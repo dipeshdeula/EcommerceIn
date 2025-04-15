@@ -1,0 +1,14 @@
+﻿global using Application.Interfaces.Services;
+global using Domain.Entities;
+global using Domain.Settings;
+global using Infrastructure.Persistence.Contexts;
+global using Infrastructure.Persistence.Services;
+global using Microsoft.AspNetCore.Http;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore.Design;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.IdentityModel.Tokens;
+global using System;
+global using System.Text;
+global using System.Threading.Tasks;

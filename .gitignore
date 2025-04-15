@@ -1,3 +1,7 @@
+.vs
+*.user
+.vscode/
+*.suo
 Application/bin/
 Application/obj/
 
@@ -9,4 +13,6 @@ Infrastructure/obj/
 
 EcommerceBackendAPI/bin/
 EcommerceBackendAPI/obj/
-/EcommerceBackendAPI.sln
+
+**/bin/
+**/obj/
