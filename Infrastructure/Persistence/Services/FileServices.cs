@@ -44,7 +44,19 @@ namespace Infrastructure.Persistence.Services
 
         public Task<bool> DeleteFileAsync(string fileName, FileType type)
         {
-            throw new NotImplementedException();
+           var filePath = Path.Combine(
+               Directory.GetCurrentDirectory(),
+               _fileSettings.Root,
+                _fileSettings.FileLocation,
+                type.ToString(),
+                fileName);
+
+            if(File.Exists(filePath))
+            {
+                File.Delete(filePath);
+                return Task.FromResult(true);
+            }
+            return Task.FromResult(false);
         }
 
         public Task<string> GetFileUrlAsync(string fileName, FileType type)

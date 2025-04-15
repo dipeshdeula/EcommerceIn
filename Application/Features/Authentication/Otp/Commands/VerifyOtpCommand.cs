@@ -1,14 +1,15 @@
 ﻿using Application.Common;
 using Application.Common.Helper;
+using Application.Features.Authentication.Commands;
 using Application.Interfaces.Repositories;
 using Application.Utilities;
 using MediatR;
 
 namespace Application.Features.Authentication.Otp.Commands
 {
-    public record VerifyOtpCommand(string Email, string Otp) : IRequest<Result>;
+    public record VerifyOtpCommand(string Email, string Otp) : IRequest<Result<RegisterCommand>>;
 
-    public class VerifyOtpCommandHandler : IRequestHandler<VerifyOtpCommand, Result>
+    public class VerifyOtpCommandHandler : IRequestHandler<VerifyOtpCommand, Result<RegisterCommand>>
     {
         private readonly IUserRepository _userRepository;
         private readonly OtpService _otpService;
@@ -19,19 +20,19 @@ namespace Application.Features.Authentication.Otp.Commands
             _otpService = otpService;
         }
 
-        public async Task<Result> Handle(VerifyOtpCommand request, CancellationToken cancellationToken)
+        public async Task<Result<RegisterCommand>> Handle(VerifyOtpCommand request, CancellationToken cancellationToken)
         {
             // ✅ Step 1: Validate OTP
             if (!_otpService.ValidateOtp(request.Email, request.Otp))
             {
-                return Result.Failure("Invalid or expired OTP.");
+                return Result<RegisterCommand>.Failure("Invalid or expired OTP.");
             }
 
             // ✅ Step 2: Get user and password from OTPService cache/memory
             var (user, rawPassword) = _otpService.GetUserInfo(request.Email);
             if (user == null || string.IsNullOrEmpty(rawPassword))
             {
-                return Result.Failure("User information not found.");
+                return Result<RegisterCommand>.Failure("User information not found.");
             }
 
             // ✅ Step 3: Hash password and save
@@ -43,11 +44,12 @@ namespace Application.Features.Authentication.Otp.Commands
                 await _userRepository.AddAsync(user, cancellationToken);
                 await _userRepository.SaveChangesAsync(cancellationToken);
 
-                return Result.Success("OTP verified successfully. Account has been created.");
+                var registerCommand = new RegisterCommand(user.Id,user.Email, rawPassword, user.Name, user.Contact);
+                return Result<RegisterCommand>.Success(registerCommand, "OTP verified successfully. Account has been created.");
             }
             catch (Exception ex)
             {
-                return Result.Failure("User registration failed.", new[] { ex.Message });
+                return Result<RegisterCommand>.Failure("User registration failed.", new[] { ex.Message });
             }
         }
     }

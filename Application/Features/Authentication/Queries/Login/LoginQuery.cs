@@ -1,4 +1,4 @@
-﻿/*using Application.Common.Helper;
+﻿using Application.Common.Helper;
 using Application.Dto;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
@@ -34,11 +34,11 @@ namespace Application.Features.Authentication.Queries.Login
                 return Results.BadRequest(new { Message = "Invalid email or password." });
             }
 
-            if(!PasswordHelper.verifyPassword(query.Password, user.Password))
+            if (!PasswordHelper.verifyPassword(query.Password, user.Password))
             {
                 return Results.BadRequest(new { Message = "Invalid email or password." });
             }
-            
+
 
             var accessToken = _tokenService.GenerateAccessToken(user);
             var refreshToken = _tokenService.GenerateRefreshToken(user);
@@ -67,4 +67,3 @@ namespace Application.Features.Authentication.Queries.Login
     }
 }
 
-*/
