@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces.Repositories;
 using System.Linq.Expressions;
 using Application.Extension;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories
 {
@@ -47,12 +48,12 @@ namespace Infrastructure.Persistence.Repositories
             return _dbContext.Set<TEntity>().Find(id);
         }
 
-        public async Task<TEntity> FindByIdAsync(object id)
+        public virtual async Task<TEntity> FindByIdAsync(object id)
         {
             return await _dbContext.Set<TEntity>().FindAsync(id);
         }
 
-        public TEntity FirstOrDefault(Expression<Func<TEntity, bool>> predicate)
+        public virtual TEntity FirstOrDefault(Expression<Func<TEntity, bool>> predicate)
         {
             return _dbContext.Set<TEntity>().Where(predicate).FirstOrDefault();
         }
@@ -99,7 +100,7 @@ namespace Infrastructure.Persistence.Repositories
 
         #region Get Methods
 
-        public async Task<IEnumerable<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null, bool includeDeleted = false)
+        public virtual async Task<IEnumerable<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null, bool includeDeleted = false)
         {
             var query = GetQueryable(includeDeleted);
 
@@ -109,7 +110,7 @@ namespace Infrastructure.Persistence.Repositories
             return await query.ToListAsync();
         }
 
-        public async Task<IEnumerable<TEntity>> GetAllAsync(
+        public async virtual Task<IEnumerable<TEntity>> GetAllAsync(
             Expression<Func<TEntity, bool>> predicate = null,
             Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
             int? skip = null,
@@ -298,6 +299,8 @@ namespace Infrastructure.Persistence.Repositories
         {
             return await _dbContext.SaveChangesAsync(cancellationToken);
         }
+
+       
 
         #endregion
     }

@@ -1,4 +1,6 @@
 ﻿using Application.Common;
+using Application.Dto;
+using Application.Extension;
 using Application.Interfaces.Repositories;
 using Domain.Entities;
 using MediatR;
@@ -6,9 +8,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Features.Authentication.Queries.UserQuery
 {
-    public record GetAllUsersQuery(int PageNumber, int PageSize) : IRequest<Result<IEnumerable<User>>>;
+    public record GetAllUsersQuery(int PageNumber, int PageSize) : IRequest<Result<IEnumerable<UserDTO>>>;
 
-    public class GetAllUsersQueryHandler : IRequestHandler<GetAllUsersQuery, Result<IEnumerable<User>>>
+    public class GetAllUsersQueryHandler : IRequestHandler<GetAllUsersQuery, Result<IEnumerable<UserDTO>>>
     {
         private readonly IUserRepository _userRepository;
         private readonly ILogger<GetAllUsersQueryHandler> _logger;
@@ -19,7 +21,7 @@ namespace Application.Features.Authentication.Queries.UserQuery
             _logger = logger;
         }
 
-        public async Task<Result<IEnumerable<User>>> Handle(GetAllUsersQuery request, CancellationToken cancellationToken)
+        public async Task<Result<IEnumerable<UserDTO>>> Handle(GetAllUsersQuery request, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Fetching all users with pagination");
 
@@ -28,8 +30,10 @@ namespace Application.Features.Authentication.Queries.UserQuery
                 skip: (request.PageNumber - 1) * request.PageSize,
                 take: request.PageSize
             );
+            var userDTOs = users.Select(u => u.ToDTO()).ToList();
 
-            return Result<IEnumerable<User>>.Success(users, "Users fetched successfully");
+
+            return Result<IEnumerable<UserDTO>>.Success(userDTOs, "Users fetched successfully");
         }
     }
 }

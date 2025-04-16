@@ -118,6 +118,9 @@ namespace Infrastructure.DependencyInjection
 */
 
 using Application.Common;
+using Application.Dto;
+using Application.Features.AddressFeat.Commands;
+using Application.Features.AddressFeat.Queries;
 using Application.Features.Authentication.Commands;
 using Application.Features.Authentication.Commands.UserInfo.Commands;
 using Application.Features.Authentication.Otp.Commands;
@@ -175,6 +178,7 @@ namespace Infrastructure.DependencyInjection
         {
             // Repositories are typically scoped because they interact with the database
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IAddressRepository, AddressRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<JwtTokenSetting>();
 
@@ -182,13 +186,17 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<RegisterCommand, IResult>, RegisterCommandHandler>();
             services.AddScoped<IRequestHandler<LoginQuery, IResult>, LoginQueryHandler>();
             services.AddScoped<IRequestHandler<VerifyOtpCommand, Result<RegisterCommand>>, VerifyOtpCommandHandler>();
-            services.AddScoped<IRequestHandler<GetAllUsersQuery, Result<IEnumerable<User>>>, GetAllUsersQueryHandler>();
+            services.AddScoped<IRequestHandler<GetAllUsersQuery, Result<IEnumerable<UserDTO>>>, GetAllUsersQueryHandler>();
             services.AddScoped<IRequestHandler<GetUsersQueryById, Result<User>>, GetUsersQueryByIdHandler>();
             services.AddScoped<IRequestHandler<UploadImageCommand, Result<User>>, UploadImageCommandHandler>();
             services.AddScoped<IRequestHandler<UsersUpdateCommand, Result<User>>, UsersUpdateCommandHandler>();
             services.AddScoped<IRequestHandler<SoftDeleteUserCommand, Result<User>>, SoftDeleteUserCommandHandler>();
             services.AddScoped<IRequestHandler<HardDeleteUserCommand, Result<User>>, HardDeleteUserCommandHandler>();
             services.AddScoped<IRequestHandler<UnDeleteUserCommnad, Result<User>>, UnDeleteUserCommandHandler>();
+
+            services.AddScoped<IRequestHandler<AddressCommand, Result<AddressDTO>>, AddressCommandHandler>();
+            services.AddScoped<IRequestHandler<GellAllAddressQuery, Result<IEnumerable<AddressDTO>>>, GetAllAddressQueryHandler>();
+            services.AddScoped<IRequestHandler<GetAddressByUserId,Result<IEnumerable<AddressDTO>>>, GetAddressByUserIdHandler>();
 
            
 

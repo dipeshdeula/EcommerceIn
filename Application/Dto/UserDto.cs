@@ -6,13 +6,17 @@ using System.Threading.Tasks;
 
 namespace Application.Dto
 {
-    public class UserDto
+    public class UserDTO
     {
-        public int UserId { get; set; }
-        public string Name { get; set; }
-        public string Email { get; set; }
-        public string Password { get; set; }
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Contact { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public string ImageUrl { get; set; } = string.Empty;
+        public bool IsDeleted { get; set; } = false;
 
-        public string? ImageUrl { get; set; } = null;
+        public ICollection<AddressDTO> Addresses { get; set; } = new List<AddressDTO>();
     }
+
 }

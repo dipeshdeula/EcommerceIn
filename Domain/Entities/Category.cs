@@ -16,7 +16,10 @@ namespace Domain.Entities
 
         public string ImageUrl { get; set; }
 
-        public int ParentCategoryId { get; set; }
+        public int? ParentCategoryId { get; set; } // Nullable to allow root categories
+        public Category ParentCategory { get; set; } // Navigation property to parent category
+        public ICollection<Category> SubCategories { get; set; } = new List<Category>(); // Navigation property to subcategories
+        public ICollection<Product> Products { get; set; } = new List<Product>(); // Navigation property to products in this category
 
 
     }

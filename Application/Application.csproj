@@ -31,8 +31,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\AddressFeat\Module\" />
-    <Folder Include="Features\AddressFeat\Queries\" />
+    <Folder Include="Features\CategoryFeat\Module\" />
+    <Folder Include="Features\CategoryFeat\Queries\" />
   </ItemGroup>
 
 </Project>
