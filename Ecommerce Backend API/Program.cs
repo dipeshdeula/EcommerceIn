@@ -65,6 +65,7 @@ using Application.Utilities;
 using Carter;
 using Infrastructure.DependencyInjection;
 using Infrastructure.Persistence.Contexts;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 
@@ -100,6 +101,15 @@ new DatabaseRegistration().AddServices(builder.Services, builder.Configuration);
 new UserServiceManager().AddServices(builder.Services);
 
 var app = builder.Build();
+
+
+
+// Auto-migrate database on startup
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<MainDbContext>();
+    db.Database.Migrate();
+}
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>
