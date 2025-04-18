@@ -79,6 +79,7 @@ namespace Application.Extension
                 Slug = subSubCategory.Slug,
                 Description = subSubCategory.Description,
                 ImageUrl = subSubCategory.ImageUrl,
+                SubCategoryId = subSubCategory.SubCategoryId,
                 Products = subSubCategory.Products.Select(p => p.ToDTO()).ToList() // Map products
             };
         }

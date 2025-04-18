@@ -54,6 +54,8 @@ namespace Application.Features.AddressFeat.Module
 
                 return Results.Ok(new { result.Message, result.Data });
             });
+
+           
         }
     }
 }

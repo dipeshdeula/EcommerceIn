@@ -128,10 +128,13 @@ using Application.Features.Authentication.Queries.Login;
 using Application.Features.Authentication.Queries.UserQuery;
 using Application.Features.Authentication.UploadImage.Commands;
 using Application.Features.CategoryFeat.Commands;
+using Application.Features.CategoryFeat.Queries;
 using Application.Interfaces.Repositories;
 using Application.Utilities;
 using Infrastructure.Persistence.Repositories;
 using MediatR;
+using Microsoft.AspNetCore.Http.HttpResults;
+using System.Collections.Generic;
 
 namespace Infrastructure.DependencyInjection
 {
@@ -162,18 +165,18 @@ namespace Infrastructure.DependencyInjection
 
     public class DatabaseRegistration : IDbServiceRegistration
     {
-        /* public void AddServices(IServiceCollection services, IConfiguration configuration)
-         {
-             services.AddDbContext<MainDbContext>(options =>
-             {
-                 options.UseSqlServer(
-                     configuration.GetConnectionString("DefaultConnection"),
-                     sqlOptions => sqlOptions.MigrationsAssembly(typeof(MainDbContext).Assembly.FullName));
-             });
-         }*/
+        public void AddServices(IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddDbContext<MainDbContext>(options =>
+            {
+                options.UseSqlServer(
+                    configuration.GetConnectionString("DefaultConnection"),
+                    sqlOptions => sqlOptions.MigrationsAssembly(typeof(MainDbContext).Assembly.FullName));
+            });
+        }
 
         // In DatabaseRegistration.cs
-        public void AddServices(IServiceCollection services, IConfiguration configuration)
+        /*public void AddServices(IServiceCollection services, IConfiguration configuration)
         {
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
 
@@ -192,7 +195,7 @@ namespace Infrastructure.DependencyInjection
                 services.AddDbContext<MainDbContext>(options =>
                     options.UseNpgsql(connectionString));
             }
-        }
+        }*/
     }
 
     public class RepositoryRegistration : IRepositoriesRegistration
@@ -204,6 +207,8 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IAddressRepository, AddressRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
+            services.AddScoped<ISubSubCategoryRepository, SubSubCategoryRepository>();
             services.AddScoped<JwtTokenSetting>();
 
             // Register CQRS handlers with scoped lifetime
@@ -224,6 +229,10 @@ namespace Infrastructure.DependencyInjection
 
             services.AddScoped<IRequestHandler<CreateCategoryCommand, Result<CategoryDTO>>, CreateCategoryCommandHandler>();
             services.AddScoped<IRequestHandler<CreateSubCategoryCommand,Result<SubCategoryDTO>>, CreateSubCategoryCommandHandler>();
+            services.AddScoped<IRequestHandler<CreateSubSubCategoryCommand,Result<SubSubCategoryDTO>>, CreateSubSubCategoryCommandHandler>();
+
+            services.AddScoped<IRequestHandler<GetAllCategoryQuery,Result<IEnumerable<CategoryDTO>>>, GetAllCategoryQueryHandler>();
+            services.AddScoped<IRequestHandler<GetAllSubCategoryQuery,  Result < IEnumerable < SubCategoryDTO >>>, GetAllSubCategoryHandler >();
 
            
 

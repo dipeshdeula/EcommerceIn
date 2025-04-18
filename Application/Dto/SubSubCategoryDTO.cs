@@ -13,7 +13,9 @@ namespace Application.Dto
         public string Name { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public string ImageUrl { get; set; } = string.Empty;      
+        public string ImageUrl { get; set; } = string.Empty;
+        public int SubCategoryId { get; set; }
+        public SubCategory SubCategory { get; set; }
         public List<ProductDTO> Products { get; set; } = new List<ProductDTO>();
     }
 }

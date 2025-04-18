@@ -15,7 +15,7 @@ namespace Domain.Entities
         public string ImageUrl { get; set; } = string.Empty;
 
         public int SubCategoryId { get; set; } // Foreign key to SubCategory
-        public SubCategory SubCategory { get; set; } // Navigation property to SubCategory entity
+        public SubCategory SubCategory { get; set; }  // Navigation property to SubCategory entity
 
         public ICollection<Product> Products { get; set; } = new List<Product>();
     }
