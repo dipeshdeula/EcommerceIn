@@ -19,4 +19,11 @@ RUN echo "<Project><PropertyGroup><NoWarn>CS8600;CS8605;CS8625;CS0266</NoWarn><T
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
+
+# Add environment variables for Render.com
+# Define PORT with a default value if not provided at runtime
+ARG PORT=8080
+ENV PORT=${PORT}
+ENV ASPNETCORE_URLS=http://+:${PORT}
+
 ENTRYPOINT ["dotnet", "EcommerceBackendAPI.dll"]
