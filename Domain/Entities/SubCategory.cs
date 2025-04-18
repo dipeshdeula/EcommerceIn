@@ -6,18 +6,18 @@ using System.Threading.Tasks;
 
 namespace Domain.Entities
 {
-    public class Category
+    public class SubCategory
     {
         public int Id { get; set; }
-
         public string Name { get; set; } = string.Empty;
-        public string Slug { get; set; } = string.Empty; // e.g. "electronics"
+        public string Slug { get; set; } = string.Empty; // e.g. "home-appliances"
         public string Description { get; set; } = string.Empty;
-
         public string ImageUrl { get; set; } = string.Empty;
 
-        public ICollection<SubCategory> SubCategories { get; set; } = new List<SubCategory>();
-       
+        public int CategoryId { get; set; } // Foreign key to Category
+        public Category Category { get; set; } // Navigation property to Category entity
+
+        public ICollection<SubSubCategory> SubSubCategories { get; set; } = new List<SubSubCategory>();
 
 
     }

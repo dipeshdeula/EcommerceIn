@@ -147,6 +147,7 @@ namespace Infrastructure.Persistence.Repositories
         public async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default)
         {
             await _dbContext.Set<TEntity>().AddAsync(entity, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken); // Ensure this line is present
             return entity;
         }
 

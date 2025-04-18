@@ -19,15 +19,12 @@ namespace Infrastructure.Persistence.Configurations
             builder.Property(c => c.Slug).IsRequired().HasMaxLength(100);
             builder.Property(c => c.Description).IsRequired().HasMaxLength(500);
             builder.Property(c => c.ImageUrl).IsRequired().HasMaxLength(200);
-            builder.HasOne(c=>c.ParentCategory)
-                .WithMany(c=>c.SubCategories)
-                .HasForeignKey(c => c.ParentCategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasMany(c => c.Products)
-                  .WithOne(p => p.Category)
-                  .HasForeignKey(p => p.CategoryId)
-                  .OnDelete(DeleteBehavior.Cascade);
+            // Relationship with SubCategories
+            builder.HasMany(c => c.SubCategories)
+                .WithOne(sc => sc.Category)
+                .HasForeignKey(sc => sc.CategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 

@@ -31,7 +31,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\CategoryFeat\Module\" />
     <Folder Include="Features\CategoryFeat\Queries\" />
   </ItemGroup>
 

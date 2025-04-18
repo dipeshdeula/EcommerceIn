@@ -17,6 +17,8 @@ namespace Infrastructure.Persistence.Contexts
         public DbSet<User> Users { get; set; }
         public DbSet<Address> Addresses { get; set; }
         public DbSet<Category> Categories { get; set; }
+        public DbSet<SubCategory> SubCategories { get; set; }
+        public DbSet<SubSubCategory> SubSubCategories { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<ProductImage> ProductImages { get; set; }
         public DbSet<Store> Stores { get; set; }
@@ -35,6 +37,8 @@ namespace Infrastructure.Persistence.Contexts
             builder.ApplyConfiguration(new UserConfig());
             builder.ApplyConfiguration(new AddressConfig());
             builder.ApplyConfiguration(new CategoryConfig());
+            builder.ApplyConfiguration(new SubCategoryConfig());
+            builder.ApplyConfiguration(new SubSubCategoryConfig());
             builder.ApplyConfiguration(new ProductConfig());
             builder.ApplyConfiguration(new ProductImageConfig());
             builder.ApplyConfiguration(new StoreConfig());

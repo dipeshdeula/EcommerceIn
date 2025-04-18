@@ -127,6 +127,7 @@ using Application.Features.Authentication.Otp.Commands;
 using Application.Features.Authentication.Queries.Login;
 using Application.Features.Authentication.Queries.UserQuery;
 using Application.Features.Authentication.UploadImage.Commands;
+using Application.Features.CategoryFeat.Commands;
 using Application.Interfaces.Repositories;
 using Application.Utilities;
 using Infrastructure.Persistence.Repositories;
@@ -180,6 +181,7 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IAddressRepository, AddressRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<JwtTokenSetting>();
 
             // Register CQRS handlers with scoped lifetime
@@ -197,6 +199,9 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<AddressCommand, Result<AddressDTO>>, AddressCommandHandler>();
             services.AddScoped<IRequestHandler<GellAllAddressQuery, Result<IEnumerable<AddressDTO>>>, GetAllAddressQueryHandler>();
             services.AddScoped<IRequestHandler<GetAddressByUserId,Result<IEnumerable<AddressDTO>>>, GetAddressByUserIdHandler>();
+
+            services.AddScoped<IRequestHandler<CreateCategoryCommand, Result<CategoryDTO>>, CreateCategoryCommandHandler>();
+            services.AddScoped<IRequestHandler<CreateSubCategoryCommand,Result<SubCategoryDTO>>, CreateSubCategoryCommandHandler>();
 
            
 
