@@ -64,6 +64,7 @@ using Application.Extension;
 using Application.Utilities;
 using Carter;
 using Infrastructure.DependencyInjection;
+using Infrastructure.Persistence.Contexts;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 
@@ -126,6 +127,17 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapCarter();
-app.MapGet("/", () => "EcommerceInstant API is running!");
+app.MapGet("/dbinfo", async (MainDbContext db) => {
+    try
+    {
+        bool canConnect = await db.Database.CanConnectAsync();
+        var provider = db.Database.ProviderName;
+        return $"DB Provider: {provider}, Can Connect: {canConnect}";
+    }
+    catch (Exception ex)
+    {
+        return $"DB Error: {ex.Message}";
+    }
+});
 
 app.Run();

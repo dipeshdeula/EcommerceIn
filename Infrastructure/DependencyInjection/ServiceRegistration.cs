@@ -162,14 +162,36 @@ namespace Infrastructure.DependencyInjection
 
     public class DatabaseRegistration : IDbServiceRegistration
     {
+        /* public void AddServices(IServiceCollection services, IConfiguration configuration)
+         {
+             services.AddDbContext<MainDbContext>(options =>
+             {
+                 options.UseSqlServer(
+                     configuration.GetConnectionString("DefaultConnection"),
+                     sqlOptions => sqlOptions.MigrationsAssembly(typeof(MainDbContext).Assembly.FullName));
+             });
+         }*/
+
+        // In DatabaseRegistration.cs
         public void AddServices(IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<MainDbContext>(options =>
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+
+            if (environment == "Development")
             {
-                options.UseSqlServer(
-                    configuration.GetConnectionString("DefaultConnection"),
-                    sqlOptions => sqlOptions.MigrationsAssembly(typeof(MainDbContext).Assembly.FullName));
-            });
+                // Local SQL Server
+                var connectionString = configuration.GetConnectionString("DefaultConnection");
+                services.AddDbContext<MainDbContext>(options =>
+                    options.UseSqlServer(connectionString));
+            }
+            else
+            {
+                // Production PostgreSQL on Render
+                var connectionString = configuration.GetConnectionString("PostgresConnection") ??
+                                       Environment.GetEnvironmentVariable("ConnectionStrings__PostgresConnection");
+                services.AddDbContext<MainDbContext>(options =>
+                    options.UseNpgsql(connectionString));
+            }
         }
     }
 
