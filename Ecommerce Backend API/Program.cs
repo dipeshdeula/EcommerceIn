@@ -118,5 +118,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapCarter();
+app.MapGet("/", () => "EcommerceInstant API is running!");
 
 app.Run();
