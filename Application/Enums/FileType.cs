@@ -9,6 +9,9 @@ namespace Application.Enums
     public enum FileType
     {
         UserImages,
+        CategoryImages,
+        SubCategoryImages,
+        SubSubCategoryImages,
         ProductImages
     }
 }

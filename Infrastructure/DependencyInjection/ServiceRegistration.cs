@@ -129,6 +129,7 @@ using Application.Features.Authentication.Queries.UserQuery;
 using Application.Features.Authentication.UploadImage.Commands;
 using Application.Features.CategoryFeat.Commands;
 using Application.Features.CategoryFeat.Queries;
+using Application.Features.CategoryFeat.UploadImages;
 using Application.Interfaces.Repositories;
 using Application.Utilities;
 using Infrastructure.Persistence.Repositories;
@@ -209,6 +210,8 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
             services.AddScoped<ISubSubCategoryRepository, SubSubCategoryRepository>();
+            services.AddScoped<IProductRepository, ProductRepository>();
+            services.AddScoped<IProductImageRepository, ProductImageRepository>();
             services.AddScoped<JwtTokenSetting>();
 
             // Register CQRS handlers with scoped lifetime
@@ -230,9 +233,18 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<CreateCategoryCommand, Result<CategoryDTO>>, CreateCategoryCommandHandler>();
             services.AddScoped<IRequestHandler<CreateSubCategoryCommand,Result<SubCategoryDTO>>, CreateSubCategoryCommandHandler>();
             services.AddScoped<IRequestHandler<CreateSubSubCategoryCommand,Result<SubSubCategoryDTO>>, CreateSubSubCategoryCommandHandler>();
+            services.AddScoped<IRequestHandler<CreateProductCommand, Result<ProductDTO>>, CreateProductCommandHandler>();
 
             services.AddScoped<IRequestHandler<GetAllCategoryQuery,Result<IEnumerable<CategoryDTO>>>, GetAllCategoryQueryHandler>();
-            services.AddScoped<IRequestHandler<GetAllSubCategoryQuery,  Result < IEnumerable < SubCategoryDTO >>>, GetAllSubCategoryHandler >();
+            services.AddScoped<IRequestHandler<GetAllSubCategoryQuery,  Result<IEnumerable <SubCategoryDTO>>>, GetAllSubCategoryHandler >();
+            services.AddScoped<IRequestHandler<GetAllSubSubCategory, Result<IEnumerable<SubSubCategoryDTO>>>, GetAllSubSubCategoryHandler>();
+            services.AddScoped <IRequestHandler<GetAllProductQuery, Result<IEnumerable<ProductDTO>>>, GetAllProductQueryHandler>();
+            services.AddScoped<IRequestHandler<GetCategoryByIdQuery, Result<CategoryDTO>>, GetCategoryByIdQueryHandler>();
+            services.AddScoped<IRequestHandler<GetSubCategoryByIdQuery, Result<SubCategoryDTO>>, GetSubCategoryByIdQueryHandler>();
+            services.AddScoped<IRequestHandler<GetSubSubCategoryByIdQuery, Result<SubSubCategoryDTO>>, GetSubSubCategoryByIdQueryHandler>();
+            services.AddScoped<IRequestHandler<GetProductByIdQuery, Result<ProductDTO>>, GetProductByIdQueryHandler>();
+
+            services.AddScoped<IRequestHandler<UploadProductImageCommand,Result<ProductImageDTO>>, UploadProductImageCommandHandler>();
 
            
 

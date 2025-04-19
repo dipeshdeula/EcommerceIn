@@ -1,9 +1,12 @@
 ﻿using Application.Common;
 using Application.Dto;
+using Application.Enums;
 using Application.Extension;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
 using Domain.Entities;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,27 +16,36 @@ namespace Application.Features.CategoryFeat.Commands
         string Name,
         string Slug,
         string Description
+       
         
     ) : IRequest<Result<CategoryDTO>>;
 
     public class CreateCategoryCommandHandler : IRequestHandler<CreateCategoryCommand, Result<CategoryDTO>>
     {
         private readonly ICategoryRepository _categoryRepository;
+        private readonly IFileServices _fileService;
 
-        public CreateCategoryCommandHandler(ICategoryRepository categoryRepository)
+        public CreateCategoryCommandHandler(ICategoryRepository categoryRepository,IFileServices fileService)
         {
             _categoryRepository = categoryRepository;
+            _fileService = fileService;
         }
 
         public async Task<Result<CategoryDTO>> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)
         {
+            /*string fileUrl = null;
+            if (request.File != null)
+            {
+                fileUrl = await _fileService.SaveFileAsync(request.File, FileType.CategoryImages);
+            }*/
             // Create the new category
             var category = new Category
             {
                 Name = request.Name,
                 Slug = request.Slug,
                 Description = request.Description,
-                
+               // ImageUrl = fileUrl
+
             };
 
             // Save the category to the database

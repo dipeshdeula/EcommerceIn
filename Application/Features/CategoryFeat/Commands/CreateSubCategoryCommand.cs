@@ -27,31 +27,33 @@ namespace Application.Features.CategoryFeat.Commands
 
         public async Task<Result<SubCategoryDTO>> Handle(CreateSubCategoryCommand request, CancellationToken cancellationToken)
         {
-            // Validate ParentCategoryId
             var parentCategory = await _categoryRepository.FindByIdAsync(request.ParentCategoryId);
             if (parentCategory == null)
             {
                 return Result<SubCategoryDTO>.Failure("Parent category not found.");
             }
-
-            // Create the new subcategory
-            var subCategory = new SubCategory
             {
-                Name = request.Name,
-                Slug = request.Slug,
-                Description = request.Description,
-                CategoryId = request.ParentCategoryId,
-                Category = parentCategory
-            };
+                // Validate ParentCategoryId
 
-            // Add the subcategory to the parent's SubCategories collection
-            parentCategory.SubCategories.Add(subCategory);
+                // Create the new subcategory
+                var subCategory = new SubCategory
+                {
+                    Name = request.Name,
+                    Slug = request.Slug,
+                    Description = request.Description,
+                    CategoryId = request.ParentCategoryId,
+                    Category = parentCategory
+                };
 
-            // Save changes to the database
-            await _categoryRepository.UpdateAsync(parentCategory, cancellationToken);
+                // Add the subcategory to the parent's SubCategories collection
+                parentCategory.SubCategories.Add(subCategory);
 
-            // Map to DTO and return success
-            return Result<SubCategoryDTO>.Success(subCategory.ToDTO(), "Subcategory created successfully");
+                // Save changes to the database
+                await _categoryRepository.UpdateAsync(parentCategory, cancellationToken);
+
+                // Map to DTO and return success
+                return Result<SubCategoryDTO>.Success(subCategory.ToDTO(), "Subcategory created successfully");
+            }
         }
     }
 }
