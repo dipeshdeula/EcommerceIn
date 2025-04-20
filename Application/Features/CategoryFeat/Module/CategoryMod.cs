@@ -3,7 +3,6 @@ using Application.Features.CategoryFeat.Commands;
 using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UploadImages;
 using Carter;
-using Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -25,7 +24,21 @@ namespace Application.Features.CategoryFeat.Module
         {
             app = app.MapGroup("category");
 
-            app.MapPost("/create", async (ISender mediator, CreateCategoryCommand command) =>
+            app.MapPost("/create", async (ISender mediator, [FromForm] CreateCategoryCommand command) =>
+            {
+
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            }).DisableAntiforgery()
+                .Accepts<CreateCategoryCommand>("multipart/form-data")
+                .Produces<CategoryDTO>(StatusCodes.Status200OK)
+                .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
+
+            app.MapPost("/create-subCategory", async ([FromQuery] int ParentCategoryId, [FromForm] CreateSubCategoryCommand command, ISender mediator) =>
             {
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
@@ -33,21 +46,14 @@ namespace Application.Features.CategoryFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            })
+             .DisableAntiforgery()
+             .Accepts<CreateSubCategoryCommand>("multipart/form-data")
+             .Produces<SubCategoryDTO>(StatusCodes.Status200OK)
+             .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
 
-            
 
-            app.MapPost("/create-subCategory", async([FromQuery] int ParentCategoryId, [FromServices] ISender mediator, CreateSubCategoryCommand command) =>
-            {
-                var result = await mediator.Send(command);
-                if (!result.Succeeded)
-                {
-                    return Results.BadRequest(new { result.Message, result.Errors });
-                }
-                return Results.Ok(new { result.Message, result.Data });
-            });
-
-            app.MapPost("/create-subSubCategory", async ([FromQuery] int subCategoryId, [FromServices] ISender mediator, CreateSubSubCategoryCommand command) => 
+            app.MapPost("/create-subSubCategory", async ([FromQuery] int subCategoryId, ISender mediator, [FromForm] CreateSubSubCategoryCommand command) =>
             {
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
@@ -67,7 +73,7 @@ namespace Application.Features.CategoryFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapGet("/getAllCategory", async ([FromServices] ISender mediator , int PageNumber = 1, int PageSize = 10) =>
+            app.MapGet("/getAllCategory", async ([FromServices] ISender mediator, int PageNumber = 1, int PageSize = 10) =>
             {
                 var result = await mediator.Send(new GetAllCategoryQuery(PageNumber, PageSize));
                 if (!result.Succeeded)
@@ -98,7 +104,7 @@ namespace Application.Features.CategoryFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapGet("/getAllProducts", async ([FromServices] ISender mediator, int PageNumber = 1, int PageSize =10) =>
+            app.MapGet("/getAllProducts", async ([FromServices] ISender mediator, int PageNumber = 1, int PageSize = 10) =>
             {
                 var result = await mediator.Send(new GetAllProductQuery(PageNumber, PageSize));
                 if (!result.Succeeded)
@@ -150,7 +156,8 @@ namespace Application.Features.CategoryFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapPost("/UploadProductImage",async(ISender mediator,IFormFile file, int productId) => {
+            app.MapPost("/UploadProductImage", async (ISender mediator, IFormFile file, int productId) =>
+            {
                 var command = new UploadProductImageCommand(productId, file);
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)

@@ -7,15 +7,17 @@ using Application.Interfaces.Services;
 using Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Application.Features.CategoryFeat.Commands
 {
     public record CreateCategoryCommand(
-        string Name,
-        string Slug,
-        string Description
+         string Name,
+         string Slug,
+         string Description,
+         IFormFile File
        
         
     ) : IRequest<Result<CategoryDTO>>;
@@ -33,18 +35,27 @@ namespace Application.Features.CategoryFeat.Commands
 
         public async Task<Result<CategoryDTO>> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)
         {
-            /*string fileUrl = null;
-            if (request.File != null)
+            string fileUrl = null;
+            if (request.File != null && request.File.Length>0)
             {
-                fileUrl = await _fileService.SaveFileAsync(request.File, FileType.CategoryImages);
-            }*/
+                try
+                {
+                    fileUrl = await _fileService.SaveFileAsync(request.File, FileType.CategoryImages);
+
+                }
+                catch (Exception ex)
+                {
+                    return Result<CategoryDTO>.Failure($"Image upload failed: {ex.Message}");
+
+                }
+            }
             // Create the new category
             var category = new Category
             {
                 Name = request.Name,
                 Slug = request.Slug,
                 Description = request.Description,
-               // ImageUrl = fileUrl
+                ImageUrl = fileUrl
 
             };
 

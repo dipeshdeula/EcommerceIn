@@ -1,48 +1,70 @@
 ﻿using Application.Common;
 using Application.Dto;
+using Application.Enums;
 using Application.Extension;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
 using Domain.Entities;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Application.Features.CategoryFeat.Commands
 {
     public record CreateSubCategoryCommand(
+        int ParentCategoryId,
         string Name,
         string Slug,
         string Description,
-        int ParentCategoryId // Parent category is required for subcategories
+        IFormFile File
+        
     ) : IRequest<Result<SubCategoryDTO>>;
 
     public class CreateSubCategoryCommandHandler : IRequestHandler<CreateSubCategoryCommand, Result<SubCategoryDTO>>
     {
         private readonly ICategoryRepository _categoryRepository;
+        private readonly IFileServices _fileService;
 
-        public CreateSubCategoryCommandHandler(ICategoryRepository categoryRepository)
+        public CreateSubCategoryCommandHandler(ICategoryRepository categoryRepository,IFileServices fileService)
         {
             _categoryRepository = categoryRepository;
+            _fileService = fileService;
         }
 
         public async Task<Result<SubCategoryDTO>> Handle(CreateSubCategoryCommand request, CancellationToken cancellationToken)
         {
+           
             var parentCategory = await _categoryRepository.FindByIdAsync(request.ParentCategoryId);
             if (parentCategory == null)
             {
                 return Result<SubCategoryDTO>.Failure("Parent category not found.");
             }
+            string fileUrl = null;
+            if (request.File != null && request.File.Length > 0)
             {
-                // Validate ParentCategoryId
+                try
+                {
+                    fileUrl = await _fileService.SaveFileAsync(request.File, FileType.SubCategoryImages);
 
-                // Create the new subcategory
-                var subCategory = new SubCategory
+                }
+                catch (Exception ex)
+                {
+                    return Result<SubCategoryDTO>.Failure($"Image upload failed: {ex.Message}");
+
+                }
+            }
+            // Validate ParentCategoryId
+
+            // Create the new subcategory
+            var subCategory = new SubCategory
                 {
                     Name = request.Name,
                     Slug = request.Slug,
                     Description = request.Description,
                     CategoryId = request.ParentCategoryId,
-                    Category = parentCategory
+                    Category = parentCategory,
+                    ImageUrl = fileUrl
                 };
 
                 // Add the subcategory to the parent's SubCategories collection
@@ -54,6 +76,5 @@ namespace Application.Features.CategoryFeat.Commands
                 // Map to DTO and return success
                 return Result<SubCategoryDTO>.Success(subCategory.ToDTO(), "Subcategory created successfully");
             }
-        }
     }
 }
