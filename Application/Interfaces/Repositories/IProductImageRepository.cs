@@ -9,5 +9,6 @@ namespace Application.Interfaces.Repositories
 {
     public interface IProductImageRepository : IRepository<ProductImage>
     {
+        Task AddRangeAsync(IEnumerable<ProductImage> productImages, CancellationToken cancellationToken = default);
     }
 }

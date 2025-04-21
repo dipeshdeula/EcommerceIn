@@ -1,7 +1,7 @@
 ﻿using Application.Dto;
 using Application.Features.CategoryFeat.Commands;
 using Application.Features.CategoryFeat.Queries;
-using Application.Features.CategoryFeat.UploadImages;
+using Application.Features.CategoryFeat.UpdateCommands;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -156,9 +156,50 @@ namespace Application.Features.CategoryFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapPost("/UploadProductImage", async (ISender mediator, IFormFile file, int productId) =>
+            app.MapPost("/UploadProductImages", async (ISender mediator, [FromForm] int productId, [FromForm] IFormFileCollection files) =>
             {
-                var command = new UploadProductImageCommand(productId, file);
+                var command = new UploadProductImagesCommand(productId, files);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+
+                return Results.Ok(new { result.Message, result.Data });
+            })
+            .DisableAntiforgery()
+            .Accepts<UploadProductImagesCommand>("multipart/form-data")
+            .Produces<IEnumerable<ProductImageDTO>>(StatusCodes.Status200OK)
+            .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
+
+            app.MapPut("/updateCategory", async ([FromForm] UpdateCategoryCommand command, ISender mediator) =>
+            {
+               
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            })
+              .DisableAntiforgery()
+              .Accepts<UpdateCategoryCommand>("multipart/form-data")
+              .Produces<CategoryDTO>(StatusCodes.Status200OK)
+              .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
+
+            app.MapPut("/updateSubCategory", async ([FromForm] UpdateSubCategoryCommand command, ISender mediator) => {
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+                
+            });
+
+            app.MapPut("/updateSubSubCategory", async ([FromForm] UpdateSubSubCategoryCommand command, ISender mediator) =>
+            {
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                 {
@@ -166,10 +207,21 @@ namespace Application.Features.CategoryFeat.Module
                 }
                 return Results.Ok(new { result.Message, result.Data });
 
-            }).DisableAntiforgery()
-                .Accepts<IFormFile>("multipart/form-data")
-                 .Produces<string>(StatusCodes.Status200OK)
-                 .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
+            });
+
+            app.MapPut("/updateProduct", async ([FromForm] UpdateProductCommand command, ISender mediator) =>
+            {
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+
+
+
         }
     }
 }

@@ -8,45 +8,50 @@ using Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 
-namespace Application.Features.CategoryFeat.UploadImages
+public record UploadProductImagesCommand(int ProductId, IFormFileCollection Files) : IRequest<Result<IEnumerable<ProductImageDTO>>>;
+
+public class UploadProductImagesCommandHandler : IRequestHandler<UploadProductImagesCommand, Result<IEnumerable<ProductImageDTO>>>
 {
-    public record UploadProductImageCommand(int ProductId, IFormFile File) : IRequest<Result<ProductImageDTO>>;
+    private readonly IProductRepository _productRepository;
+    private readonly IProductImageRepository _productImageRepository;
+    private readonly IFileServices _fileService;
 
-    public class UploadProductImageCommandHandler : IRequestHandler<UploadProductImageCommand, Result<ProductImageDTO>>
+    public UploadProductImagesCommandHandler(IProductRepository productRepository, IProductImageRepository productImageRepository, IFileServices fileService)
     {
-        private readonly IProductRepository _productRepository;
-        private readonly IProductImageRepository _productImageRepository;
-        private readonly IFileServices _fileService;
-        public UploadProductImageCommandHandler(IProductRepository productRepository, IProductImageRepository productImageRepository, IFileServices fileService)
-        {
-            _productRepository = productRepository;
-            _productImageRepository = productImageRepository;
-            _fileService = fileService;
+        _productRepository = productRepository;
+        _productImageRepository = productImageRepository;
+        _fileService = fileService;
+    }
 
+    public async Task<Result<IEnumerable<ProductImageDTO>>> Handle(UploadProductImagesCommand request, CancellationToken cancellationToken)
+    {
+        // Validate ProductId
+        var product = await _productRepository.FindByIdAsync(request.ProductId);
+        if (product == null)
+        {
+            return Result<IEnumerable<ProductImageDTO>>.Failure("Product not found.");
         }
-        public async Task<Result<ProductImageDTO>> Handle(UploadProductImageCommand request, CancellationToken cancellationToken)
+
+        // Validate Files
+        if (request.Files == null || request.Files.Count == 0)
         {
-            var product = _productRepository.FindByIdAsync(request.ProductId);
-            if (product == null)
-            {
-                return Result<ProductImageDTO>.Failure("Product id not found");
-            }
+            return Result<IEnumerable<ProductImageDTO>>.Failure("No files uploaded. Please upload at least one image.");
+        }
 
-            // Validate File
-            if (request.File == null || request.File.Length == 0)
-            {
-                return Result<ProductImageDTO>.Failure("Invalid file. Please upload a valid image.");
-            }
+        var productImages = new List<ProductImage>();
+        var productImageDTOs = new List<ProductImageDTO>();
 
-            // Save the file using the file service
+        foreach (var file in request.Files)
+        {
+            // Save each file using the file service
             string fileUrl;
             try
             {
-                fileUrl = await _fileService.SaveFileAsync(request.File, FileType.ProductImages);
+                fileUrl = await _fileService.SaveFileAsync(file, FileType.ProductImages);
             }
             catch (Exception ex)
             {
-                return Result<ProductImageDTO>.Failure($"File upload failed: {ex.Message}");
+                return Result<IEnumerable<ProductImageDTO>>.Failure($"File upload failed: {ex.Message}");
             }
 
             // Create a new ProductImage entity
@@ -56,13 +61,14 @@ namespace Application.Features.CategoryFeat.UploadImages
                 ImageUrl = fileUrl
             };
 
-            // Save the ProductImage to the database
-            await _productImageRepository.AddAsync(productImage, cancellationToken);
-
-            // Map to DTO and return success
-            return Result<ProductImageDTO>.Success(productImage.ToDTO(), "Product image uploaded successfully.");
+            productImages.Add(productImage);
+            productImageDTOs.Add(productImage.ToDTO());
         }
+
+        // Save all ProductImages to the database
+        await _productImageRepository.AddRangeAsync(productImages, cancellationToken);
+
+        // Return success with the list of uploaded images
+        return Result<IEnumerable<ProductImageDTO>>.Success(productImageDTOs, "Product images uploaded successfully.");
     }
 }
-
-

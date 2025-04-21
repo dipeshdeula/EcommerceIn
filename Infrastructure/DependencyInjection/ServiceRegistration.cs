@@ -129,7 +129,7 @@ using Application.Features.Authentication.Queries.UserQuery;
 using Application.Features.Authentication.UploadImage.Commands;
 using Application.Features.CategoryFeat.Commands;
 using Application.Features.CategoryFeat.Queries;
-using Application.Features.CategoryFeat.UploadImages;
+using Application.Features.CategoryFeat.UpdateCommands;
 using Application.Interfaces.Repositories;
 using Application.Utilities;
 using Infrastructure.Persistence.Repositories;
@@ -244,7 +244,11 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<GetSubSubCategoryByIdQuery, Result<SubSubCategoryDTO>>, GetSubSubCategoryByIdQueryHandler>();
             services.AddScoped<IRequestHandler<GetProductByIdQuery, Result<ProductDTO>>, GetProductByIdQueryHandler>();
 
-            services.AddScoped<IRequestHandler<UploadProductImageCommand,Result<ProductImageDTO>>, UploadProductImageCommandHandler>();
+            services.AddScoped<IRequestHandler<UploadProductImagesCommand, Result<IEnumerable<ProductImageDTO>>>, UploadProductImagesCommandHandler>();
+
+            services.AddScoped<IRequestHandler<UpdateCategoryCommand, Result<CategoryDTO>>, UpdateCategoryCommandHandler>();
+            services.AddScoped<IRequestHandler<UpdateSubCategoryCommand, Result<SubCategoryDTO>>, UpdateSubCategoryCommandHandler>();
+            services.AddScoped<IRequestHandler<UpdateProductCommand, Result<ProductDTO>>, UpdateProudctComamndHandler>();
 
            
 

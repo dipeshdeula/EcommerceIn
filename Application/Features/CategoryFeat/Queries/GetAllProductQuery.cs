@@ -33,9 +33,9 @@ namespace Application.Features.CategoryFeat.Queries
                 );
 
             // Map products to DTOs
-            var productDTOsa = products.Select(p => p.ToDTO()).ToList();
+            var productDTOs = products.Select(p => p.ToDTO()).ToList();
 
-            return Result<IEnumerable<ProductDTO>>.Success(productDTOsa, "Product is fetched successfully");
+            return Result<IEnumerable<ProductDTO>>.Success(productDTOs, "Product is fetched successfully");
         }
     }
 

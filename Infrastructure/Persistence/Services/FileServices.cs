@@ -1,12 +1,4 @@
 ﻿using Application.Enums;
-using Application.Interfaces.Services;
-using Domain.Settings;
-using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Persistence.Services
 {
@@ -64,15 +56,60 @@ namespace Infrastructure.Persistence.Services
             throw new NotImplementedException();
         }
 
-      
-        public Task<string> SaveFileAsync(string filePath, CancellationToken cancellationToken)
+        public async Task<string> UpdateFileAsync(string oldFileName, IFormFile newFile, FileType type)
         {
-            throw new NotImplementedException();
+            // Step 1: If no new file is provided, return the old file path
+            if (newFile == null || newFile.Length == 0)
+            {
+                return oldFileName; // Return the old file name as it is
+            }
+
+            // Step 2: Delete the old file if it exists
+            if (!string.IsNullOrEmpty(oldFileName))
+            {
+                var oldFilePath = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    _fileSettings.Root,
+                    _fileSettings.FileLocation,
+                    type.ToString(),
+                    oldFileName);
+
+                if (File.Exists(oldFilePath))
+                {
+                    File.Delete(oldFilePath);
+                }
+            }
+
+            // Step 3: Save the new file
+            string newFilePath = string.Empty;
+            string newFileName = string.Empty;
+
+            if (newFile != null && newFile.Length > 0)
+            {
+                newFileName = Guid.NewGuid() + Path.GetExtension(newFile.FileName);
+                newFilePath = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    _fileSettings.Root,
+                    _fileSettings.FileLocation,
+                    type.ToString(),
+                    newFileName);
+
+                var directory = Path.GetDirectoryName(newFilePath);
+                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                using (var stream = new FileStream(newFilePath, FileMode.Create))
+                {
+                    await newFile.CopyToAsync(stream);
+                }
+            }
+
+            // Step 4: Return the relative path of the new file
+            return $"{_fileSettings.FileLocation}/{type.ToString()}/{newFileName}";
         }
 
-        public Task<string> UpdateFileAsync(string oldFileName, IFormFile newFile, FileType type)
-        {
-            throw new NotImplementedException();
-        }
+
     }
 }
