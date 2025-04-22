@@ -13,6 +13,7 @@ namespace Domain.Entities
         public int ProductId { get; set; }
         public int Quantity { get; set; }
 
+        public bool IsDeleted { get; set; }
         public User User { get; set; } //Navigation property to User entity
         public Product Product { get; set; } // Navigation property to Product entity
 

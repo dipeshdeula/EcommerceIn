@@ -13,6 +13,8 @@ namespace Domain.Entities
         public int StoreId { get; set; } // Foreign key to Store
         public int StockQuantity { get; set; } // Quantity of the product available in this store
 
+        public bool IsDeleted { get; set; } = false; // Soft delete flag
+
         public Product Product { get; set; } // Navigation property to Product entity
         public Store Store { get; set; } // Navigation property to Store entity
     }

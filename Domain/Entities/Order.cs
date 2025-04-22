@@ -16,6 +16,8 @@ namespace Domain.Entities
         public string ShippingAddress { get; set; } = string.Empty;
         public string ShippingCity { get; set; }
 
+        public bool IsDeleted { get; set; } = false;
+
         public User User { get; set; }
         public ICollection<OrderItem> Items { get; set; }
 

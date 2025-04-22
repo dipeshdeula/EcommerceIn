@@ -1,4 +1,6 @@
-﻿using Application.Interfaces.Repositories;
+﻿using Application.Enums;
+using Application.Extension;
+using Application.Interfaces.Repositories;
 using System.Linq.Expressions;
 
 namespace Infrastructure.Persistence.Repositories
@@ -6,9 +8,11 @@ namespace Infrastructure.Persistence.Repositories
     public class ProductRepository : Repository<Product>, IProductRepository
     {
         private readonly MainDbContext _context;
-        public ProductRepository(MainDbContext context) : base(context)
+        private readonly IFileServices _fileServices;
+        public ProductRepository(MainDbContext context,IFileServices fileServices) : base(context)
         {
             _context = context;
+            _fileServices = fileServices;
 
         }
 
@@ -56,7 +60,53 @@ namespace Infrastructure.Persistence.Repositories
             return await query.ToListAsync();
         }
 
+        public async Task SoftDeleteProductAsync(int productId, CancellationToken cancellationToken = default)
+        {
+            var product = await _context.Products
+                .Include(p => p.Images) // Include images for soft delete
+                .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
+
+            if (product != null)
+            {
+                // Soft delete the product
+                await _context.SoftDeleteAsync(product, cancellationToken);
+            }
+        }
+
+        public async Task HardDeleteProductAsync(int productId, CancellationToken cancellationToken = default)
+        {
+            var product = await _context.Products
+                .Include(p => p.Images) // Include images for hard delete
+                .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
+
+            if (product != null)
+            {
+                // Delete associated images from the file system
+                foreach (var image in product.Images)
+                {
+                    await _fileServices.DeleteFileAsync(image.ImageUrl, FileType.ProductImages);
+                }
+
+                // Use the HardDeleteAsync method from DeleteExtensions
+                await _context.HardDeleteAsync(product, cancellationToken);
+            }
+        }
 
 
+
+        public async Task<bool> UndeleteProductAsync(int productId, CancellationToken cancellationToken = default)
+        {
+            var product = await _context.Products
+                .Include(p => p.Images) // Include images for undelete
+                .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
+
+            if (product != null)
+            {
+                // Undelete the product
+                return await _context.UndeleteAsync(product, cancellationToken);
+            }
+
+            return false;
+        }
     }
 }

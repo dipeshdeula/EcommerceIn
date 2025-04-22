@@ -14,6 +14,8 @@ namespace Domain.Entities
         public string Description { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
 
+        public bool IsDeleted { get; set; } = false;
+
         public int CategoryId { get; set; } // Foreign key to Category
         public Category Category { get; set; } // Navigation property to Category entity
 

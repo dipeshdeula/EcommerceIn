@@ -18,6 +18,7 @@ namespace Domain.Entities
         public double Latitude { get; set; }
         public double Longitude { get; set; }
         public bool IsDefault { get; set; } = false;
+        public bool IsDeleted { get; set; } = false; // Soft delete flag
 
         public User User { get; set; } // Navigation property to User entity
     }

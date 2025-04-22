@@ -16,6 +16,8 @@ namespace Domain.Entities
 
         public string ImageUrl { get; set; } = string.Empty;
 
+        public bool IsDeleted { get; set; } = false;
+
         public ICollection<SubCategory> SubCategories { get; set; } = new List<SubCategory>();
        
 

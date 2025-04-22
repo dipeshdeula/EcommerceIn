@@ -13,6 +13,7 @@ namespace Domain.Entities
         public string Slug { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
+        public bool IsDeleted { get; set; } = false;
 
         public int SubCategoryId { get; set; } // Foreign key to SubCategory
         public SubCategory SubCategory { get; set; }  // Navigation property to SubCategory entity

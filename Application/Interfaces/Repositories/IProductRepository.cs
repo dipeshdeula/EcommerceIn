@@ -9,5 +9,8 @@ namespace Application.Interfaces.Repositories
 {
     public interface IProductRepository : IRepository<Product>
     {
+        Task SoftDeleteProductAsync(int productId, CancellationToken cancellationToken);
+        Task HardDeleteProductAsync(int productId, CancellationToken cancellationToken = default);
+        Task<bool> UndeleteProductAsync(int productId, CancellationToken cancellationToken = default);
     }
 }

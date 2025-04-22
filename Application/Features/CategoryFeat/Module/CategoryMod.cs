@@ -1,5 +1,6 @@
 ﻿using Application.Dto;
 using Application.Features.CategoryFeat.Commands;
+using Application.Features.CategoryFeat.DeleteCommands;
 using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
 using Carter;
@@ -20,7 +21,7 @@ namespace Application.Features.CategoryFeat.Module
 
         }
 
-        public override void AddRoutes(IEndpointRouteBuilder app)
+        public override async void AddRoutes(IEndpointRouteBuilder app)
         {
             app = app.MapGroup("category");
 
@@ -219,6 +220,36 @@ namespace Application.Features.CategoryFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
+            app.MapDelete("/softdDeleteProduct", async ([FromQuery] int productId, ISender mediator) =>
+            {
+                var result = await mediator.Send(new SoftDeleteProductCommand(productId));
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+            app.MapDelete("hardDeleteProduct", async ([FromQuery] int productId, ISender mediator) =>
+            {
+                var result = await mediator.Send(new HardDeleteProductCommand(productId));
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message });
+            });
+
+            app.MapDelete("/unDeleteProduct", async ([FromQuery] int productId, ISender mediator) =>
+            {
+                var result = await mediator.Send(new UnDeleteProductCommand(productId));
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+
+            });
 
 
 

@@ -128,6 +128,7 @@ using Application.Features.Authentication.Queries.Login;
 using Application.Features.Authentication.Queries.UserQuery;
 using Application.Features.Authentication.UploadImage.Commands;
 using Application.Features.CategoryFeat.Commands;
+using Application.Features.CategoryFeat.DeleteCommands;
 using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
 using Application.Interfaces.Repositories;
@@ -250,9 +251,9 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<UpdateSubCategoryCommand, Result<SubCategoryDTO>>, UpdateSubCategoryCommandHandler>();
             services.AddScoped<IRequestHandler<UpdateProductCommand, Result<ProductDTO>>, UpdateProudctComamndHandler>();
 
-           
-
-            
+            services.AddScoped<IRequestHandler<SoftDeleteProductCommand,Result<ProductDTO>>, SoftDeleteProductCommandHandler>();
+            services.AddScoped<IRequestHandler<HardDeleteProductCommand, Result<ProductDTO>>, HardDeleteProductCommandHandler>();
+            services.AddScoped<IRequestHandler<UnDeleteProductCommand, Result<ProductDTO>>, UnDeleteProductCommandHandler>();
         }
     }
 
