@@ -58,7 +58,7 @@ namespace Application.Features.Authentication.Commands
                     CreatedAt = DateTime.UtcNow,
                 };
 
-                await _userRepository.AddAsync(user, cancellationToken);
+                //await _userRepository.AddAsync(user, cancellationToken);
                 _otpService.StoreUserInfo(request.Email, user, request.Password);
 
                 return Results.Ok(new
