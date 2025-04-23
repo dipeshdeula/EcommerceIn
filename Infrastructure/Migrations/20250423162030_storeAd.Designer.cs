@@ -4,6 +4,7 @@ using Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(MainDbContext))]
-    partial class MainDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250423162030_storeAd")]
+    partial class storeAd
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -325,7 +328,7 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDateTimeUtc")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2025, 4, 23, 16, 35, 3, 644, DateTimeKind.Utc).AddTicks(2696));
+                        .HasDefaultValue(new DateTime(2025, 4, 23, 16, 20, 28, 526, DateTimeKind.Utc).AddTicks(7219));
 
                     b.Property<DateTime>("ExpiryDateTimeUtc")
                         .HasColumnType("datetime2");
@@ -370,6 +373,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("OwnerName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StoreCity")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -517,7 +524,7 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2025, 4, 23, 16, 35, 3, 641, DateTimeKind.Utc).AddTicks(2881));
+                        .HasDefaultValue(new DateTime(2025, 4, 23, 16, 20, 28, 523, DateTimeKind.Utc).AddTicks(518));
 
                     b.Property<string>("Email")
                         .IsRequired()

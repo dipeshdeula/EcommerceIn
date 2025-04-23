@@ -12,8 +12,8 @@ namespace Application.Features.CategoryFeat.Commands
         string Name,
         string Slug,
         string Description,
-        decimal Price,
-        decimal DiscountPrice,
+        double Price,
+        double DiscountPrice,
         int StockQuantity
 
         ):IRequest<Result<ProductDTO>>;

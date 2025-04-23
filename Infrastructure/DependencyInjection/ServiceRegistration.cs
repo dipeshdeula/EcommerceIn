@@ -128,9 +128,12 @@ using Application.Features.Authentication.Queries.Login;
 using Application.Features.Authentication.Queries.UserQuery;
 using Application.Features.Authentication.UploadImage.Commands;
 using Application.Features.CategoryFeat.Commands;
+using Application.Features.CategoryFeat.DeleteCategoryCommands;
 using Application.Features.CategoryFeat.DeleteCommands;
 using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
+using Application.Features.ProductFeat.Queries;
+using Application.Features.StoreFeat.Commands;
 using Application.Interfaces.Repositories;
 using Application.Utilities;
 using Infrastructure.Persistence.Repositories;
@@ -214,6 +217,9 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IProductImageRepository, ProductImageRepository>();
             services.AddScoped<JwtTokenSetting>();
+            services.AddScoped<IProductStoreRepository, ProductStoreRepository>();
+            services.AddScoped<IStoreRepository, StoreRepository>();
+
 
             // Register CQRS handlers with scoped lifetime
             services.AddScoped<IRequestHandler<RegisterCommand, IResult>, RegisterCommandHandler>();
@@ -254,6 +260,11 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<SoftDeleteProductCommand,Result<ProductDTO>>, SoftDeleteProductCommandHandler>();
             services.AddScoped<IRequestHandler<HardDeleteProductCommand, Result<ProductDTO>>, HardDeleteProductCommandHandler>();
             services.AddScoped<IRequestHandler<UnDeleteProductCommand, Result<ProductDTO>>, UnDeleteProductCommandHandler>();
+
+            services.AddScoped<IRequestHandler<SoftDeleteCategoryCommand, Result<CategoryDTO>>, SoftDeleteCategoryCommandHandler>();
+
+            services.AddScoped<IRequestHandler<GetNearbyProductsQuery,Result<IEnumerable<NearbyProductDto>>>,GetNearbyProductQueryHandler>();
+            services.AddScoped<IRequestHandler<CreateStoreCommand,Result<StoreDTO>>, CreateStoreCommandHandler>();
         }
     }
 

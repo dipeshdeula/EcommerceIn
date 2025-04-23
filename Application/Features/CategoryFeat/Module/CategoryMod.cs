@@ -1,5 +1,6 @@
 ﻿using Application.Dto;
 using Application.Features.CategoryFeat.Commands;
+using Application.Features.CategoryFeat.DeleteCategoryCommands;
 using Application.Features.CategoryFeat.DeleteCommands;
 using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
@@ -216,6 +217,17 @@ namespace Application.Features.CategoryFeat.Module
                 if (!result.Succeeded)
                 {
                     return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+            app.MapDelete("/softDeleteCategory", async ([FromQuery] int categoryId, ISender mediator) =>
+            {
+                var result = await mediator.Send(new SoftDeleteCategoryCommand(categoryId));
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+
                 }
                 return Results.Ok(new { result.Message, result.Data });
             });

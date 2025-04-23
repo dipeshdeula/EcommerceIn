@@ -13,8 +13,8 @@ namespace Application.Dto
         public string Name { get; set; }
         public string Slug { get; set; } // e.g. "home-appliances"
         public string Description { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-        public decimal? DiscountPrice { get; set; } // Nullable if no discount
+        public double Price { get; set; }
+        public double? DiscountPrice { get; set; } // Nullable if no discount
         public int StockQuantity { get; set; }
         public bool IsDeleted { get; set; } = false;
 

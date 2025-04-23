@@ -18,6 +18,9 @@ namespace Infrastructure.Persistence.Configurations
                             .WithMany(p => p.Images)
                             .HasForeignKey(pi => pi.ProductId)
                             .OnDelete(DeleteBehavior.Cascade); // Optional: specify delete behavior
+            builder.HasIndex(pi=>new { pi.ProductId,pi.IsMain})
+                .IsUnique()
+                .HasFilter("[IsMain] = 1");
         }
     }
 }

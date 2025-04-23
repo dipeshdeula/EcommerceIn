@@ -111,5 +111,17 @@ namespace Application.Extension
             };
         }
 
+        public static StoreDTO ToDTO(this Store store)
+        {
+            return new StoreDTO
+            {
+                Id = store.Id,
+                Name = store.Name,
+                OwnerName = store.OwnerName,
+                IsDeleted = store.IsDeleted,
+                Address = store.Address
+            };
+        }
+
     }
 }

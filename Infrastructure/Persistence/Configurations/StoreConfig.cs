@@ -13,6 +13,11 @@ namespace Infrastructure.Persistence.Configurations
         {
             builder.ToTable("Stores");
             builder.HasKey(s => s.Id);
+
+            builder.HasOne(s=>s.Address)
+                .WithOne(a=>a.Store)
+                .HasForeignKey<StoreAddress>(a=>a.StoreId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
     }

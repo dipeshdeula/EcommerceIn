@@ -25,14 +25,15 @@ namespace Infrastructure.Persistence.Services
             {
                 Host = "smtp.gmail.com",
                 Port = 587,
-                Credentials = new System.Net.NetworkCredential("deuladipesh94@gmail.com", "sdgw pgxy yzeg expx"),
+                //Credentials = new System.Net.NetworkCredential("deuladipesh94@gmail.com", "sdgw pgxy yzeg expx"),
+                Credentials = new System.Net.NetworkCredential("getinstantmart.contactus@gmail.com", "pzev elzr lpsk fwuh"),
                 EnableSsl = true,
                 DeliveryMethod = SmtpDeliveryMethod.Network
             };
 
             var mailMessage = new MailMessage()
             {
-                From = new MailAddress("deuladipesh94@gmail.com"),
+                From = new MailAddress("getinstantmart.contactus@gmail.com"),
                 Subject = subject,
                 Body = body,
                 IsBodyHtml = true

@@ -12,8 +12,8 @@ namespace Domain.Entities
         public string Name { get; set; }
         public string Slug { get; set; } // e.g. "home-appliances"
         public string Description { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-        public decimal? DiscountPrice { get; set; } // Nullable if no discount
+        public double Price { get; set; }
+        public double? DiscountPrice { get; set; } // Nullable if no discount
         public int StockQuantity { get; set; }
         public bool IsDeleted { get; set; } = false;
 
@@ -25,5 +25,8 @@ namespace Domain.Entities
 
         // Navigation property for product images
         public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
+
+        // Navigation property for product stores
+        public ICollection<ProductStore> ProductStores { get; set; } = new List<ProductStore>();
     }
 }

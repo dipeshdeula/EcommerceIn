@@ -30,4 +30,9 @@
     <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\ProductFeat\Commands\" />
+    <Folder Include="Features\StoreFeat\Queries\" />
+  </ItemGroup>
+
 </Project>
