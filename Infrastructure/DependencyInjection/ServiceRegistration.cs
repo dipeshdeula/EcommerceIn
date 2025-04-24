@@ -134,6 +134,7 @@ using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
 using Application.Features.ProductFeat.Queries;
 using Application.Features.StoreFeat.Commands;
+using Application.Features.StoreFeat.Queries;
 using Application.Interfaces.Repositories;
 using Application.Utilities;
 using Infrastructure.Persistence.Repositories;
@@ -265,6 +266,7 @@ namespace Infrastructure.DependencyInjection
 
             services.AddScoped<IRequestHandler<GetNearbyProductsQuery,Result<IEnumerable<NearbyProductDto>>>,GetNearbyProductQueryHandler>();
             services.AddScoped<IRequestHandler<CreateStoreCommand,Result<StoreDTO>>, CreateStoreCommandHandler>();
+            services.AddScoped<IRequestHandler<GetAllStoreQuery, Result<IEnumerable<StoreDTO>>>, GetAllStoreQueryHandler>();
         }
     }
 

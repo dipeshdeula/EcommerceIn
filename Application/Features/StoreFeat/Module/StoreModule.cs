@@ -1,4 +1,5 @@
 ﻿using Application.Features.StoreFeat.Commands;
+using Application.Features.StoreFeat.Queries;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -22,6 +23,16 @@ namespace Application.Features.StoreFeat.Module
             app.MapPost("/create", async (CreateStoreCommand command, ISender mediator) =>
             {
                 var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+            app.MapGet("/getAllStores", async (ISender mediator, int PageNumber = 1, int PageSize = 10) =>
+            {
+                var result = await mediator.Send(new GetAllStoreQuery(PageNumber, PageSize));
                 if (!result.Succeeded)
                 {
                     return Results.BadRequest(new { result.Message, result.Errors });
