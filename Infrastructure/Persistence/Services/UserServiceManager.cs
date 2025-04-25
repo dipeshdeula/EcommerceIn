@@ -1,8 +1,5 @@
 ﻿using Application.Common.Behaviours;
 using Application.Exceptions;
-using Application.Features.Authentication.Commands;
-using Application.Features.Authentication.Queries.Login;
-using FluentValidation;
 using Infrastructure.DependencyInjection;
 using MediatR;
 using System.Reflection;

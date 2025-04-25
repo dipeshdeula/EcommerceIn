@@ -141,8 +141,6 @@ using Application.Interfaces.Repositories;
 using Application.Utilities;
 using Infrastructure.Persistence.Repositories;
 using MediatR;
-using Microsoft.AspNetCore.Http.HttpResults;
-using System.Collections.Generic;
 
 namespace Infrastructure.DependencyInjection
 {
@@ -177,7 +175,7 @@ namespace Infrastructure.DependencyInjection
         {
             services.AddDbContext<MainDbContext>(options =>
             {
-                options.UseSqlServer(
+                options.UseNpgsql(
                     configuration.GetConnectionString("DefaultConnection"),
                     sqlOptions => sqlOptions.MigrationsAssembly(typeof(MainDbContext).Assembly.FullName));
             });

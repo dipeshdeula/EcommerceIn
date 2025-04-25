@@ -1,5 +1,4 @@
 using Application.Extension;
-using Application.Utilities;
 using Carter;
 using Infrastructure.DependencyInjection;
 using Infrastructure.Persistence.Contexts;
@@ -43,12 +42,12 @@ var app = builder.Build();
 
 
 // Auto-migrate database on startup
-using (var scope = app.Services.CreateScope())
+/*using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<MainDbContext>();
     db.Database.Migrate();
 }
-
+*/
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {

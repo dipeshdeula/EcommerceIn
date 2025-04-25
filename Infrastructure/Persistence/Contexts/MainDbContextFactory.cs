@@ -16,7 +16,7 @@ namespace Infrastructure.Persistence.Contexts
 
             var optionsBuilder = new DbContextOptionsBuilder<MainDbContext>();
             var connectionString = configuration.GetConnectionString("DefaultConnection");
-            optionsBuilder.UseSqlServer(connectionString);
+            optionsBuilder.UseNpgsql(connectionString);
 
             return new MainDbContext(optionsBuilder.Options);
         }

@@ -1,27 +1,26 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using Npgsql;
 
 namespace Application.Provider
 {
     public class DatabaseValidator
     {
-        public static bool IsConnectionValid(string dataSource, string userId, string password)
+        public static bool IsConnectionValid(string host, string database, string user, string password, int port = 5432)
         {
-            // Create a connection string without initial catalog
-            string connectionString = $"Data Source={dataSource};User Id={userId};Password={password};Encrypt=false;Connection Timeout=10;";
+            string connectionString = $"Host={host};Port={port};Database={database};Username={user};Password={password};";
+
             try
             {
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = new NpgsqlConnection(connectionString))
                 {
                     connection.Open();
                     connection.Close();
                     return true;
                 }
             }
-            catch (SqlException)
+            catch (Exception)
             {
                 return false;
             }
         }
     }
 }
-
