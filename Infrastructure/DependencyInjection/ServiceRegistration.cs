@@ -171,18 +171,18 @@ namespace Infrastructure.DependencyInjection
 
     public class DatabaseRegistration : IDbServiceRegistration
     {
-        public void AddServices(IServiceCollection services, IConfiguration configuration)
-        {
-            services.AddDbContext<MainDbContext>(options =>
-            {
-                options.UseNpgsql(
-                    configuration.GetConnectionString("DefaultConnection"),
-                    sqlOptions => sqlOptions.MigrationsAssembly(typeof(MainDbContext).Assembly.FullName));
-            });
-        }
+        // public void AddServices(IServiceCollection services, IConfiguration configuration)
+        // {
+        //     services.AddDbContext<MainDbContext>(options =>
+        //     {
+        //         options.UseNpgsql(
+        //             configuration.GetConnectionString("DefaultConnection"),
+        //             sqlOptions => sqlOptions.MigrationsAssembly(typeof(MainDbContext).Assembly.FullName));
+        //     });
+        // }
 
         // In DatabaseRegistration.cs
-        /*public void AddServices(IServiceCollection services, IConfiguration configuration)
+        public void AddServices(IServiceCollection services, IConfiguration configuration)
         {
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
 
@@ -191,17 +191,17 @@ namespace Infrastructure.DependencyInjection
                 // Local SQL Server
                 var connectionString = configuration.GetConnectionString("DefaultConnection");
                 services.AddDbContext<MainDbContext>(options =>
-                    options.UseSqlServer(connectionString));
+                    options.UseNpgsql(connectionString));
             }
             else
             {
                 // Production PostgreSQL on Render
-                var connectionString = configuration.GetConnectionString("PostgresConnection") ??
+                var connectionString = configuration.GetConnectionString("DefaultConnection") ??
                                        Environment.GetEnvironmentVariable("ConnectionStrings__PostgresConnection");
                 services.AddDbContext<MainDbContext>(options =>
                     options.UseNpgsql(connectionString));
             }
-        }*/
+        }
     }
 
     public class RepositoryRegistration : IRepositoriesRegistration
