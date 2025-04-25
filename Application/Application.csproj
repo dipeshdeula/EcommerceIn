@@ -32,6 +32,8 @@
 
   <ItemGroup>
     <Folder Include="Features\ProductFeat\Commands\" />
+    <Folder Include="Features\ProductStoreFeat\Queries\" />
+    <Folder Include="Features\StoreAddressFeat\Queries\" />
   </ItemGroup>
 
 </Project>

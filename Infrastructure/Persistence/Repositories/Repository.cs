@@ -1,6 +1,6 @@
-﻿using Application.Interfaces.Repositories;
+﻿using Application.Extension;
+using Application.Interfaces.Repositories;
 using System.Linq.Expressions;
-using Application.Extension;
 
 namespace Infrastructure.Persistence.Repositories
 {
@@ -114,21 +114,69 @@ namespace Infrastructure.Persistence.Repositories
             Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
             int? skip = null,
             int? take = null,
-            bool includeDeleted = false)
+            bool includeDeleted = false,
+            string includeProperties = null)
+
         {
-            var query = GetQueryable(includeDeleted);
+            /* var query = GetQueryable(includeDeleted);
 
+             if (predicate != null)
+                 query = query.Where(predicate);
+
+             if (orderBy != null)
+                 query = orderBy(query);
+
+             if (skip.HasValue)
+                 query = query.Skip(skip.Value);
+
+             if (take.HasValue)
+                 query = query.Take(take.Value);
+
+             return await query.ToListAsync();*/
+
+            IQueryable<TEntity> query = _dbContext.Set<TEntity>();
+
+            // Include navigation properties
+            if (!string.IsNullOrEmpty(includeProperties))
+            {
+                foreach (var includeProperty in includeProperties.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    query = query.Include(includeProperty);
+                }
+            }
+
+            // Filter out soft-deleted entities if includeDeleted is false
+            if (!includeDeleted)
+            {
+                var isDeletedProperty = typeof(TEntity).GetProperty("IsDeleted");
+                if (isDeletedProperty != null)
+                {
+                    query = query.Where(e => EF.Property<bool>(e, "IsDeleted") == false);
+                }
+            }
+
+            // Apply additional filtering
             if (predicate != null)
+            {
                 query = query.Where(predicate);
+            }
 
+            // Apply ordering
             if (orderBy != null)
+            {
                 query = orderBy(query);
+            }
 
+            // Apply pagination
             if (skip.HasValue)
+            {
                 query = query.Skip(skip.Value);
+            }
 
             if (take.HasValue)
+            {
                 query = query.Take(take.Value);
+            }
 
             return await query.ToListAsync();
         }
@@ -300,7 +348,7 @@ namespace Infrastructure.Persistence.Repositories
             return await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
-       
+
 
         #endregion
     }

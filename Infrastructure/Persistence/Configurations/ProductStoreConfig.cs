@@ -16,12 +16,20 @@ namespace Infrastructure.Persistence.Configurations
             builder.HasKey(ps => ps.Id);
 
             builder.HasOne(ps => ps.Product)
-                   .WithMany()
-                   .HasForeignKey(ps => ps.ProductId);
+                   .WithMany(p => p.ProductStores) // Navigation property in Product
+                   .HasForeignKey(ps => ps.ProductId)
+                   .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasOne(ps => ps.Store)
-                   .WithMany()
-                   .HasForeignKey(ps => ps.StoreId);
+                   .WithMany(s => s.ProductStores) // Navigation property in Store
+                   .HasForeignKey(ps => ps.StoreId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            // Indexes for efficient queries
+            builder.HasIndex(ps => ps.ProductId);
+            builder.HasIndex(ps => ps.StoreId);
+            builder.HasIndex(ps => new { ps.StoreId, ps.IsDeleted });
+            builder.HasIndex(ps => new { ps.ProductId, ps.StoreId });
         }
     }
 }

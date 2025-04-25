@@ -36,7 +36,7 @@ namespace Application.Features.StoreFeat.Commands
                 Name = store.Name,
                 OwnerName = store.OwnerName,
                 IsDeleted = store.IsDeleted,
-                Address = store.Address
+                //Address = store.Address
             };
 
             var createStore = await _storeRepository.AddAsync(store, cancellationToken);

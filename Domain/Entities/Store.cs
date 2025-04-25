@@ -14,5 +14,7 @@ namespace Domain.Entities
         public string OwnerName { get; set; } = string.Empty;
         public bool IsDeleted { get; set; }
         public StoreAddress Address { get; set; }
+        public ICollection<ProductStore> ProductStores { get; set; } = new List<ProductStore>();
+
     }
 }

@@ -17,7 +17,7 @@ namespace Infrastructure.Persistence.Repositories
             _context = context;
         }
       
-        public async Task<IEnumerable<NearbyProductDto>> GetNearbyProductsAsync(double lat, double lon, double radiusKm)
+        public async Task<IEnumerable<NearbyProductDto>> GetNearbyProductsAsync(double lat, double lon, double radiusKm, int skip , int take)
         {
             var stores = await _context.Stores.Where(s => !s.IsDeleted).Include(s=>s.Address).ToListAsync();
 
@@ -26,11 +26,13 @@ namespace Infrastructure.Persistence.Repositories
                 .ToList();
 
             var productStores = await _context.ProductStores
-                .Where(ps => nearbyStores.Contains(ps.StoreId) && ps.StockQuantity > 0 && !ps.IsDeleted)
+                .Where(ps => nearbyStores.Contains(ps.StoreId) && ps.Product.StockQuantity > 0 && !ps.IsDeleted)
                 .Include(ps => ps.Product)
                     .ThenInclude(p=>p.Images)
                 .Include(ps => ps.Store)
                     .ThenInclude(s=>s.Address)
+                .Skip(skip)
+                .Take(take)
                 .AsNoTracking()
                 .ToListAsync();
 
@@ -43,7 +45,7 @@ namespace Infrastructure.Persistence.Repositories
                 Price = Convert.ToDouble(ps.Product.Price),
                 ImageUrl = ps.Product.Images.FirstOrDefault(img => img.IsMain && !img.IsDeleted)?.ImageUrl ?? string.Empty,
                 StoreCity = ps.Store.Address.City,
-                StockQuantity = ps.StockQuantity,
+                StockQuantity = ps.Product.StockQuantity,
 
                 StoreId = ps.Store.Id,
                 StoreAddress = $"{ps.Store.Address.Street}, {ps.Store.Address.City}, {ps.Store.Address.Province}, {ps.Store.Address.PostalCode}",

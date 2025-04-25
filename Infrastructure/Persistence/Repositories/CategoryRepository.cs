@@ -46,7 +46,9 @@ namespace Infrastructure.Persistence.Repositories
             Func<IQueryable<Category>, IOrderedQueryable<Category>> orderBy = null,
             int? skip = null,
             int? take = null,
-            bool includeDeleted = false)
+            bool includeDeleted = false,
+            string includeProperties = null
+            )
         {
             var query = _context.Categories
                 .AsNoTracking() // Read-only query

@@ -25,7 +25,9 @@ namespace Application.Interfaces.Repositories
             Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
             int? skip = null,
             int? take = null,
-            bool includeDeleted = false);
+            bool includeDeleted = false,
+            string includeProperties = null
+            );
 
         // Add methods
         TEntity Add(TEntity entity);

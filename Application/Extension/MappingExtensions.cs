@@ -119,7 +119,54 @@ namespace Application.Extension
                 Name = store.Name,
                 OwnerName = store.OwnerName,
                 IsDeleted = store.IsDeleted,
-                Address = store.Address
+                Address = store.Address?.ToDTO() // Map the Address to StoreAddressDTO
+            };
+        }
+
+        public static StoreAddressDTO ToDTO(this StoreAddress storeAddress)
+        {
+            return new StoreAddressDTO
+            {
+                Id = storeAddress.Id,
+                StoreId = storeAddress.StoreId,
+                Street = storeAddress.Street,
+                City = storeAddress.City,
+                Province = storeAddress.Province,
+                PostalCode = storeAddress.PostalCode,
+                Latitude = storeAddress.Latitude,
+                Longitude = storeAddress.Longitude
+            };
+        }
+
+        public static ProductStoreDTO ToDTO (this ProductStore productStore)
+        {
+            return new ProductStoreDTO
+            {
+                Id = productStore.Id,
+                StoreId = productStore.StoreId,
+                ProductId = productStore.ProductId,
+                Product = productStore.Product?.ToDTO(),
+                Store = productStore.Store?.ToDTO()
+
+            };
+        }
+
+        public static NearbyProductDto ToNearbyProductDto(this ProductStore productStore, double distance)
+        {
+            return new NearbyProductDto
+            {
+                ProductId = productStore.ProductId,
+                Name = productStore.Product.Name,
+                ImageUrl = productStore.Product.Images.FirstOrDefault()?.ImageUrl,
+                StoreCity = productStore.Store.Address?.City,
+                StoreName = productStore.Store.Name,
+                Price = productStore.Product.Price,
+                DiscountPrice = productStore.Product.DiscountPrice,
+                StockQuantity = productStore.Product.StockQuantity,
+                StoreId = productStore.StoreId,
+                StoreAddress = $"{productStore.Store.Address?.Street},{productStore.Store.Address?.City}",
+                Distance = distance,
+                HasDiscount = productStore.Product.DiscountPrice.HasValue
             };
         }
 

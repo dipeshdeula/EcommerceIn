@@ -24,14 +24,17 @@ namespace Application.Features.StoreFeat.Queries
             _logger = logger;
             
         }
-        public async Task<Result<IEnumerable<StoreDTO>>> Handle(GetAllStoreQuery request, CancellationToken cancellationToken)
+        public async  Task<Result<IEnumerable<StoreDTO>>> Handle(GetAllStoreQuery request, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Fetching all store info with pagination");
 
             var stores = await _storeRepository.GetAllAsync(
+                predicate : null,
                 orderBy: query => query.OrderByDescending(store => store.Id),
                 skip: (request.PageNumber - 1) * request.PageSize,
-                take: request.PageSize
+                take: request.PageSize,
+                includeDeleted:false,
+                includeProperties:"Address"
                 );
             var storeDTOs = stores.Select(s => s.ToDTO()).ToList();
             return Result<IEnumerable<StoreDTO>>.Success(storeDTOs, "Stores fetched successfully");

@@ -14,6 +14,6 @@ namespace Application.Dto
         public string OwnerName { get; set; } = string.Empty;
         public bool IsDeleted { get; set; }
 
-        public StoreAddress Address { get; set; }
+        public StoreAddressDTO Address { get; set; }
     }
 }

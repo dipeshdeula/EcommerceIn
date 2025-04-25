@@ -133,6 +133,8 @@ using Application.Features.CategoryFeat.DeleteCommands;
 using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
 using Application.Features.ProductFeat.Queries;
+using Application.Features.ProductStoreFeat.Commands;
+using Application.Features.StoreAddressFeat.Commands;
 using Application.Features.StoreFeat.Commands;
 using Application.Features.StoreFeat.Queries;
 using Application.Interfaces.Repositories;
@@ -220,6 +222,7 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<JwtTokenSetting>();
             services.AddScoped<IProductStoreRepository, ProductStoreRepository>();
             services.AddScoped<IStoreRepository, StoreRepository>();
+            services.AddScoped<IStoreAddressRepository, StoreAddressRepository>();
 
 
             // Register CQRS handlers with scoped lifetime
@@ -267,6 +270,9 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<GetNearbyProductsQuery,Result<IEnumerable<NearbyProductDto>>>,GetNearbyProductQueryHandler>();
             services.AddScoped<IRequestHandler<CreateStoreCommand,Result<StoreDTO>>, CreateStoreCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllStoreQuery, Result<IEnumerable<StoreDTO>>>, GetAllStoreQueryHandler>();
+            services.AddScoped<IRequestHandler<CreateStoreAddressCommand,Result<StoreAddressDTO>>, CreateStoreAddressCommandHandler>();
+
+            services.AddScoped<IRequestHandler<CreateProductStoreCommand, Result<ProductStoreDTO>>, CreateProductStoreCommandHandler>();
         }
     }
 

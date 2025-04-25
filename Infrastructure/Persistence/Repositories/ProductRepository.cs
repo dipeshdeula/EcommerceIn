@@ -9,7 +9,7 @@ namespace Infrastructure.Persistence.Repositories
     {
         private readonly MainDbContext _context;
         private readonly IFileServices _fileServices;
-        public ProductRepository(MainDbContext context,IFileServices fileServices) : base(context)
+        public ProductRepository(MainDbContext context, IFileServices fileServices) : base(context)
         {
             _context = context;
             _fileServices = fileServices;
@@ -21,7 +21,9 @@ namespace Infrastructure.Persistence.Repositories
      Func<IQueryable<Product>, IOrderedQueryable<Product>> orderBy = null,
      int? skip = null,
      int? take = null,
-     bool includeDeleted = false)
+     bool includeDeleted = false,
+        string includeProperties = null
+     )
         {
             // Start with the base query
             IQueryable<Product> query = _context.Products

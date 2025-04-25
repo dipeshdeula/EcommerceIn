@@ -4,6 +4,7 @@ using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using System;
 using System.Collections.Generic;
@@ -18,9 +19,9 @@ namespace Application.Features.ProductFeat.Module
         public ProductModule() : base("api/products") { }
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapGet("/nearby", async (double lat, double lon, double radius, ISender mediator) =>
+            app.MapGet("/nearby", async (ISender mediator,double lat, double lon, double radius,int skip = 0,int take = 10) =>
             {
-                var query = new GetNearbyProductsQuery(lat, lon, radius);
+                var query = new GetNearbyProductsQuery(lat, lon, radius,skip,take);
                 var result = await mediator.Send(query);
                 if (!result.Succeeded)
                 {

@@ -5,7 +5,7 @@ using MediatR;
 
 namespace Application.Features.ProductFeat.Queries
 {
-    public record GetNearbyProductsQuery(double Latitude, double Longitude, double RadiusKm) : IRequest<Result<IEnumerable<NearbyProductDto>>>;
+    public record GetNearbyProductsQuery(double Latitude, double Longitude, double RadiusKm,int skip,int take) : IRequest<Result<IEnumerable<NearbyProductDto>>>;
 
     public class GetNearbyProductQueryHandler : IRequestHandler<GetNearbyProductsQuery, Result<IEnumerable<NearbyProductDto>>>
     {
@@ -19,12 +19,15 @@ namespace Application.Features.ProductFeat.Queries
 
         public async Task<Result<IEnumerable<NearbyProductDto>>> Handle(GetNearbyProductsQuery request, CancellationToken cancellationToken)
         {
-            var products = await _productStoreRepository.GetNearbyProductsAsync(
+
+            var nearbyProducts = await _productStoreRepository.GetNearbyProductsAsync(
                 request.Latitude,
                 request.Longitude,
-                request.RadiusKm);
+                request.RadiusKm,
+                request.skip,
+                request.take);
 
-            return Result<IEnumerable<NearbyProductDto>>.Success(products, "Nearby products retrieved successfully.");
+            return Result<IEnumerable<NearbyProductDto>>.Success(nearbyProducts, "Nearby products retrieved successfully.");
         }
     }
 }

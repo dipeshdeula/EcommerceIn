@@ -31,14 +31,27 @@ namespace Infrastructure.Persistence.Repositories
                 .Include(u => u.Addresses) // Ensure addresses are included
                 .FirstOrDefaultAsync(u => u.Id == (int)id);
         }
-        public override async Task<IEnumerable<User>> GetAllAsync(
+        public  async Task<IEnumerable<User>> GetAllAsync(
            Expression<Func<User, bool>> predicate = null,
            Func<IQueryable<User>, IOrderedQueryable<User>> orderBy = null,
            int? skip = null,
            int? take = null,
-           bool includeDeleted = false)
+           bool includeDeleted = false,
+           string includeProperties = null
+
+
+           )
         {
             var query = _context.Users.Include(u => u.Addresses).AsQueryable();
+
+            // Include navigation properties dynamically
+            if (!string.IsNullOrEmpty(includeProperties))
+            {
+                foreach (var includeProperty in includeProperties.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    query = query.Include(includeProperty);
+                }
+            }
 
             if (predicate != null)
             {
@@ -58,6 +71,12 @@ namespace Infrastructure.Persistence.Repositories
             if (take.HasValue)
             {
                 query = query.Take(take.Value);
+            }
+
+            // Exclude soft-deleted entities if includeDeleted is false
+            if (!includeDeleted)
+            {
+                query = query.Where(u => !u.IsDeleted);
             }
 
             return await query.ToListAsync();
