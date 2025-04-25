@@ -63,9 +63,12 @@ namespace Application.Features.CategoryFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).DisableAntiforgery()
+             .Accepts<CreateSubSubCategoryCommand>("multipart/form-data")
+             .Produces<SubSubCategoryDTO>(StatusCodes.Status200OK)
+             .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
 
-            app.MapPost("/create-product", async ([FromQuery] int subSubCategoryId, [FromServices] ISender mediator, CreateProductCommand command) =>
+            app.MapPost("/create-product", async ([FromQuery] int subSubCategoryId, ISender mediator, CreateProductCommand command) =>
             {
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
@@ -177,7 +180,7 @@ namespace Application.Features.CategoryFeat.Module
 
             app.MapPut("/updateCategory", async ([FromForm] UpdateCategoryCommand command, ISender mediator) =>
             {
-               
+
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                 {
@@ -190,15 +193,19 @@ namespace Application.Features.CategoryFeat.Module
               .Produces<CategoryDTO>(StatusCodes.Status200OK)
               .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
 
-            app.MapPut("/updateSubCategory", async ([FromForm] UpdateSubCategoryCommand command, ISender mediator) => {
+            app.MapPut("/updateSubCategory", async ([FromForm] UpdateSubCategoryCommand command, ISender mediator) =>
+            {
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                 {
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-                
-            });
+
+            }).DisableAntiforgery()
+              .Accepts<UpdateSubCategoryCommand>("multipart/form-data")
+              .Produces<SubCategoryDTO>(StatusCodes.Status200OK)
+              .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
 
             app.MapPut("/updateSubSubCategory", async ([FromForm] UpdateSubSubCategoryCommand command, ISender mediator) =>
             {
@@ -209,7 +216,10 @@ namespace Application.Features.CategoryFeat.Module
                 }
                 return Results.Ok(new { result.Message, result.Data });
 
-            });
+            }).DisableAntiforgery()
+            .Accepts<UpdateSubSubCategoryCommand>("multipart/form-data")
+            .Produces<SubSubCategoryDTO>(StatusCodes.Status200OK)
+            .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
 
             app.MapPut("/updateProduct", async ([FromForm] UpdateProductCommand command, ISender mediator) =>
             {
