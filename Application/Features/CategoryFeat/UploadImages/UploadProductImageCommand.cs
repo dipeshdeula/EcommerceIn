@@ -67,6 +67,7 @@ public class UploadProductImagesCommandHandler : IRequestHandler<UploadProductIm
 
         // Save all ProductImages to the database
         await _productImageRepository.AddRangeAsync(productImages, cancellationToken);
+        await _productImageRepository.SaveChangesAsync(cancellationToken);
 
         // Return success with the list of uploaded images
         return Result<IEnumerable<ProductImageDTO>>.Success(productImageDTOs, "Product images uploaded successfully.");

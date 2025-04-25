@@ -29,7 +29,8 @@ namespace Application.Features.CategoryFeat.Queries
             var products = await _productRepository.GetAllAsync(
                 orderBy: query => query.OrderByDescending(product => product.Id),
                 skip: (request.PageNumber - 1) * request.PageSize,
-                take: request.PageSize
+                take: request.PageSize,
+                includeProperties:"Images"
                 );
 
             // Map products to DTOs
