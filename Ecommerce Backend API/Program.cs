@@ -4,9 +4,13 @@ using Infrastructure.DependencyInjection;
 using Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Serilog;
 using System.Text.Json.Serialization;
 
+
 var builder = WebApplication.CreateBuilder(args);
+
+
 
 // Add services
 builder.Services.AddEndpointsApiExplorer();
