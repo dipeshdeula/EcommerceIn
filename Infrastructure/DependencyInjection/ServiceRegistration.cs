@@ -72,7 +72,7 @@ namespace Infrastructure.DependencyInjection
             {
                 // Production PostgreSQL on Render
                 var connectionString = configuration.GetConnectionString("DefaultConnection") ??
-                                       Environment.GetEnvironmentVariable("ConnectionStrings__PostgresConnection");
+                                       Environment.GetEnvironmentVariable("DefaultConnection");
                 services.AddDbContext<MainDbContext>(options =>
                     options.UseNpgsql(connectionString));
             }
