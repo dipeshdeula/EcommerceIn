@@ -151,6 +151,20 @@ namespace Application.Extension
             };
         }
 
+        public static CartItemDTO ToDTO(this CartItem cartItem)
+        {
+            return new CartItemDTO
+            {
+                Id = cartItem.Id,
+                UserId = cartItem.UserId,
+                ProductId = cartItem.ProductId,
+                Quantity = cartItem.Quantity,
+                IsDeleted = cartItem.IsDeleted,
+                User = cartItem.User?.ToDTO(),
+                Product = cartItem.Product?.ToDTO()
+            };
+        }
+
         public static NearbyProductDto ToNearbyProductDto(this ProductStore productStore, double distance)
         {
             return new NearbyProductDto
