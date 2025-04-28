@@ -10,20 +10,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Features.CategoryFeat.Queries
+namespace Application.Features.ProductFeat.Queries
 {
-    public record GetProductByIdQuery (int productId,int PageNumber,int PageSize) : IRequest<Result<ProductDTO>>;
+    public record GetProductByIdQuery(int productId, int PageNumber, int PageSize) : IRequest<Result<ProductDTO>>;
 
     public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, Result<ProductDTO>>
     {
         private readonly IProductRepository _productRepository;
         private readonly ILogger<GetProductByIdQuery> _logger;
 
-        public GetProductByIdQueryHandler(IProductRepository productRepository,ILogger<GetProductByIdQuery> logger)
+        public GetProductByIdQueryHandler(IProductRepository productRepository, ILogger<GetProductByIdQuery> logger)
         {
             _productRepository = productRepository;
             _logger = logger;
-            
+
         }
         public async Task<Result<ProductDTO>> Handle(GetProductByIdQuery request, CancellationToken cancellationToken)
         {

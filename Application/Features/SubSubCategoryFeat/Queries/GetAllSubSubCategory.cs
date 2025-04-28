@@ -6,7 +6,7 @@ using Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace Application.Features.CategoryFeat.Queries
+namespace Application.Features.SubSubCategoryFeat.Queries
 {
     public record GetAllSubSubCategory(
        int PageNumber,
@@ -14,15 +14,15 @@ namespace Application.Features.CategoryFeat.Queries
         ) : IRequest<Result<IEnumerable<SubSubCategoryDTO>>>;
 
     public class GetAllSubSubCategoryHandler : IRequestHandler<GetAllSubSubCategory, Result<IEnumerable<SubSubCategoryDTO>>>
-        {
+    {
         private readonly ISubSubCategoryRepository _subSubCategoryRepository;
         private readonly ILogger<GetAllSubSubCategory> _logger;
-        public GetAllSubSubCategoryHandler(ISubSubCategoryRepository subSubCategoryRepository,ILogger<GetAllSubSubCategory> logger)
+        public GetAllSubSubCategoryHandler(ISubSubCategoryRepository subSubCategoryRepository, ILogger<GetAllSubSubCategory> logger)
         {
             _subSubCategoryRepository = subSubCategoryRepository;
             _logger = logger;
 
-            
+
         }
         public async Task<Result<IEnumerable<SubSubCategoryDTO>>> Handle(GetAllSubSubCategory request, CancellationToken cancellationToken)
         {

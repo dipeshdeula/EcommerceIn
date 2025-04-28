@@ -10,9 +10,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Features.CategoryFeat.Queries
+namespace Application.Features.SubSubCategoryFeat.Queries
 {
-    public record GetSubSubCategoryByIdQuery (int subSubCategoryId, int PageNumber,int PageSize) : IRequest<Result<SubSubCategoryDTO>>;
+    public record GetSubSubCategoryByIdQuery(int subSubCategoryId, int PageNumber, int PageSize) : IRequest<Result<SubSubCategoryDTO>>;
 
     public class GetSubSubCategoryByIdQueryHandler : IRequestHandler<GetSubSubCategoryByIdQuery, Result<SubSubCategoryDTO>>
     {
@@ -23,7 +23,7 @@ namespace Application.Features.CategoryFeat.Queries
         {
             _subSubCategoryRepository = subSubCategoryRepository;
             _logger = logger;
-            
+
         }
         public async Task<Result<SubSubCategoryDTO>> Handle(GetSubSubCategoryByIdQuery request, CancellationToken cancellationToken)
         {

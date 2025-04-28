@@ -1,0 +1,81 @@
+﻿using Application.Dto;
+using Application.Features.CategoryFeat.UpdateCommands;
+using Application.Features.SubSubCategoryFeat.Commands;
+using Application.Features.SubSubCategoryFeat.Queries;
+using Carter;
+using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Application.Features.SubSubCategoryFeat.Module
+{
+    public class SubSubCategoryMod : CarterModule
+    {
+        public SubSubCategoryMod() : base("")
+        {
+            WithTags("SubSubCategory");
+            IncludeInOpenApi();
+
+        }
+
+        public override void AddRoutes(IEndpointRouteBuilder app)
+        {
+            app = app.MapGroup("subSubCategory");
+            app.MapPost("/create-subSubCategory", async ([FromQuery] int subCategoryId, ISender mediator, [FromForm] CreateSubSubCategoryCommand command) =>
+            {
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            }).DisableAntiforgery()
+            .Accepts<CreateSubSubCategoryCommand>("multipart/form-data")
+            .Produces<SubSubCategoryDTO>(StatusCodes.Status200OK)
+            .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
+
+            app.MapGet("/getAllSubSubCategory", async ([FromServices] ISender mediator, int PageNumber = 1, int PageSize = 10) =>
+            {
+                var result = await mediator.Send(new GetAllSubSubCategory(PageNumber, PageSize));
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+
+            app.MapGet("/getSubSubCategoryById", async ([FromQuery] int subSubCategoryId, ISender mediator, int PageNumber = 1, int PageSize = 10) =>
+            {
+                var result = await mediator.Send(new GetSubSubCategoryByIdQuery(subSubCategoryId, PageNumber, PageSize));
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+
+            });
+
+            app.MapPut("/updateSubSubCategory", async ([FromForm] UpdateSubSubCategoryCommand command, ISender mediator) =>
+            {
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+
+            }).DisableAntiforgery()
+           .Accepts<UpdateSubSubCategoryCommand>("multipart/form-data")
+           .Produces<SubSubCategoryDTO>(StatusCodes.Status200OK)
+           .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
+        }
+    }
+}

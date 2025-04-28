@@ -5,7 +5,7 @@ using Application.Interfaces.Repositories;
 using Domain.Entities;
 using MediatR;
 
-namespace Application.Features.CategoryFeat.Commands
+namespace Application.Features.ProductFeat.Commands
 {
     public record CreateProductCommand(
         int subSubCategoryId,
@@ -16,7 +16,7 @@ namespace Application.Features.CategoryFeat.Commands
         double DiscountPrice,
         int StockQuantity
 
-        ):IRequest<Result<ProductDTO>>;
+        ) : IRequest<Result<ProductDTO>>;
 
     public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, Result<ProductDTO>>
     {
@@ -24,7 +24,7 @@ namespace Application.Features.CategoryFeat.Commands
         public CreateProductCommandHandler(ISubSubCategoryRepository subSubCategoryRepository)
         {
             _subSubCategoryRepository = subSubCategoryRepository;
-            
+
         }
         public async Task<Result<ProductDTO>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
         {

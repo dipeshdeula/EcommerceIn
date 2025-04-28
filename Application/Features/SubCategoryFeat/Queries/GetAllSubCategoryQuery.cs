@@ -5,7 +5,7 @@ using Application.Interfaces.Repositories;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace Application.Features.CategoryFeat.Queries
+namespace Application.Features.SubCategoryFeat.Queries
 {
     public record GetAllSubCategoryQuery(
         int PageNumber,
@@ -17,11 +17,11 @@ namespace Application.Features.CategoryFeat.Queries
         private readonly ISubCategoryRepository _subCategoryRepository;
         private readonly ILogger<GetAllSubCategoryQuery> _logger;
 
-        public GetAllSubCategoryHandler(ISubCategoryRepository subCategoryRepository,ILogger<GetAllSubCategoryQuery> logger)
+        public GetAllSubCategoryHandler(ISubCategoryRepository subCategoryRepository, ILogger<GetAllSubCategoryQuery> logger)
         {
             _subCategoryRepository = subCategoryRepository;
             _logger = logger;
-            
+
         }
 
         public async Task<Result<IEnumerable<SubCategoryDTO>>> Handle(GetAllSubCategoryQuery request, CancellationToken cancellationToken)
@@ -40,8 +40,8 @@ namespace Application.Features.CategoryFeat.Queries
             //Return the result wrapped in a Task
             return Result<IEnumerable<SubCategoryDTO>>.Success(subCategoryDTOs, "Sub-Categories fetched successfully");
 
-                
+
         }
     }
-    
+
 }

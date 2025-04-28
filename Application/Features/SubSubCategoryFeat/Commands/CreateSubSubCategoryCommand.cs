@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Application.Features.CategoryFeat.Commands
+namespace Application.Features.SubSubCategoryFeat.Commands
 {
     public record CreateSubSubCategoryCommand(
         int SubCategoryId,

@@ -10,9 +10,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Features.CategoryFeat.Queries
+namespace Application.Features.ProductFeat.Queries
 {
-    public record GetAllProductQuery (int PageNumber,int PageSize) : IRequest<Result<IEnumerable<ProductDTO>>>;
+    public record GetAllProductQuery(int PageNumber, int PageSize) : IRequest<Result<IEnumerable<ProductDTO>>>;
 
     public class GetAllProductQueryHandler : IRequestHandler<GetAllProductQuery, Result<IEnumerable<ProductDTO>>>
     {
@@ -22,7 +22,7 @@ namespace Application.Features.CategoryFeat.Queries
         {
             _productRepository = productRepository;
             _logger = logger;
-            
+
         }
         public async Task<Result<IEnumerable<ProductDTO>>> Handle(GetAllProductQuery request, CancellationToken cancellationToken)
         {
@@ -30,7 +30,7 @@ namespace Application.Features.CategoryFeat.Queries
                 orderBy: query => query.OrderByDescending(product => product.Id),
                 skip: (request.PageNumber - 1) * request.PageSize,
                 take: request.PageSize,
-                includeProperties:"Images"
+                includeProperties: "Images"
                 );
 
             // Map products to DTOs
