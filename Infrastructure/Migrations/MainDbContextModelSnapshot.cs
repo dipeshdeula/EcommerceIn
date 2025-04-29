@@ -213,6 +213,9 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -244,6 +247,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
 
                     b.HasIndex("SubSubCategoryId");
 
@@ -326,7 +331,7 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDateTimeUtc")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasDefaultValue(new DateTime(2025, 4, 25, 8, 6, 4, 159, DateTimeKind.Utc).AddTicks(8493));
+                        .HasDefaultValue(new DateTime(2025, 4, 29, 11, 10, 43, 656, DateTimeKind.Utc).AddTicks(1454));
 
                     b.Property<DateTime>("ExpiryDateTimeUtc")
                         .HasColumnType("timestamp with time zone");
@@ -518,7 +523,7 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasDefaultValue(new DateTime(2025, 4, 25, 8, 6, 4, 156, DateTimeKind.Utc).AddTicks(7546));
+                        .HasDefaultValue(new DateTime(2025, 4, 29, 11, 10, 43, 653, DateTimeKind.Utc).AddTicks(4834));
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -612,11 +617,19 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Product", b =>
                 {
+                    b.HasOne("Domain.Entities.Category", "Category")
+                        .WithMany("Products")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.SubSubCategory", "SubSubCategory")
                         .WithMany("Products")
                         .HasForeignKey("SubSubCategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Category");
 
                     b.Navigation("SubSubCategory");
                 });
@@ -697,6 +710,8 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Category", b =>
                 {
+                    b.Navigation("Products");
+
                     b.Navigation("SubCategories");
                 });
 

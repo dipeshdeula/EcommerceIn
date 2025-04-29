@@ -25,6 +25,12 @@ namespace Infrastructure.Persistence.Configurations
                 .WithOne(sc => sc.Category)
                 .HasForeignKey(sc => sc.CategoryId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Relationship with Products
+            builder.HasMany(c => c.Products)
+                .WithOne(p => p.Category)
+                .HasForeignKey(p => p.CategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 

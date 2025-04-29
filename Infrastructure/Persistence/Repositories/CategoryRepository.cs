@@ -109,5 +109,19 @@ namespace Infrastructure.Persistence.Repositories
                 .Include(p => p.Images) // Include product images
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<Product>> GetProductsByCategoryIdAsync(
+            int categoryId,
+            int skip, int take,
+            string orderBy = "Id")
+        {
+            return await _context.Products
+        .Where(p => p.CategoryId == categoryId)
+        .Include(p=>p.Images)
+        .OrderBy(p => EF.Property<object>(p, orderBy)) // Sort by ProductId
+        .Skip(skip)
+        .Take(take)
+        .ToListAsync();
+        }
     }
 }

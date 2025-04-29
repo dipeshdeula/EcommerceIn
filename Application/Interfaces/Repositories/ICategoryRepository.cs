@@ -12,6 +12,11 @@ namespace Application.Interfaces.Repositories
         Task<Category> GetByNameAsync(string name);
         Task<Category> GetBySlugAsync(string slug);
         Task<IEnumerable<SubCategory>> GetSubCategoriesByCategoryIdAsync(int categoryId);
+        Task<IEnumerable<Product>> GetProductsByCategoryIdAsync(
+        int categoryId,
+        int skip,
+        int take,
+        string orderBy = "Id");
 
         // Task<Category> GetByIdWithProductsAsync(int id);
         /* Task<IEnumerable<Category>> GetAllWithProductsAsync();

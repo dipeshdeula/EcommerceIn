@@ -155,6 +155,8 @@ namespace Infrastructure.DependencyInjection
 
             services.AddScoped<IRequestHandler<CreateCartItemCommand,Result<CartItemDTO>>, CreateCartItemCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllCartItemQuery, Result<IEnumerable<CartItemDTO>>>, GetAllCartItemQueryHandler>();
+
+            services.AddScoped < IRequestHandler<GetAllProductsByCategoryId, Result<CategoryWithProductsDTO>>, GetAllProductsByCategoryIdHandler>();
         }
     }
 

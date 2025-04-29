@@ -65,6 +65,16 @@ namespace Application.Features.CategoryFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
+            app.MapGet("/getAllProdcutByCategoryById", async ([FromQuery] int categoryId, ISender mediator, int PageNumber = 1, int PageSize = 10) =>
+            {
+                var result = await mediator.Send(new GetAllProductsByCategoryId(categoryId, PageNumber, PageSize));
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
 
             app.MapPut("/updateCategory", async ([FromForm] UpdateCategoryCommand command, ISender mediator) =>
             {

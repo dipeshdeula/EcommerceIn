@@ -23,6 +23,10 @@ namespace Domain.Entities
         public int SubSubCategoryId { get; set; }
         public SubSubCategory SubSubCategory { get; set; } // Navigation property to SubSubCategory
 
+        // New: Foreign key to Category
+        public int CategoryId { get; set; }
+        public Category Category { get; set; } // Navigation property to Category
+
         // Navigation property for product images
         public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
 

@@ -37,6 +37,12 @@ namespace Infrastructure.Persistence.Configurations
                 .HasForeignKey(p => p.SubSubCategoryId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Relationship with Category
+            builder.HasOne(p => p.Category)
+                .WithMany(c => c.Products)
+                .HasForeignKey(p => p.CategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // Relationship with ProductImage
             builder.HasMany(p => p.Images)
                 .WithOne(pi => pi.Product)

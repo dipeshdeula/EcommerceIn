@@ -35,10 +35,18 @@ namespace Application.Features.ProductFeat.Commands
                 return Result<ProductDTO>.Failure("sub-sub category not found");
             }
 
+            // Resolve CategoryId from SubSubCategory -> SubCategory -> Category
+            var categoryId = subSubCategory.SubCategory?.CategoryId;
+            if (categoryId == null)
+            {
+                return Result<ProductDTO>.Failure("Category not found for the given sub-sub category");
+            }
+
             // Create the new Product item
             var product = new Product
             {
                 SubSubCategoryId = request.subSubCategoryId,
+                CategoryId = categoryId.Value,
                 Name = request.Name,
                 Slug = request.Slug,
                 Description = request.Slug,

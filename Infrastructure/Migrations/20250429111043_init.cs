@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class intPostDB : Migration
+    public partial class init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -54,7 +54,7 @@ namespace Infrastructure.Migrations
                     Email = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Password = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Contact = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValue: new DateTime(2025, 4, 25, 8, 6, 4, 156, DateTimeKind.Utc).AddTicks(7546)),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValue: new DateTime(2025, 4, 29, 11, 10, 43, 653, DateTimeKind.Utc).AddTicks(4834)),
                     ImageUrl = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
@@ -173,7 +173,7 @@ namespace Infrastructure.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Token = table.Column<string>(type: "text", nullable: false),
                     JwtId = table.Column<string>(type: "text", nullable: false),
-                    CreatedDateTimeUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValue: new DateTime(2025, 4, 25, 8, 6, 4, 159, DateTimeKind.Utc).AddTicks(8493)),
+                    CreatedDateTimeUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValue: new DateTime(2025, 4, 29, 11, 10, 43, 656, DateTimeKind.Utc).AddTicks(1454)),
                     ExpiryDateTimeUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Used = table.Column<bool>(type: "boolean", nullable: false),
                     Invalidated = table.Column<bool>(type: "boolean", nullable: false),
@@ -227,11 +227,18 @@ namespace Infrastructure.Migrations
                     DiscountPrice = table.Column<double>(type: "numeric(18,2)", nullable: true),
                     StockQuantity = table.Column<int>(type: "integer", nullable: false),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    SubSubCategoryId = table.Column<int>(type: "integer", nullable: false)
+                    SubSubCategoryId = table.Column<int>(type: "integer", nullable: false),
+                    CategoryId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Products", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Products_Categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "Categories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Products_SubSubCategories_SubSubCategoryId",
                         column: x => x.SubSubCategoryId,
@@ -381,6 +388,11 @@ namespace Infrastructure.Migrations
                 columns: new[] { "ProductId", "IsMain" },
                 unique: true,
                 filter: "\"IsMain\" = TRUE");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Products_CategoryId",
+                table: "Products",
+                column: "CategoryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Products_SubSubCategoryId",

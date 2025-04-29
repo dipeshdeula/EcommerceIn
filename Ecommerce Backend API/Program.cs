@@ -90,5 +90,5 @@ app.MapGet("/dbinfo", async (MainDbContext db) => {
         return $"DB Error: {ex.Message}";
     }
 });
-
+app.UseStaticFiles();
 app.Run();

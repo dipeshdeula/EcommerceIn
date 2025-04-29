@@ -9,5 +9,6 @@ namespace Application.Interfaces.Repositories
 {
     public interface ISubSubCategoryRepository : IRepository<SubSubCategory>
     {
+        Task<SubSubCategory> FindByIdAsync(int id);
     }
 }
