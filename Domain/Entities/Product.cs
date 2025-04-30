@@ -14,8 +14,13 @@ namespace Domain.Entities
         public string Description { get; set; } = string.Empty;
         public double Price { get; set; }
         public double? DiscountPrice { get; set; } // Nullable if no discount
-        public int StockQuantity { get; set; }
+        public int StockQuantity { get; set; } // Total stock
+        public int ReservedStock { get; set; } // Reserved stock for orders
         public bool IsDeleted { get; set; } = false;
+
+
+        // Computed property for available stock (not mapped to the database)
+        public int AvailableStock => StockQuantity - ReservedStock;
 
 
 

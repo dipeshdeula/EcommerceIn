@@ -31,6 +31,15 @@ namespace Infrastructure.Persistence.Configurations
             builder.Property(p => p.Price).HasColumnType("decimal(18,2)");
             builder.Property(p => p.DiscountPrice).HasColumnType("decimal(18,2)");
 
+            builder.Property(p => p.StockQuantity)
+           .IsRequired();
+
+            builder.Property(p => p.ReservedStock)
+                .IsRequired()
+                .HasDefaultValue(0); // Default reserved stock is 0
+
+
+
             // Relationship with SubSubCategory
             builder.HasOne(p => p.SubSubCategory)
                 .WithMany(ssc => ssc.Products)
