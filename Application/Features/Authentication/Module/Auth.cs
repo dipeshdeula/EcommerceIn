@@ -47,6 +47,11 @@ namespace Application.Features.Authentication.Module
                 return await mediator.Send(query);
             });
 
+            app.MapPost("/google-auth", async ([FromBody] VerifyGoogleTokenCommand command, ISender mediator) =>
+            {
+                return await mediator.Send(command);
+            });
+
             app.MapGet("/getUsers", async([FromServices] ISender mediator, int PageNumber = 1, int PageSize = 10) =>
                 {
                 var result = await mediator.Send(new GetAllUsersQuery(PageNumber, PageSize));

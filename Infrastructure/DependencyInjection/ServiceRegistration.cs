@@ -157,6 +157,8 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<GetAllCartItemQuery, Result<IEnumerable<CartItemDTO>>>, GetAllCartItemQueryHandler>();
 
             services.AddScoped < IRequestHandler<GetAllProductsByCategoryId, Result<CategoryWithProductsDTO>>, GetAllProductsByCategoryIdHandler>();
+
+            services.AddScoped<IRequestHandler<VerifyGoogleTokenCommand,IResult>, VerifyGoogleTokenCommandHandler>();
         }
     }
 
