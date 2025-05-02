@@ -27,6 +27,7 @@ using Application.Features.SubSubCategoryFeat.Commands;
 using Application.Features.SubSubCategoryFeat.Queries;
 using Application.Interfaces.Repositories;
 using Application.Utilities;
+using Infrastructure.Persistence.Messaging;
 using Infrastructure.Persistence.Repositories;
 using MediatR;
 
@@ -169,8 +170,13 @@ namespace Infrastructure.DependencyInjection
             // TokenService and EmailService are stateless, so they can be transient
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IRabbitMqPublisher,RabbitMQPublisher>();
+            services.AddScoped<IRabbitMqConsumer,RabbitMQConsumer>();
+            services.AddScoped<RabbitMqConsumerService>();
 
-           
+
+
+
 
             // OtpSettings is a configuration setting, so it can be singleton
             services.AddScoped<OtpSettings>();

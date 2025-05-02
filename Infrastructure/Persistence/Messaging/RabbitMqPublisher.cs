@@ -1,39 +1,38 @@
-﻿/*using Application.Interfaces.Services.Messaging;
-using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.Extensions.Configuration;
+﻿using Newtonsoft.Json;
 using RabbitMQ.Client;
-using System.Text;
-using System.Text.Json;
 
 namespace Infrastructure.Persistence.Messaging
 {
-    public class RabbitMqPublisher : IRabbitMqPublisher
+    public class RabbitMQPublisher : IRabbitMqPublisher, IDisposable
     {
         private readonly IConnection _connection;
         private readonly IModel _channel;
-        private readonly string _queueName;
 
-        public RabbitMqPublisher(IConfiguration configuration)
+        public RabbitMQPublisher(IConfiguration configuration)
         {
             var factory = new ConnectionFactory
             {
-                HostName = configuration["RabbitMq:HostName"] // Get hostname from appsettings.json
+                HostName = configuration["RabbitMQ:HostName"] ?? "localhost"
             };
 
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
-
-            _queueName = configuration["RabbitMq:QueueName"]; // Get queue name from appsettings.json
-            _channel.QueueDeclare(queue: _queueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
         }
 
         public void Publish<T>(string queueName, T message)
         {
-            var json = JsonSerializer.Serialize(message);
-            var body = Encoding.UTF8.GetBytes(json);
+            _channel.QueueDeclare(queue: queueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
+
+            var messageBody = JsonConvert.SerializeObject(message);
+            var body = Encoding.UTF8.GetBytes(messageBody);
 
             _channel.BasicPublish(exchange: "", routingKey: queueName, basicProperties: null, body: body);
         }
+
+        public void Dispose()
+        {
+            _channel?.Dispose();
+            _connection?.Dispose();
+        }
     }
 }
-*/

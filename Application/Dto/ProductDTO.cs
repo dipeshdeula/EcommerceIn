@@ -16,6 +16,10 @@ namespace Application.Dto
         public double Price { get; set; }
         public double? DiscountPrice { get; set; } // Nullable if no discount
         public int StockQuantity { get; set; }
+        public int ReservedStock { get; set; } // Reserved stock for orders
+        public int AvailableStock => StockQuantity - ReservedStock;
+
+
         public bool IsDeleted { get; set; } = false;
 
 

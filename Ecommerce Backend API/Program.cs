@@ -2,6 +2,7 @@ using Application.Extension;
 using Carter;
 using Infrastructure.DependencyInjection;
 using Infrastructure.Persistence.Contexts;
+using Infrastructure.Persistence.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Serilog;
@@ -40,6 +41,8 @@ new ServicesRegistration().AddServices(builder.Services);
 new RepositoryRegistration().AddServices(builder.Services);
 new DatabaseRegistration().AddServices(builder.Services, builder.Configuration);
 new UserServiceManager().AddServices(builder.Services);
+
+
 
 var app = builder.Build();
 

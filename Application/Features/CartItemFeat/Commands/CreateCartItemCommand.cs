@@ -1,14 +1,9 @@
 ﻿using Application.Common;
 using Application.Dto;
-using Application.Extension;
-using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
 using Domain.Entities;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
 namespace Application.Features.CartItemFeat.Commands
 {
@@ -16,83 +11,35 @@ namespace Application.Features.CartItemFeat.Commands
         int UserId,
         int ProductId,
         int Quantity
-
-        ) : IRequest<Result<CartItemDTO>>;
+    ) : IRequest<Result<CartItemDTO>>;
 
     public class CreateCartItemCommandHandler : IRequestHandler<CreateCartItemCommand, Result<CartItemDTO>>
     {
-        private readonly ICartItemRepository _cartItemRepository;
-        private readonly IProductRepository _productRepository;
-        private readonly IUserRepository _userRepository;
+        private readonly IRabbitMqPublisher _rabbitMqPublisher;
+        private readonly string _queueName;
 
-        public CreateCartItemCommandHandler(
-            ICartItemRepository cartItemRepository,
-            IProductRepository productRepository,
-            IUserRepository userRepository)
+        public CreateCartItemCommandHandler(IRabbitMqPublisher rabbitMqPublisher, IConfiguration configuration)
         {
-            _cartItemRepository = cartItemRepository;
-            _productRepository = productRepository;
-            _userRepository = userRepository;
+            _rabbitMqPublisher = rabbitMqPublisher;
+            _queueName = configuration["RabbitMQ:QueueName"] ?? "ReserveStockQueue";
         }
 
-        public async Task<Result<CartItemDTO>> Handle(CreateCartItemCommand request, CancellationToken cancellationToken)
+        public Task<Result<CartItemDTO>> Handle(CreateCartItemCommand request, CancellationToken cancellationToken)
         {
-            //Validate User
-            var user = await _userRepository.FindByIdAsync(request.UserId);
-            if (user == null)
-            {
-                return Result<CartItemDTO>.Failure("User not found");
-            }
+            // Publish the request to RabbitMQ
+            _rabbitMqPublisher.Publish(_queueName, request);
 
-            // Start a transaction or use a mutex for thread safety
-
-            //Validate Product
-
-            var product = await _productRepository.FindByIdAsync(request.ProductId);
-            if (product == null)
-            {
-                return Result<CartItemDTO>.Failure("Product not found");
-            }
-
-            //Check stock availability
-            if(product.StockQuantity - product.ReservedStock < request.Quantity)
-            {
-                return Result<CartItemDTO>.Failure("Insufficient stock available");
-            }
-
-            // Reserve stock
-            product.ReservedStock += request.Quantity;
-            await _productRepository.UpdateAsync(product,cancellationToken);
-
-          
-
-            var cartItem = new CartItem
+            // Simulate waiting for the consumer to process the message
+            // In a real-world scenario, you might use a callback mechanism or a database update to track the result
+            var cartItemDto = new CartItemDTO
             {
                 UserId = request.UserId,
                 ProductId = request.ProductId,
                 Quantity = request.Quantity,
-                User = user,
-                Product = product
+                IsDeleted = false
             };
-            
 
-            var createdCartItem = await _cartItemRepository.AddAsync(cartItem);
-            if (createdCartItem == null)
-            {
-                return Result<CartItemDTO>.Failure("Failed to create cart item");
-            }
-
-            // Publish message to RabbitMQ
-            //var publisher = new RabbitMqPublisher();
-            //publisher.Publish(new ReserverStockMessage
-            //{
-            //    ProductId = request.ProductId,
-            //    Quantity = request.Quantity,
-            //});
-
-            return Result<CartItemDTO>.Success(createdCartItem.ToDTO(), "Items added to the Cart");
+            return Task.FromResult(Result<CartItemDTO>.Success(cartItemDto, "Cart item request has been processed successfully."));
         }
     }
-
-
 }

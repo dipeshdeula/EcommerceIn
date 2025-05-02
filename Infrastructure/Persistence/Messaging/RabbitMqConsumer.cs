@@ -1,43 +1,51 @@
-﻿/*using Application.Interfaces.Services.Messaging;
-using Microsoft.EntityFrameworkCore.Metadata;
-using RabbitMQ.Client;
+﻿using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-
 
 namespace Infrastructure.Persistence.Messaging
 {
-    public class RabbitMqConsumer : IRabbitMqConsumer
+    public class RabbitMQConsumer : IRabbitMqConsumer, IDisposable
     {
         private readonly IConnection _connection;
         private readonly IModel _channel;
 
-        public RabbitMqConsumer(IConfiguration configuration)
+        public RabbitMQConsumer(IConfiguration configuration)
         {
             var factory = new ConnectionFactory
             {
-                HostName = configuration["RabbitMq:HostName"] // Get hostname from appsettings.json
+                HostName = configuration["RabbitMQ:HostName"] ?? "localhost"
             };
 
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
         }
 
-        public void StartConsuming(string queueName, Action<string> onMessageReceived)
+        public void StartConsuming(string queueName, Func<string, Task> onMessageReceived)
         {
             _channel.QueueDeclare(queue: queueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
 
             var consumer = new EventingBasicConsumer(_channel);
-            consumer.Received += (model, ea) =>
+            consumer.Received += async (model, ea) =>
             {
-                var body = ea.Body.ToArray();
-                var message = Encoding.UTF8.GetString(body);
-
-                // Pass the message to the provided callback
-                onMessageReceived(message);
+                var message = Encoding.UTF8.GetString(ea.Body.ToArray());
+                try
+                {
+                    await onMessageReceived(message);
+                    _channel.BasicAck(ea.DeliveryTag, false);
+                }
+                catch
+                {
+                    // Reject the message and requeue it
+                    _channel.BasicNack(ea.DeliveryTag, false, true);
+                }
             };
 
-            _channel.BasicConsume(queue: queueName, autoAck: true, consumer: consumer);
+            _channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
+        }
+
+        public void Dispose()
+        {
+            _channel?.Dispose();
+            _connection?.Dispose();
         }
     }
 }
-*/
