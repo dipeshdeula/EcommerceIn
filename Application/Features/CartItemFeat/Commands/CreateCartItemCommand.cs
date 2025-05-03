@@ -1,7 +1,6 @@
 ﻿using Application.Common;
 using Application.Dto;
 using Application.Interfaces.Services;
-using Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 
@@ -17,29 +16,33 @@ namespace Application.Features.CartItemFeat.Commands
     {
         private readonly IRabbitMqPublisher _rabbitMqPublisher;
         private readonly string _queueName;
+        private readonly string _replyQueueName;
 
         public CreateCartItemCommandHandler(IRabbitMqPublisher rabbitMqPublisher, IConfiguration configuration)
         {
             _rabbitMqPublisher = rabbitMqPublisher;
             _queueName = configuration["RabbitMQ:QueueName"] ?? "ReserveStockQueue";
+            _replyQueueName = configuration["RabbitMQ:ReplyQueueName"] ?? "ReplyQueue";
         }
 
-        public Task<Result<CartItemDTO>> Handle(CreateCartItemCommand request, CancellationToken cancellationToken)
+        public async Task<Result<CartItemDTO>> Handle(CreateCartItemCommand request, CancellationToken cancellationToken)
         {
+            var correlationId = Guid.NewGuid().ToString();
+            var replyQueueName = "ReplyQueue";
+
             // Publish the request to RabbitMQ
-            _rabbitMqPublisher.Publish(_queueName, request);
+            _rabbitMqPublisher.Publish(_queueName, request, correlationId, _replyQueueName);
 
-            // Simulate waiting for the consumer to process the message
-            // In a real-world scenario, you might use a callback mechanism or a database update to track the result
-            var cartItemDto = new CartItemDTO
+            // Wait for the response from the reply-to queue
+            try
             {
-                UserId = request.UserId,
-                ProductId = request.ProductId,
-                Quantity = request.Quantity,
-                IsDeleted = false
-            };
-
-            return Task.FromResult(Result<CartItemDTO>.Success(cartItemDto, "Cart item request has been processed successfully."));
+                var response = await _rabbitMqPublisher.WaitForResponseAsync(_replyQueueName, correlationId, cancellationToken);
+                return response as Result<CartItemDTO>;
+            }
+            catch (TaskCanceledException)
+            {
+                return Result<CartItemDTO>.Failure("Timeout waiting for the consumer to process the request.");
+            }
         }
     }
 }

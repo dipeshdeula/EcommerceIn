@@ -30,6 +30,7 @@ using Application.Utilities;
 using Infrastructure.Persistence.Messaging;
 using Infrastructure.Persistence.Repositories;
 using MediatR;
+using RabbitMQ.Client;
 
 namespace Infrastructure.DependencyInjection
 {
@@ -49,6 +50,23 @@ namespace Infrastructure.DependencyInjection
                 config.GetSection("FileSettings").Bind(fileSettings);
                 return fileSettings;
             });
+
+            // Register RabbitMQ connection and channel
+            services.AddSingleton<IConnection>(sp =>
+            {
+                var factory = new ConnectionFactory
+                {
+                    HostName = configuration["RabbitMQ:HostName"] ?? "localhost"
+                };
+                return factory.CreateConnection();
+            });
+
+            services.AddSingleton<IModel>(sp =>
+            {
+                var connection = sp.GetRequiredService<IConnection>();
+                return connection.CreateModel();
+            });
+
 
             // Register file services
             services.AddTransient<IFileServices, FileServices>();
@@ -170,9 +188,11 @@ namespace Infrastructure.DependencyInjection
             // TokenService and EmailService are stateless, so they can be transient
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IEmailService, EmailService>();
-            services.AddScoped<IRabbitMqPublisher,RabbitMQPublisher>();
-            services.AddScoped<IRabbitMqConsumer,RabbitMQConsumer>();
-            services.AddScoped<RabbitMqConsumerService>();
+            services.AddSingleton<IRabbitMqConsumer, RabbitMQConsumer>();
+            services.AddSingleton<IRabbitMqPublisher, RabbitMQPublisher>();
+            services.AddHostedService<RabbitMqConsumerService>();
+
+
 
 
 

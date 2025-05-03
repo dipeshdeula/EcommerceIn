@@ -33,11 +33,18 @@ namespace Application.Features.CartItemFeat.Module
             {
 
                 var result = await mediator.Send(command);
-                if (!result.Succeeded)
+
+              /*  if (result == null)
                 {
-                    return Results.BadRequest(new { result.Message, result.Errors });
+                    return Results.BadRequest(new { message = "No response from the consumer." });
+                }*/
+
+                if (result == null || !result.Succeeded)
+                {
+                    return Results.BadRequest(new { message = result?.Message ?? "An error occurred." });
                 }
-                return Results.Ok(new { result.Message, result.Data });
+
+                return Results.Ok(result.Data);
             });
 
             app.MapGet("/getAllCartItem", async ([FromServices] ISender mediator, int PageNumber = 1, int PageSize = 10) =>

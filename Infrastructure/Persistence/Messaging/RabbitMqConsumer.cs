@@ -1,4 +1,6 @@
-﻿using RabbitMQ.Client;
+﻿using Application.Common;
+using Newtonsoft.Json;
+using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
 namespace Infrastructure.Persistence.Messaging
@@ -7,6 +9,8 @@ namespace Infrastructure.Persistence.Messaging
     {
         private readonly IConnection _connection;
         private readonly IModel _channel;
+
+
 
         public RabbitMQConsumer(IConfiguration configuration)
         {
@@ -19,7 +23,7 @@ namespace Infrastructure.Persistence.Messaging
             _channel = _connection.CreateModel();
         }
 
-        public void StartConsuming(string queueName, Func<string, Task> onMessageReceived)
+        public void StartConsuming(string queueName, Func<string, IBasicProperties, Task> onMessageReceived)
         {
             _channel.QueueDeclare(queue: queueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
 
@@ -29,18 +33,18 @@ namespace Infrastructure.Persistence.Messaging
                 var message = Encoding.UTF8.GetString(ea.Body.ToArray());
                 try
                 {
-                    await onMessageReceived(message);
+                    await onMessageReceived(message, ea.BasicProperties);
                     _channel.BasicAck(ea.DeliveryTag, false);
                 }
                 catch
                 {
-                    // Reject the message and requeue it
                     _channel.BasicNack(ea.DeliveryTag, false, true);
                 }
             };
 
             _channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
         }
+
 
         public void Dispose()
         {
