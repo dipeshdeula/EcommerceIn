@@ -16,6 +16,11 @@ namespace Infrastructure.Persistence.Repositories
 
         }
 
+        public async Task ReloadAsync(Product product)
+        {
+            await _context.Entry(product).ReloadAsync();
+        }
+
         public override async Task<IEnumerable<Product>> GetAllAsync(
      Expression<Func<Product, bool>> predicate = null,
      Func<IQueryable<Product>, IOrderedQueryable<Product>> orderBy = null,

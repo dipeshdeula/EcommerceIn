@@ -14,6 +14,17 @@ namespace Infrastructure.Persistence.Repositories
         {
             _context = dbContext;
         }
+
+        public async Task LoadNavigationProperties(CartItem cartItem)
+        {
+            await _context.Entry(cartItem)
+                .Reference(c => c.User)
+                .LoadAsync();
+
+            await _context.Entry(cartItem)
+                .Reference(c => c.Product)
+                .LoadAsync();
+        }
     }
 
 }

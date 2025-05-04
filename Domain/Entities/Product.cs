@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,6 +22,14 @@ namespace Domain.Entities
 
         // Computed property for available stock (not mapped to the database)
         public int AvailableStock => StockQuantity - ReservedStock;
+
+        //for sql server
+        /*
+                [Timestamp]
+                public byte[] RowVersion { get; set; }*/
+
+        // Replace RowVersion with PostgreSQL-compatible concurrency token
+        public uint Version { get; set; } // Changed to uint for xmin compatibility
 
 
 

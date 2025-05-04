@@ -9,5 +9,6 @@ namespace Application.Interfaces.Repositories
 {
     public interface ICartItemRepository : IRepository<CartItem>
     {
+        Task LoadNavigationProperties(CartItem cartItem);
     }
 }

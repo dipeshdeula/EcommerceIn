@@ -40,6 +40,20 @@ namespace Infrastructure.Persistence.Messaging
             _channel.BasicPublish(exchange: "", routingKey: queueName, basicProperties: properties, body: body);
         }
 
+        public void Publish(string queueName, byte[] message, string correlationId, string replyQueueName)
+        {
+            var properties = _channel.CreateBasicProperties();
+            properties.CorrelationId = correlationId;
+            properties.ReplyTo = replyQueueName;
+
+            _channel.BasicPublish(
+                exchange: "",
+                routingKey: queueName,
+                basicProperties: properties,
+                body: message
+            );
+        }
+
         public Task<object> WaitForResponseAsync(string replyQueueName, string correlationId, CancellationToken cancellationToken)
         {
             var tcs = new TaskCompletionSource<object>();

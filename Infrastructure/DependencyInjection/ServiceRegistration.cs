@@ -27,6 +27,7 @@ using Application.Features.SubSubCategoryFeat.Commands;
 using Application.Features.SubSubCategoryFeat.Queries;
 using Application.Interfaces.Repositories;
 using Application.Utilities;
+using FluentMigrator;
 using Infrastructure.Persistence.Messaging;
 using Infrastructure.Persistence.Repositories;
 using MediatR;
@@ -76,33 +77,63 @@ namespace Infrastructure.DependencyInjection
         }
     }
 
+    /* public class DatabaseRegistration : IDbServiceRegistration
+     {
+
+
+         // In DatabaseRegistration.cs
+         public void AddServices(IServiceCollection services, IConfiguration configuration)
+         {
+             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+
+             if (environment == "Development")
+             {
+                 // Local SQL Server
+                 var connectionString = configuration.GetConnectionString("DefaultConnection");
+                 services.AddDbContext<MainDbContext>(options =>
+                     options.UseNpgsql(connectionString));
+             }
+             else
+             {
+                 // Production PostgreSQL on Render
+                 var connectionString = configuration.GetConnectionString("DefaultConnection") ??
+                                        Environment.GetEnvironmentVariable("DefaultConnection");
+                 services.AddDbContext<MainDbContext>(options =>
+                     options.UseNpgsql(connectionString));
+             }
+         }
+     }*/
+
     public class DatabaseRegistration : IDbServiceRegistration
     {
-        
-
-        // In DatabaseRegistration.cs
         public void AddServices(IServiceCollection services, IConfiguration configuration)
         {
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+            var connectionString = configuration.GetConnectionString("DefaultConnection") ??
+                                  Environment.GetEnvironmentVariable("DefaultConnection");
 
-            if (environment == "Development")
+            services.AddDbContext<MainDbContext>(options =>
             {
-                // Local SQL Server
-                var connectionString = configuration.GetConnectionString("DefaultConnection");
-                services.AddDbContext<MainDbContext>(options =>
-                    options.UseNpgsql(connectionString));
-            }
-            else
-            {
-                // Production PostgreSQL on Render
-                var connectionString = configuration.GetConnectionString("DefaultConnection") ??
-                                       Environment.GetEnvironmentVariable("DefaultConnection");
-                services.AddDbContext<MainDbContext>(options =>
-                    options.UseNpgsql(connectionString));
-            }
+                options.UseNpgsql(connectionString, o =>
+                {
+                    // Connection resiliency
+                    o.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(30),
+                        errorCodesToAdd: null
+                    );
+                });
+
+                // For development debugging
+                if (environment == "Development")
+                {
+                    options.EnableSensitiveDataLogging();
+                    options.EnableDetailedErrors();
+                    options.LogTo(Console.WriteLine);
+                }
+            });
         }
     }
-
     public class RepositoryRegistration : IRepositoriesRegistration
     {
         public void AddServices(IServiceCollection services)

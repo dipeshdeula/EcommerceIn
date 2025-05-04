@@ -39,6 +39,13 @@ namespace Infrastructure.Persistence.Configurations
                 .HasDefaultValue(0); // Default reserved stock is 0
 
 
+            builder.Property(p => p.Version)
+            //.IsRowVersion(); // For Sql Server
+            // for PostgreSQL
+            .HasColumnName("xmin") // Maps to postgresSql's system column
+            .HasColumnType("xid")
+            .IsRowVersion()
+            .IsConcurrencyToken();
 
             // Relationship with SubSubCategory
             builder.HasOne(p => p.SubSubCategory)
