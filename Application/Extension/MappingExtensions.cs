@@ -96,6 +96,7 @@ namespace Application.Extension
                 Price = product.Price,
                 DiscountPrice = product.DiscountPrice,
                 StockQuantity = product.StockQuantity,
+                ReservedStock = product.ReservedStock,               
                 IsDeleted = product.IsDeleted,
                 Images = product.Images.Select(pi => pi.ToDTO()).ToList() // Map product images
             };

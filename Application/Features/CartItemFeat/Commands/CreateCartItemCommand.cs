@@ -3,6 +3,7 @@ using Application.Dto;
 using Application.Interfaces.Services;
 using MediatR;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 
 namespace Application.Features.CartItemFeat.Commands
 {
@@ -37,7 +38,7 @@ namespace Application.Features.CartItemFeat.Commands
             try
             {
                 var response = await _rabbitMqPublisher.WaitForResponseAsync(_replyQueueName, correlationId, cancellationToken);
-                return response as Result<CartItemDTO>;
+                return JsonConvert.DeserializeObject<Result<CartItemDTO>>(response.ToString());
             }
             catch (TaskCanceledException)
             {
