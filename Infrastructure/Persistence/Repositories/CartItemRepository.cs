@@ -14,6 +14,12 @@ namespace Infrastructure.Persistence.Repositories
         {
             _context = dbContext;
         }
+        public async Task<IEnumerable<CartItem>> GetByUserIdAsync(int userId)
+        {
+            return await _context.CartItems.Include(c => c.Product)
+                 .Where(c => c.UserId == userId && !c.IsDeleted).ToListAsync();
+        }       
+      
 
         public async Task LoadNavigationProperties(CartItem cartItem)
         {
@@ -25,6 +31,14 @@ namespace Infrastructure.Persistence.Repositories
                 .Reference(c => c.Product)
                 .LoadAsync();
         }
+        public async Task DeleteByUserIdAsync(int userId)
+        {
+            var cartItems  = await _context.CartItems.Where(c=>c.UserId == userId && !c.IsDeleted)
+                .ToListAsync();
+            _context.CartItems.RemoveRange(cartItems);
+            await _context.SaveChangesAsync();
+        }
+
     }
 
 }

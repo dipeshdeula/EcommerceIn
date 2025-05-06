@@ -10,5 +10,7 @@ namespace Application.Interfaces.Repositories
     public interface ICartItemRepository : IRepository<CartItem>
     {
         Task LoadNavigationProperties(CartItem cartItem);
+        Task<IEnumerable<CartItem>> GetByUserIdAsync(int userId);
+        Task DeleteByUserIdAsync(int userId);
     }
 }

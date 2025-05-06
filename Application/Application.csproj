@@ -33,6 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Features\OrderFeat\Queries\" />
     <Folder Include="Features\ProductStoreFeat\Queries\" />
     <Folder Include="Features\StoreAddressFeat\Queries\" />
   </ItemGroup>

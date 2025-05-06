@@ -15,6 +15,7 @@ using Application.Features.CategoryFeat.DeleteCategoryCommands;
 using Application.Features.CategoryFeat.DeleteCommands;
 using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
+using Application.Features.OrderFeat.Commands;
 using Application.Features.ProductFeat.Commands;
 using Application.Features.ProductFeat.Queries;
 using Application.Features.ProductStoreFeat.Commands;
@@ -152,6 +153,8 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IStoreRepository, StoreRepository>();
             services.AddScoped<IStoreAddressRepository, StoreAddressRepository>();
             services.AddScoped<ICartItemRepository,CartItemRepository>();
+            services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<IOrderItemRepository, OrderItemRepository>();
 
 
             // Register CQRS handlers with scoped lifetime
@@ -209,6 +212,8 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped < IRequestHandler<GetAllProductsByCategoryId, Result<CategoryWithProductsDTO>>, GetAllProductsByCategoryIdHandler>();
 
             services.AddScoped<IRequestHandler<VerifyGoogleTokenCommand,IResult>, VerifyGoogleTokenCommandHandler>();
+
+            services.AddScoped<IRequestHandler<CreatePlaceOrderCommand,Result<OrderDTO>>, CreatePlaceOrderCommandHandler>();
         }
     }
 
