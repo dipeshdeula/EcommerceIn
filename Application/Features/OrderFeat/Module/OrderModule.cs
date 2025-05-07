@@ -1,4 +1,6 @@
-﻿using Application.Features.OrderFeat.Commands;
+﻿using Application.Features.CategoryFeat.Queries;
+using Application.Features.OrderFeat.Commands;
+using Application.Features.OrderFeat.Queries;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -34,6 +36,16 @@ namespace Application.Features.OrderFeat.Module
                 return Results.Ok(result.Data);
             });
 
+            app.MapGet("/getAllOrder", async (ISender mediator, int PageNumber = 1, int PageSize = 10) =>
+            {
+                var result = await mediator.Send(new GetAllOrderQuery(PageNumber, PageSize));
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+
+            });
         }
     }
 }

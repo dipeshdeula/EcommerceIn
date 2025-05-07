@@ -15,6 +15,17 @@ namespace Infrastructure.Persistence.Configurations
 
             builder.HasKey(c => c.Id);
 
+            builder.Property(ci => ci.CreatedAt)
+                  .HasColumnType("timestamp with time zone")
+                  .HasDefaultValueSql("NOW()"); // Default to current UTC time
+
+            builder.Property(ci => ci.UpdatedAt)
+                   .HasColumnType("timestamp with time zone")
+                   .HasDefaultValueSql("NOW()"); // Default to current UTC time
+
+            builder.Property(ci => ci.IsDeleted)
+                   .HasDefaultValue(false);
+
             builder.HasOne(c => c.User)
                    .WithMany()
                    .HasForeignKey(c => c.UserId);

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,6 +16,8 @@ namespace Application.Dto
         public double TotalAmount { get; set; }
         public string ShippingAddress { get; set; }
         public string ShippingCity { get; set; }
+
+        public ICollection<OrderItemDTO> Items { get; set; }
 
     }
 }

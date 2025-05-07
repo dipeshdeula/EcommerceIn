@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Entities
+namespace Application.Dto
 {
-    public class OrderItem
+    public class OrderItemDTO
     {
         public int Id { get; set; }
         public int OrderId { get; set; } // Foreign key to Order
@@ -14,10 +15,8 @@ namespace Domain.Entities
         public int Quantity { get; set; } // Quantity of the product in the order
         public double UnitPrice { get; set; } // Price per unit at the time of order
         public double TotalPrice { get; private set; } // Total price for this order item
-        public bool IsDeleted { get; set; }
 
-        public Order Order { get; set; } // Navigation property to Order entity
-        public Product Product { get; set; } // Navigation property to Product entity
+        public OrderDTO Order { get; set; } // Navigation property to Order entity
+        public ProductDTO Product { get; set; } // Navigation property to Product entity
     }
-
 }

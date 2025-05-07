@@ -96,7 +96,11 @@ namespace Application.Extension
                 Price = product.Price,
                 DiscountPrice = product.DiscountPrice,
                 StockQuantity = product.StockQuantity,
-                ReservedStock = product.ReservedStock,               
+                ReservedStock = product.ReservedStock,  
+                Sku = product.Sku,
+                Weight = product.Weight,
+                Reviews = product.Reviews,
+                Rating = product.Rating,
                 IsDeleted = product.IsDeleted,
                 Images = product.Images.Select(pi => pi.ToDTO()).ToList() // Map product images
             };
@@ -163,6 +167,40 @@ namespace Application.Extension
                 IsDeleted = cartItem.IsDeleted,
                 User = cartItem.User?.ToDTO(),
                 Product = cartItem.Product?.ToDTO()
+            };
+        }
+
+        public static IEnumerable<CartItemDTO> ToDTO(this IEnumerable<CartItem> cartItems)
+        {
+            return cartItems.Select(cartItem => cartItem.ToDTO());
+        }
+
+        public static OrderDTO ToDTO(this Order order)
+        {
+            return new OrderDTO
+            {
+                Id = order.Id,
+                UserId = order.UserId,
+                OrderDate = order.OrderDate,
+                Status = order.Status,
+                TotalAmount = order.TotalAmount,
+                ShippingAddress = order.ShippingAddress,
+                ShippingCity = order.ShippingCity,
+                Items = order.Items.Select(oi => oi.ToDTO()).ToList()
+            };
+        }
+
+        public static OrderItemDTO ToDTO(this OrderItem orderItem)
+        {
+            return new OrderItemDTO
+            {
+                Id = orderItem.Id,
+                OrderId = orderItem.OrderId,
+                ProductId = orderItem.ProductId,
+                Quantity = orderItem.Quantity,
+                UnitPrice = orderItem.UnitPrice,
+                Product = orderItem.Product?.ToDTO(), // Map Product to ProductDTO
+                Order = null // Avoid circular reference
             };
         }
 

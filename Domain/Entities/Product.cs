@@ -17,6 +17,10 @@ namespace Domain.Entities
         public double? DiscountPrice { get; set; } // Nullable if no discount
         public int StockQuantity { get; set; } // Total stock
         public int ReservedStock { get; set; } // Reserved stock for orders
+        public string Sku { get; set; }
+        public string Weight { get; set; }
+        public int Reviews { get; set; }
+        public double Rating { get; set; }
         public bool IsDeleted { get; set; } = false;
 
 

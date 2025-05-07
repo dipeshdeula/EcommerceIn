@@ -14,7 +14,11 @@ namespace Application.Features.ProductFeat.Commands
         string Description,
         double Price,
         double DiscountPrice,
-        int StockQuantity
+        int StockQuantity,
+        string Sku,
+        string Weight,
+        int Reviews,
+        double Rating
 
         ) : IRequest<Result<ProductDTO>>;
 
@@ -53,6 +57,10 @@ namespace Application.Features.ProductFeat.Commands
                 Price = request.Price,
                 DiscountPrice = request.DiscountPrice,
                 StockQuantity = request.StockQuantity,
+                Sku = request.Sku,
+                Weight = request.Weight,
+                Reviews = request.Reviews,
+                Rating = request.Rating,
                 SubSubCategory = subSubCategory
 
             };

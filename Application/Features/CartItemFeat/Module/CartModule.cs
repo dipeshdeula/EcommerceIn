@@ -56,6 +56,16 @@ namespace Application.Features.CartItemFeat.Module
                 }
                 return Results.Ok(new { result.Message, result.Data });
             });
+
+            app.MapGet("/getCartItemByUserId",async(ISender mediator, [FromQuery] int userId, int PageNumber = 1, int PageSize = 10) => { 
+                var result = await mediator.Send(new GetCartByUserIdQuery(userId,PageNumber, PageSize));
+                if (result == null || !result.Succeeded)
+                {
+                    return Results.BadRequest(new { message = result?.Message ?? "An error occurred." });
+                }
+
+                return Results.Ok(result.Data);
+            });
         }
     }
 }

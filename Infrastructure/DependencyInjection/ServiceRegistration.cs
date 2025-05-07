@@ -16,6 +16,7 @@ using Application.Features.CategoryFeat.DeleteCommands;
 using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
 using Application.Features.OrderFeat.Commands;
+using Application.Features.OrderFeat.Queries;
 using Application.Features.ProductFeat.Commands;
 using Application.Features.ProductFeat.Queries;
 using Application.Features.ProductStoreFeat.Commands;
@@ -208,12 +209,14 @@ namespace Infrastructure.DependencyInjection
 
             services.AddScoped<IRequestHandler<CreateCartItemCommand,Result<CartItemDTO>>, CreateCartItemCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllCartItemQuery, Result<IEnumerable<CartItemDTO>>>, GetAllCartItemQueryHandler>();
+            services.AddScoped<IRequestHandler<GetCartByUserIdQuery,Result<IEnumerable<CartItemDTO>>>, GetCartByUserIdQueryHandler>();
 
             services.AddScoped < IRequestHandler<GetAllProductsByCategoryId, Result<CategoryWithProductsDTO>>, GetAllProductsByCategoryIdHandler>();
 
             services.AddScoped<IRequestHandler<VerifyGoogleTokenCommand,IResult>, VerifyGoogleTokenCommandHandler>();
 
             services.AddScoped<IRequestHandler<CreatePlaceOrderCommand,Result<OrderDTO>>, CreatePlaceOrderCommandHandler>();
+            services.AddScoped<IRequestHandler<GetAllOrderQuery,Result<IEnumerable<OrderDTO>>>, GetAllOrderQueryHandler>();
         }
     }
 

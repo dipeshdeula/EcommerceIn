@@ -54,7 +54,7 @@ namespace Infrastructure.Migrations
                     Email = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Password = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Contact = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValue: new DateTime(2025, 4, 29, 11, 10, 43, 653, DateTimeKind.Utc).AddTicks(4834)),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValue: new DateTime(2025, 5, 7, 13, 18, 20, 179, DateTimeKind.Utc).AddTicks(5601)),
                     ImageUrl = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
@@ -148,11 +148,11 @@ namespace Infrastructure.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     UserId = table.Column<int>(type: "integer", nullable: false),
                     OrderDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Status = table.Column<string>(type: "text", nullable: false),
-                    TotalAmount = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    ShippingAddress = table.Column<string>(type: "text", nullable: false),
-                    ShippingCity = table.Column<string>(type: "text", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false, defaultValue: "Pending"),
+                    TotalAmount = table.Column<double>(type: "numeric(18,2)", nullable: false),
+                    ShippingAddress = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
+                    ShippingCity = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
@@ -173,7 +173,7 @@ namespace Infrastructure.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Token = table.Column<string>(type: "text", nullable: false),
                     JwtId = table.Column<string>(type: "text", nullable: false),
-                    CreatedDateTimeUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValue: new DateTime(2025, 4, 29, 11, 10, 43, 656, DateTimeKind.Utc).AddTicks(1454)),
+                    CreatedDateTimeUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValue: new DateTime(2025, 5, 7, 13, 18, 20, 183, DateTimeKind.Utc).AddTicks(6971)),
                     ExpiryDateTimeUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Used = table.Column<bool>(type: "boolean", nullable: false),
                     Invalidated = table.Column<bool>(type: "boolean", nullable: false),
@@ -226,7 +226,13 @@ namespace Infrastructure.Migrations
                     Price = table.Column<double>(type: "numeric(18,2)", nullable: false),
                     DiscountPrice = table.Column<double>(type: "numeric(18,2)", nullable: true),
                     StockQuantity = table.Column<int>(type: "integer", nullable: false),
+                    ReservedStock = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    Sku = table.Column<string>(type: "text", nullable: false),
+                    Weight = table.Column<string>(type: "text", nullable: false),
+                    Reviews = table.Column<int>(type: "integer", nullable: false),
+                    Rating = table.Column<double>(type: "double precision", nullable: false),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
                     SubSubCategoryId = table.Column<int>(type: "integer", nullable: false),
                     CategoryId = table.Column<int>(type: "integer", nullable: false)
                 },
@@ -256,6 +262,8 @@ namespace Infrastructure.Migrations
                     UserId = table.Column<int>(type: "integer", nullable: false),
                     ProductId = table.Column<int>(type: "integer", nullable: false),
                     Quantity = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
@@ -284,7 +292,9 @@ namespace Infrastructure.Migrations
                     OrderId = table.Column<int>(type: "integer", nullable: false),
                     ProductId = table.Column<int>(type: "integer", nullable: false),
                     Quantity = table.Column<int>(type: "integer", nullable: false),
-                    UnitPrice = table.Column<decimal>(type: "numeric(18,2)", nullable: false)
+                    UnitPrice = table.Column<double>(type: "numeric(18,2)", nullable: false),
+                    TotalPrice = table.Column<double>(type: "numeric(18,2)", nullable: false, computedColumnSql: "\"UnitPrice\" * \"Quantity\"", stored: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
@@ -300,7 +310,7 @@ namespace Infrastructure.Migrations
                         column: x => x.ProductId,
                         principalTable: "Products",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -368,9 +378,10 @@ namespace Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OrderItems_OrderId",
+                name: "IX_OrderItem_OrderId_ProductId",
                 table: "OrderItems",
-                column: "OrderId");
+                columns: new[] { "OrderId", "ProductId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrderItems_ProductId",
@@ -378,9 +389,9 @@ namespace Infrastructure.Migrations
                 column: "ProductId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Orders_UserId",
+                name: "IX_Order_UserId_OrderDate",
                 table: "Orders",
-                column: "UserId");
+                columns: new[] { "UserId", "OrderDate" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProductImages_ProductId_IsMain",

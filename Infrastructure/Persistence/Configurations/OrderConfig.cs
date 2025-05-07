@@ -1,9 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Persistence.Configurations
 {
@@ -19,9 +14,26 @@ namespace Infrastructure.Persistence.Configurations
                    .WithMany()
                    .HasForeignKey(o => o.UserId)
                    .OnDelete(DeleteBehavior.Restrict);
+            builder.Property(o => o.Status)
+                .HasMaxLength(50).HasDefaultValue("Pending");
 
+            builder.Property(o => o.ShippingAddress)
+                          .HasMaxLength(250)
+                          .IsRequired();
+
+            builder.Property(o => o.ShippingCity)
+                   .HasMaxLength(100)
+                   .IsRequired();
             // Configure decimal properties
-            builder.Property(o => o.TotalAmount).HasColumnType("decimal(18,2)");
+            builder.Property(o => o.TotalAmount).HasColumnType("decimal(18,2)").IsRequired();
+
+            builder.Property(o => o.IsDeleted)
+                .HasDefaultValue(false);
+
+            // Indexes
+            builder.HasIndex(o => new { o.UserId, o.OrderDate })
+                   .HasDatabaseName("IX_Order_UserId_OrderDate");
+
         }
     }
 }
