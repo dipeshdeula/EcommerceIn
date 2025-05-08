@@ -24,4 +24,15 @@ COPY --from=build /app/publish .
 ENV PORT=8080
 ENV ASPNETCORE_URLS=http://+:${PORT}
 
+# RabbitMQ CloudAMQP settings
+ENV RabbitMQ__HostName=possum.lmq.cloudamqp.com
+ENV RabbitMQ__Username=pdnbjnjo
+ENV RabbitMQ__Password=c0GzGu_-51U_Fkzb7UnAsVvnz9JDwt8G
+ENV RabbitMQ__VirtualHost=pdnbjnjo
+ENV RabbitMQ__Ssl=true
+
+# RabbitMQ settings - using direct URI
+ENV RabbitMQ__Uri=amqps://pdnbjnjo:c0GzGu_-51U_Fkzb7UnAsVvnz9JDwt8G@possum.lmq.cloudamqp.com/pdnbjnjo
+ENV RabbitMQ__QueueName=ReserveStockQueue
+
 ENTRYPOINT ["dotnet", "EcommerceBackendAPI.dll"]
