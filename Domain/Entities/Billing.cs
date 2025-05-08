@@ -11,8 +11,9 @@ namespace Domain.Entities
         public int Id { get; set; }
         public int UserId { get; set; }
         public int PaymentId { get; set; }
-
         public int OrderId { get; set; }
+
+        public DateTime BillingDate { get; set; } = DateTime.UtcNow;
 
         public User User { get; set; }
         public PaymentRequest PaymentRequest { get; set; }

@@ -12,7 +12,7 @@ namespace Domain.Entities
         public int UserId { get; set; }
         public int OrderId { get; set; }
 
-        public string PaymentMethod { get; set; } // esewa,khalti,cash on delivery
+        public int PaymentMethodId { get; set; } // esewa,khalti,cash on delivery
 
         public double PaymentAmount { get; set; }
 
@@ -22,10 +22,11 @@ namespace Domain.Entities
         public string? KhaltiPidx { get; set; } // For khalti
         public string? EsewaTransactionId { get; set; } // For esewa
 
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         public User User { get; set; }
         public Order Order { get; set; }
+        public PaymentMethod PaymentMethod { get; set; } // Navigation property to PaymentMethod
     }
 }
