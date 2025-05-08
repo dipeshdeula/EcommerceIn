@@ -6,7 +6,12 @@ using System.Threading.Tasks;
 
 namespace Domain.Entities
 {
-    internal class BannerEventSpecial
+    public class BannerEventSpecial
     {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string Offers { get; set; }
+
     }
 }

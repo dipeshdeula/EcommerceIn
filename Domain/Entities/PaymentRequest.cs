@@ -6,7 +6,26 @@ using System.Threading.Tasks;
 
 namespace Domain.Entities
 {
-    internal class PaymentRequest
+    public class PaymentRequest
     {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+        public int OrderId { get; set; }
+
+        public string PaymentMethod { get; set; } // esewa,khalti,cash on delivery
+
+        public double PaymentAmount { get; set; }
+
+        public string Currency { get; set; } = "npr";
+        public string Description { get; set; }
+
+        public string? KhaltiPidx { get; set; } // For khalti
+        public string? EsewaTransactionId { get; set; } // For esewa
+
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+
+        public User User { get; set; }
+        public Order Order { get; set; }
     }
 }
