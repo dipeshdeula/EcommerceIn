@@ -11,19 +11,20 @@ using Application.Features.Authentication.UploadImage.Commands;
 using Application.Features.CartItemFeat.Commands;
 using Application.Features.CartItemFeat.Queries;
 using Application.Features.CategoryFeat.Commands;
-using Application.Features.CategoryFeat.DeleteCategoryCommands;
 using Application.Features.CategoryFeat.DeleteCommands;
 using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
 using Application.Features.OrderFeat.Commands;
 using Application.Features.OrderFeat.Queries;
 using Application.Features.ProductFeat.Commands;
+using Application.Features.ProductFeat.DeleteCommands;
 using Application.Features.ProductFeat.Queries;
 using Application.Features.ProductStoreFeat.Commands;
 using Application.Features.StoreAddressFeat.Commands;
 using Application.Features.StoreFeat.Commands;
 using Application.Features.StoreFeat.Queries;
 using Application.Features.SubCategoryFeat.Commands;
+using Application.Features.SubCategoryFeat.DeleteCommands;
 using Application.Features.SubCategoryFeat.Queries;
 using Application.Features.SubSubCategoryFeat.Commands;
 using Application.Features.SubSubCategoryFeat.Queries;
@@ -191,14 +192,23 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<UploadProductImagesCommand, Result<IEnumerable<ProductImageDTO>>>, UploadProductImagesCommandHandler>();
 
             services.AddScoped<IRequestHandler<UpdateCategoryCommand, Result<CategoryDTO>>, UpdateCategoryCommandHandler>();
+
+            services.AddScoped<IRequestHandler<SoftDeleteCategoryCommand,Result<CategoryDTO>>, SoftDeleteCategoryCommandHandler>();
+            services.AddScoped<IRequestHandler<UnDeleteCategoryCommand,Result<CategoryDTO>>, UnDeleteCategoryCommandHandler>();
+            services.AddScoped<IRequestHandler<HardDeleteCategoryCommand,Result<CategoryDTO>>, HardDeleteCategoryCommandHandler>();
+
+            services.AddScoped<IRequestHandler<SoftDeleteSubCategoryCommand, Result<SubCategoryDTO>>, SoftDeleteSubCategoryCommandHandler>();
+            services.AddScoped<IRequestHandler<UnDeleteSubCategoryCommand, Result<SubCategoryDTO>>, UnDeleteSubCategoryCommandHandler>();
+            services.AddScoped<IRequestHandler<HardDeleteSubCategoryCommand, Result<SubCategoryDTO>>, HardDeleteSubCategoryCommandHandler>();
+
             services.AddScoped<IRequestHandler<UpdateSubCategoryCommand, Result<SubCategoryDTO>>, UpdateSubCategoryCommandHandler>();
             services.AddScoped<IRequestHandler<UpdateProductCommand, Result<ProductDTO>>, UpdateProudctComamndHandler>();
 
-            services.AddScoped<IRequestHandler<SoftDeleteProductCommand,Result<ProductDTO>>, SoftDeleteProductCommandHandler>();
-            services.AddScoped<IRequestHandler<HardDeleteProductCommand, Result<ProductDTO>>, HardDeleteProductCommandHandler>();
+            services.AddScoped<IRequestHandler<SoftDeleteProductCommand, Result<ProductDTO>>, SoftDeleteProductCommandHandler>();
             services.AddScoped<IRequestHandler<UnDeleteProductCommand, Result<ProductDTO>>, UnDeleteProductCommandHandler>();
+            services.AddScoped<IRequestHandler<HardDeleteProductCommand, Result<ProductDTO>>, HardDeleteProductCommandHandler>();
 
-            services.AddScoped<IRequestHandler<SoftDeleteCategoryCommand, Result<CategoryDTO>>, SoftDeleteCategoryCommandHandler>();
+
 
             services.AddScoped<IRequestHandler<GetNearbyProductsQuery,Result<IEnumerable<NearbyProductDto>>>,GetNearbyProductQueryHandler>();
             services.AddScoped<IRequestHandler<CreateStoreCommand,Result<StoreDTO>>, CreateStoreCommandHandler>();

@@ -2,6 +2,7 @@
 using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
 using Application.Features.SubCategoryFeat.Commands;
+using Application.Features.SubCategoryFeat.DeleteCommands;
 using Application.Features.SubCategoryFeat.Queries;
 using Carter;
 using MediatR;
@@ -25,8 +26,24 @@ namespace Application.Features.SubCategoryFeat.Module
         {
             app = app.MapGroup("subCategory");
 
-            app.MapPost("/create-subCategory", async ([FromQuery] int ParentCategoryId, [FromForm] CreateSubCategoryCommand command, ISender mediator) =>
+            /*            app.MapPost("/create-subCategory", async ([FromQuery] int ParentCategoryId, [FromForm] CreateSubCategoryCommand command, ISender mediator) =>
+                        {
+                            var result = await mediator.Send(command);
+                            if (!result.Succeeded)
+                            {
+                                return Results.BadRequest(new { result.Message, result.Errors });
+                            }
+                            return Results.Ok(new { result.Message, result.Data });
+                        })
+                         .DisableAntiforgery()
+                         .Accepts<CreateSubCategoryCommand>("multipart/form-data")
+                         .Produces<SubCategoryDTO>(StatusCodes.Status200OK)
+                         .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);*/
+
+            app.MapPost("/create-subCategory/{CategoryId}", async (
+                [FromQuery] int CategoryId, string Name,string Slug,string Description,IFormFile File, ISender mediator) =>
             {
+                var command = new CreateSubCategoryCommand(CategoryId, Name, Slug, Description, File);
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                 {
@@ -34,10 +51,10 @@ namespace Application.Features.SubCategoryFeat.Module
                 }
                 return Results.Ok(new { result.Message, result.Data });
             })
-             .DisableAntiforgery()
-             .Accepts<CreateSubCategoryCommand>("multipart/form-data")
-             .Produces<SubCategoryDTO>(StatusCodes.Status200OK)
-             .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
+            .DisableAntiforgery()
+            .Accepts<CreateSubCategoryCommand>("multipart/form-data")
+            .Produces<SubCategoryDTO>(StatusCodes.Status200OK)
+            .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
 
             app.MapGet("/getAllSubCategory", async ([FromServices] ISender mediator, int PageNumber = 1, int PageSize = 10) =>
             {
@@ -60,8 +77,10 @@ namespace Application.Features.SubCategoryFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapPut("/updateSubCategory", async ([FromForm] UpdateSubCategoryCommand command, ISender mediator) =>
+            app.MapPut("/updateSubCategory/{SubCategoryId}", async (
+                int SubCategoryId,string? Name,string? Slug,string? Description, IFormFile? File, ISender mediator) =>
             {
+                var command = new UpdateSubCategoryCommand(SubCategoryId, Name, Slug, Description, File);
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                 {
@@ -73,6 +92,45 @@ namespace Application.Features.SubCategoryFeat.Module
               .Accepts<UpdateSubCategoryCommand>("multipart/form-data")
               .Produces<SubCategoryDTO>(StatusCodes.Status200OK)
               .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
+
+            app.MapDelete("/softDeleteSubCategory/{SubCategoryId}", async (
+                int SubCategoryId, ISender mediator
+                ) =>
+            {
+                var command = new SoftDeleteSubCategoryCommand(SubCategoryId);
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+            app.MapDelete("/unDeleteSubCategory/{SubCategoryId}", async (
+               int SubCategoryId, ISender mediator
+               ) =>
+            {
+                var command = new UnDeleteSubCategoryCommand(SubCategoryId);
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+            app.MapDelete("/hardDeleteSubCategory/{SubCategoryId}", async (
+               int SubCategoryId, ISender mediator
+               ) =>
+            {
+                var command = new HardDeleteSubCategoryCommand(SubCategoryId);
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            });
         }
     }
 }

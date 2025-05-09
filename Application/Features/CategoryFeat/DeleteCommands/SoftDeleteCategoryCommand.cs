@@ -10,31 +10,27 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Features.CategoryFeat.DeleteCategoryCommands
+namespace Application.Features.CategoryFeat.DeleteCommands
 {
     public record SoftDeleteCategoryCommand(int CategoryId) : IRequest<Result<CategoryDTO>>;
+
 
     public class SoftDeleteCategoryCommandHandler : IRequestHandler<SoftDeleteCategoryCommand, Result<CategoryDTO>>
     {
         private readonly ICategoryRepository _categoryRepository;
-        private readonly IFileServices _fileServices;
-        public SoftDeleteCategoryCommandHandler(ICategoryRepository categoryRepository,IFileServices fileServices)
+        public SoftDeleteCategoryCommandHandler(ICategoryRepository categoryRepository)
         {
             _categoryRepository = categoryRepository;
-            _fileServices = fileServices;
+            
             
         }
         public async Task<Result<CategoryDTO>> Handle(SoftDeleteCategoryCommand request, CancellationToken cancellationToken)
         {
             var category = await _categoryRepository.FindByIdAsync(request.CategoryId);
             if (category == null)
-            {
-                return Result<CategoryDTO>.Failure("Category Id not found");
-            }
-
-            await _categoryRepository.SoftDeleteAsync(category, cancellationToken);
-            return Result<CategoryDTO>.Success(category.ToDTO(), "Category Soft deleted successfully");
+                return Result<CategoryDTO>.Failure("Category not found");
+            await _categoryRepository.SoftDeleteCategoryAsync(request.CategoryId, cancellationToken);
+            return Result<CategoryDTO>.Success(category.ToDTO(), $"Category with Id {category.Id} soft deleted successful");
         }
     }
-
 }

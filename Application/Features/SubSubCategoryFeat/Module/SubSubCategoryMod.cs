@@ -28,8 +28,10 @@ namespace Application.Features.SubSubCategoryFeat.Module
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
             app = app.MapGroup("subSubCategory");
-            app.MapPost("/create-subSubCategory", async ([FromQuery] int subCategoryId, ISender mediator, [FromForm] CreateSubSubCategoryCommand command) =>
+            app.MapPost("/create-subSubCategory", async (
+                [FromQuery] int subCategoryId,string Name,string Slug,string Description,IFormFile File, ISender mediator) =>
             {
+                var command = new CreateSubSubCategoryCommand(subCategoryId, Name, Slug, Description, File);
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                 {
@@ -63,8 +65,10 @@ namespace Application.Features.SubSubCategoryFeat.Module
 
             });
 
-            app.MapPut("/updateSubSubCategory", async ([FromForm] UpdateSubSubCategoryCommand command, ISender mediator) =>
+            app.MapPut("/updateSubSubCategory/{SubSubCategoryId}", async (
+                int SubSubCategoryId,string? Name,string? Slug,string? Description,IFormFile? File, ISender mediator) =>
             {
+                var command = new UpdateSubSubCategoryCommand(SubSubCategoryId, Name, Slug, Description, File);
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                 {

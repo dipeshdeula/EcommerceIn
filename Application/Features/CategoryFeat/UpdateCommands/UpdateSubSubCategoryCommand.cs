@@ -16,10 +16,10 @@ namespace Application.Features.CategoryFeat.UpdateCommands
 {
     public record UpdateSubSubCategoryCommand(
         int SubSubCategoryId,
-        string Name,
-        string Slug,
-        string Description,
-        IFormFile File
+        string? Name,
+        string? Slug,
+        string? Description,
+        IFormFile? File
         ) : IRequest<Result<SubSubCategoryDTO>>;
 
     public class UpdateSubSubCategoryCommandHandler : IRequestHandler<UpdateSubSubCategoryCommand, Result<SubSubCategoryDTO>>

@@ -4,7 +4,7 @@ using Application.Extension;
 using Application.Interfaces.Repositories;
 using MediatR;
 
-namespace Application.Features.CategoryFeat.DeleteCommands
+namespace Application.Features.ProductFeat.DeleteCommands
 {
     public record SoftDeleteProductCommand(
         int ProductId

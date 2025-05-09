@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace Application.Features.SubCategoryFeat.Commands
 {
     public record CreateSubCategoryCommand(
-        int ParentCategoryId,
+        int CategoryId,
         string Name,
         string Slug,
         string Description,
@@ -35,7 +35,7 @@ namespace Application.Features.SubCategoryFeat.Commands
         public async Task<Result<SubCategoryDTO>> Handle(CreateSubCategoryCommand request, CancellationToken cancellationToken)
         {
 
-            var parentCategory = await _categoryRepository.FindByIdAsync(request.ParentCategoryId);
+            var parentCategory = await _categoryRepository.FindByIdAsync(request.CategoryId);
             if (parentCategory == null)
             {
                 return Result<SubCategoryDTO>.Failure("Parent category not found.");
@@ -62,7 +62,7 @@ namespace Application.Features.SubCategoryFeat.Commands
                 Name = request.Name,
                 Slug = request.Slug,
                 Description = request.Description,
-                CategoryId = request.ParentCategoryId,
+                CategoryId = request.CategoryId,
                 Category = parentCategory,
                 ImageUrl = fileUrl
             };

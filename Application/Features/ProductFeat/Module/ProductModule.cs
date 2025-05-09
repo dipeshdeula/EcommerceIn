@@ -1,5 +1,5 @@
 ﻿using Application.Dto;
-using Application.Features.CategoryFeat.DeleteCommands;
+using Application.Features.ProductFeat.DeleteCommands;
 using Application.Features.CategoryFeat.UpdateCommands;
 using Application.Features.ProductFeat.Commands;
 using Application.Features.ProductFeat.Queries;

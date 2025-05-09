@@ -16,6 +16,7 @@
     <PackageReference Include="Google.Apis.Auth" Version="1.69.0" />
     <PackageReference Include="MediatR" Version="12.4.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.10" />
+    <PackageReference Include="Microsoft.AspNetCore.JsonPatch" Version="9.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11">
       <PrivateAssets>all</PrivateAssets>
@@ -35,6 +36,7 @@
   <ItemGroup>
     <Folder Include="Features\ProductStoreFeat\Queries\" />
     <Folder Include="Features\StoreAddressFeat\Queries\" />
+    <Folder Include="Features\SubCategoryFeat\NewFolder\" />
   </ItemGroup>
 
 </Project>

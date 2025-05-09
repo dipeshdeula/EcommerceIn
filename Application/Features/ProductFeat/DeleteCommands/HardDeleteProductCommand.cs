@@ -1,15 +1,9 @@
 ﻿using Application.Common;
 using Application.Dto;
 using Application.Interfaces.Repositories;
-using Domain.Entities;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Application.Features.CategoryFeat.DeleteCommands
+namespace Application.Features.ProductFeat.DeleteCommands
 {
     public record HardDeleteProductCommand(int ProductId) : IRequest<Result<ProductDTO>>;
 

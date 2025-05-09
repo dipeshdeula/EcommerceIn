@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Repositories;
+﻿using Application.Extension;
+using Application.Interfaces.Repositories;
 using System.Linq.Expressions;
 
 namespace Infrastructure.Persistence.Repositories
@@ -51,11 +52,17 @@ namespace Infrastructure.Persistence.Repositories
             )
         {
             var query = _context.Categories
-                .AsNoTracking() // Read-only query
+                .AsNoTracking() // Read-only query                
                 .Include(c => c.SubCategories) // Include subcategories
                     .ThenInclude(sc => sc.SubSubCategories) // Include sub-subcategories
                         .ThenInclude(ssc => ssc.Products) // Include products in sub-subcategories
                 .AsQueryable();
+
+            // Filter out deleted category if includeDeleted is false
+            if (!includeDeleted)
+            {
+                query = query.Where(c => !c.IsDeleted);
+            }
 
             if (predicate != null)
             {
@@ -122,6 +129,45 @@ namespace Infrastructure.Persistence.Repositories
         .Skip(skip)
         .Take(take)
         .ToListAsync();
+        }
+
+        public async Task SoftDeleteCategoryAsync(int categoryId, CancellationToken cancellationToken)
+        {
+            var category = await _context.Categories
+                .Include(c => c.SubCategories)
+                .FirstOrDefaultAsync(c => c.Id == categoryId, cancellationToken);
+
+            if (category != null)
+            {
+                // Soft delete the category
+                await _context.SoftDeleteAsync(category, cancellationToken);
+            }
+        }
+
+        public async Task HardDeleteCategoryAsync(int categoryId, CancellationToken cancellationToken)
+        {
+            var category = await _context.Categories
+                .Include(c => c.SubCategories)
+                .FirstOrDefaultAsync(c => c.Id == categoryId, cancellationToken);
+
+            if (category != null)
+            {
+                 await _context.HardDeleteAsync(category, cancellationToken);
+            }
+
+        }
+
+        public async Task<bool> UndeleteCategoryAsync(int categoryId, CancellationToken cancellationToken)
+        {
+            var category = await _context.Categories
+                .Include(c => c.SubCategories)
+                .FirstOrDefaultAsync(c => c.Id == categoryId, cancellationToken);
+
+            if (category != null)
+            {
+                return await _context.UndeleteAsync(category, cancellationToken);
+            }
+            return false;
         }
     }
 }

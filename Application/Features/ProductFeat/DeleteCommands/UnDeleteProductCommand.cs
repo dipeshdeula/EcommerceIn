@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Features.CategoryFeat.DeleteCommands
+namespace Application.Features.ProductFeat.DeleteCommands
 {
     public record UnDeleteProductCommand(int ProductId) : IRequest<Result<ProductDTO>>;
 
