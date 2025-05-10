@@ -1,4 +1,5 @@
 ﻿using Application.Features.StoreFeat.Commands;
+using Application.Features.StoreFeat.DeleteCommands;
 using Application.Features.StoreFeat.Queries;
 using Carter;
 using MediatR;
@@ -38,6 +39,49 @@ namespace Application.Features.StoreFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
+            });
+
+            app.MapPut("/updateStore/{Id}", async (int Id, string? Name, string? OwnerName, ISender mediator) =>
+            {
+                var command = new UpdateStoreCommand(Id, Name, OwnerName);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+            app.MapDelete("/softDeleteStore/{Id}", async (int Id, ISender mediator) =>
+            {
+                var command = new SoftDeleteStoreCommand(Id);
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+
+                return Results.Ok(new {result.Message, result.Data});
+
+            });
+
+            app.MapDelete("/unDeleteStore/{Id}", async (int Id, ISender mediator) =>
+            {
+                var command = new UnDeleteStoreCommand(Id);
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+
+                return Results.Ok(new { result.Message, result.Data });
+
+            });
+
+            app.MapDelete("/hardDeleteStore/{Id}", async (int Id, ISender mediator) =>
+            {
+                var command = new HardDeleteStoreCommand(Id);
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+
+                return Results.Ok(new { result.Message, result.Data });
+
             });
         }
 

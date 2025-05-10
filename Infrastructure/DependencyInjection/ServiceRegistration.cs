@@ -22,6 +22,7 @@ using Application.Features.ProductFeat.Queries;
 using Application.Features.ProductStoreFeat.Commands;
 using Application.Features.StoreAddressFeat.Commands;
 using Application.Features.StoreFeat.Commands;
+using Application.Features.StoreFeat.DeleteCommands;
 using Application.Features.StoreFeat.Queries;
 using Application.Features.SubCategoryFeat.Commands;
 using Application.Features.SubCategoryFeat.DeleteCommands;
@@ -220,6 +221,12 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<GetNearbyProductsQuery,Result<IEnumerable<NearbyProductDto>>>,GetNearbyProductQueryHandler>();
             services.AddScoped<IRequestHandler<CreateStoreCommand,Result<StoreDTO>>, CreateStoreCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllStoreQuery, Result<IEnumerable<StoreDTO>>>, GetAllStoreQueryHandler>();
+            services.AddScoped<IRequestHandler<UpdateStoreCommand,Result<StoreDTO>>, UpdateStoreCommandHandler>();
+            services.AddScoped<IRequestHandler<SoftDeleteStoreCommand,Result<StoreDTO>>, SoftDeleteStoreCommandHandler>();
+            services.AddScoped<IRequestHandler<UnDeleteStoreCommand, Result<StoreDTO>>, UnDeleteStoreCommandHandler>();
+            services.AddScoped<IRequestHandler<HardDeleteStoreCommand, Result<StoreDTO>>, HardDeleteStoreCommandHandler>();
+
+
             services.AddScoped<IRequestHandler<CreateStoreAddressCommand,Result<StoreAddressDTO>>, CreateStoreAddressCommandHandler>();
 
             services.AddScoped<IRequestHandler<CreateProductStoreCommand, Result<ProductStoreDTO>>, CreateProductStoreCommandHandler>();
@@ -227,6 +234,8 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<CreateCartItemCommand,Result<CartItemDTO>>, CreateCartItemCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllCartItemQuery, Result<IEnumerable<CartItemDTO>>>, GetAllCartItemQueryHandler>();
             services.AddScoped<IRequestHandler<GetCartByUserIdQuery,Result<IEnumerable<CartItemDTO>>>, GetCartByUserIdQueryHandler>();
+            services.AddScoped<IRequestHandler<UpdateCartItemCommand,Result<CartItemDTO>>, UpdateCartItemCommandHandler>();
+            services.AddScoped<IRequestHandler<HardDeleteCartItemCommand,Result<CartItemDTO>>, HardDeleteCartItemCommandHandler>();
 
             services.AddScoped < IRequestHandler<GetAllProductsByCategoryId, Result<CategoryWithProductsDTO>>, GetAllProductsByCategoryIdHandler>();
 

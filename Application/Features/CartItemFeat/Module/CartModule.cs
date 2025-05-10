@@ -6,6 +6,7 @@ using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using System;
@@ -65,6 +66,28 @@ namespace Application.Features.CartItemFeat.Module
                 }
 
                 return Results.Ok(result.Data);
+            });
+
+            app.MapPut("/updateCartItem/{Id}", async (
+                int Id, int UserId, int? ProductId, int? Quantity, ISender mediator) =>
+            {
+                var command = new UpdateCartItemCommand(Id, UserId, ProductId, Quantity);
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+            app.MapDelete("/deleteCartItemByUserId/{UserId}", async (
+                int Id, ISender mediator) =>
+            {
+                var command = new HardDeleteCartItemCommand(Id);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                return Results.Ok(new { result.Message, result.Data });
+
             });
         }
     }

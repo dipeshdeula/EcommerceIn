@@ -12,5 +12,7 @@ namespace Application.Interfaces.Repositories
         Task LoadNavigationProperties(CartItem cartItem);
         Task<IEnumerable<CartItem>> GetByUserIdAsync(int userId);
         Task DeleteByUserIdAsync(int userId);
+
+        
     }
 }
