@@ -55,6 +55,27 @@ namespace Application.Features.AddressFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
+            app.MapPut("/updateAddress/{Id}", async (
+                int Id, string? Label, string? Street, string? City,
+                string? Province, string? PostalCode, double? Latitude, double? Longitude, ISender mediator) =>
+            {
+                var command = new UpdateAddressCommand(Id, Label, Street, City, Province, PostalCode, Latitude, Longitude);
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                return Results.Ok(new { result.Message, result.Data });
+
+
+            });
+
+            app.MapDelete("/hardDeleteAddress/{Id}", async (int Id, ISender mediator) =>
+            {
+                var command = new HardDeleteAddressCommand(Id);
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                return Results.Ok(new { result.Message, result.Data });
+            });
            
         }
     }

@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Repositories;
+﻿using Application.Extension;
+using Application.Interfaces.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,5 +16,15 @@ namespace Infrastructure.Persistence.Repositories
             _context = context;
         }
 
+        public async Task HardDeleteAddressAsync(int Id, CancellationToken cancellationToken)
+        {
+            var address = await _context.Addresses              
+                .FirstOrDefaultAsync(a => a.Id == Id, cancellationToken);
+
+            if (address != null)
+            {
+                await _context.HardDeleteAsync(address, cancellationToken);
+            }
+        }
     }
 }

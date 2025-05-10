@@ -1,6 +1,7 @@
 ﻿using Application.Dto;
 using Application.Features.CategoryFeat.UpdateCommands;
 using Application.Features.SubSubCategoryFeat.Commands;
+using Application.Features.SubSubCategoryFeat.DeleteCommands;
 using Application.Features.SubSubCategoryFeat.Queries;
 using Carter;
 using MediatR;
@@ -80,6 +81,45 @@ namespace Application.Features.SubSubCategoryFeat.Module
            .Accepts<UpdateSubSubCategoryCommand>("multipart/form-data")
            .Produces<SubSubCategoryDTO>(StatusCodes.Status200OK)
            .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
+
+            app.MapDelete("/softDeleteSubSubCategory/{SubSubCategoryId}", async (
+                int SubSubCategoryId, ISender mediator
+                ) =>
+            {
+                var command = new SoftDeleteSubSubCategoryCommand(SubSubCategoryId);
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+            app.MapDelete("/hardDeleteSubSubCategory/{SubSubCategoryId}", async (
+                int SubSubCategoryId, ISender mediator
+                ) =>
+            {
+                var command = new HardDeleteSubSubCategoryCommand(SubSubCategoryId);
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+            app.MapDelete("/unDeleteSubSubCategory/{SubSubCategoryId}", async (
+               int SubSubCategoryId, ISender mediator
+               ) =>
+            {
+                var command = new UnDeleteSubSubCategoryCommand(SubSubCategoryId);
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            });
         }
     }
 }

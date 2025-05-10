@@ -33,7 +33,7 @@ namespace Application.Features.SubSubCategoryFeat.DeleteCommands
 
             await _subSubCategoryRepository.SoftDeleteSubSubCategoryAsync(request.subSubCategoryId, cancellationToken);
 
-            return Result<SubSubCategoryDTO>.Success(subSubCategory.ToDTO(), $"sub subc ategory with Id {subSubCategory.Id} soft deleted successful")
+            return Result<SubSubCategoryDTO>.Success(subSubCategory.ToDTO(), $"sub subc ategory with Id {subSubCategory.Id} soft deleted successful");
 
         }
     }

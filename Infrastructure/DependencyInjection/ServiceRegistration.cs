@@ -27,6 +27,7 @@ using Application.Features.SubCategoryFeat.Commands;
 using Application.Features.SubCategoryFeat.DeleteCommands;
 using Application.Features.SubCategoryFeat.Queries;
 using Application.Features.SubSubCategoryFeat.Commands;
+using Application.Features.SubSubCategoryFeat.DeleteCommands;
 using Application.Features.SubSubCategoryFeat.Queries;
 using Application.Interfaces.Repositories;
 using Application.Utilities;
@@ -174,6 +175,8 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<AddressCommand, Result<AddressDTO>>, AddressCommandHandler>();
             services.AddScoped<IRequestHandler<GellAllAddressQuery, Result<IEnumerable<AddressDTO>>>, GetAllAddressQueryHandler>();
             services.AddScoped<IRequestHandler<GetAddressByUserId,Result<IEnumerable<AddressDTO>>>, GetAddressByUserIdHandler>();
+            services.AddScoped<IRequestHandler<UpdateAddressCommand,Result<AddressDTO>>, UpdateAddressCommandHandler>();
+            services.AddScoped<IRequestHandler<HardDeleteAddressCommand,Result<AddressDTO>>,HardDeleteAddressCommmandHandler>();
 
             services.AddScoped<IRequestHandler<CreateCategoryCommand, Result<CategoryDTO>>, CreateCategoryCommandHandler>();
             services.AddScoped<IRequestHandler<CreateSubCategoryCommand,Result<SubCategoryDTO>>, CreateSubCategoryCommandHandler>();
@@ -200,6 +203,10 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<SoftDeleteSubCategoryCommand, Result<SubCategoryDTO>>, SoftDeleteSubCategoryCommandHandler>();
             services.AddScoped<IRequestHandler<UnDeleteSubCategoryCommand, Result<SubCategoryDTO>>, UnDeleteSubCategoryCommandHandler>();
             services.AddScoped<IRequestHandler<HardDeleteSubCategoryCommand, Result<SubCategoryDTO>>, HardDeleteSubCategoryCommandHandler>();
+
+            services.AddScoped<IRequestHandler<SoftDeleteSubSubCategoryCommand, Result<SubSubCategoryDTO>>, SoftDeleteSubSubCategoryCommandHandler>();
+            services.AddScoped<IRequestHandler<UnDeleteSubSubCategoryCommand, Result<SubSubCategoryDTO>>, UnDeleteSubSubCategoryCommandHandler>();
+            services.AddScoped<IRequestHandler<HardDeleteSubSubCategoryCommand, Result<SubSubCategoryDTO>>, HardDeleteSubSubCategoryCommandHandler>();
 
             services.AddScoped<IRequestHandler<UpdateSubCategoryCommand, Result<SubCategoryDTO>>, UpdateSubCategoryCommandHandler>();
             services.AddScoped<IRequestHandler<UpdateProductCommand, Result<ProductDTO>>, UpdateProudctComamndHandler>();
