@@ -130,6 +130,7 @@ namespace Application.Extension
 
         public static StoreAddressDTO ToDTO(this StoreAddress storeAddress)
         {
+            if (storeAddress == null) return null;
             return new StoreAddressDTO
             {
                 Id = storeAddress.Id,

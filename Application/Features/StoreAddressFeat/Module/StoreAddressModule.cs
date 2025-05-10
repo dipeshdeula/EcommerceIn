@@ -1,9 +1,11 @@
 ﻿using Application.Features.StoreAddressFeat.Commands;
+using Application.Features.StoreAddressFeat.Queries;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.AspNetCore.Routing;
 using System;
 using System.Collections.Generic;
@@ -30,6 +32,28 @@ namespace Application.Features.StoreAddressFeat.Module
                 {
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+            app.MapGet("/getStoreAddressByStoreId/{storeId}", async (int StoreId, ISender mediator) =>
+            {
+                var command = new GetStoreAddressByStoreIdQuery(StoreId);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+            app.MapPut("/updateStoreAddress/{StoreId}", async (
+                int StoreId, string? Street, string? City, string? Province, string? PostalCode, double? Latitude, double? Longitude, ISender mediator) =>
+            {
+                var command = new UpdateStoreAddressCommand(StoreId, Street, City, Province, PostalCode, Latitude, Longitude);
+
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
                 return Results.Ok(new { result.Message, result.Data });
             });
 

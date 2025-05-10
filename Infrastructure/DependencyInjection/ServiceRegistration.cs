@@ -21,6 +21,7 @@ using Application.Features.ProductFeat.DeleteCommands;
 using Application.Features.ProductFeat.Queries;
 using Application.Features.ProductStoreFeat.Commands;
 using Application.Features.StoreAddressFeat.Commands;
+using Application.Features.StoreAddressFeat.Queries;
 using Application.Features.StoreFeat.Commands;
 using Application.Features.StoreFeat.DeleteCommands;
 using Application.Features.StoreFeat.Queries;
@@ -228,6 +229,8 @@ namespace Infrastructure.DependencyInjection
 
 
             services.AddScoped<IRequestHandler<CreateStoreAddressCommand,Result<StoreAddressDTO>>, CreateStoreAddressCommandHandler>();
+            services.AddScoped<IRequestHandler<GetStoreAddressByStoreIdQuery, Result<StoreAddressDTO>>, GetStoreAddressByStoreIdQueryHandler>();
+            services.AddScoped<IRequestHandler<UpdateStoreAddressCommand, Result<StoreAddressDTO>>, UpdateStoreAddressCommandHandler>();
 
             services.AddScoped<IRequestHandler<CreateProductStoreCommand, Result<ProductStoreDTO>>, CreateProductStoreCommandHandler>();
 
