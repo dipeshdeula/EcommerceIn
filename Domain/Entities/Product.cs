@@ -21,6 +21,7 @@ namespace Domain.Entities
         public string Weight { get; set; }
         public int Reviews { get; set; }
         public double Rating { get; set; }
+        public string Dimensions { get; set; }
         public bool IsDeleted { get; set; } = false;
 
 

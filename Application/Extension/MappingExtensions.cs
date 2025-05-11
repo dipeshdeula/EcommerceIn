@@ -123,6 +123,7 @@ namespace Application.Extension
                 Id = store.Id,
                 Name = store.Name,
                 OwnerName = store.OwnerName,
+                ImageUrl = store.ImageUrl,
                 IsDeleted = store.IsDeleted,
                 Address = store.Address?.ToDTO() // Map the Address to StoreAddressDTO
             };

@@ -12,6 +12,7 @@ namespace Domain.Entities
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string OwnerName { get; set; } = string.Empty;
+        public string ImageUrl { get; set; }
         public bool IsDeleted { get; set; }
         public StoreAddress Address { get; set; }
         public ICollection<ProductStore> ProductStores { get; set; } = new List<ProductStore>();

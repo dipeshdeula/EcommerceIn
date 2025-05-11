@@ -12,6 +12,8 @@ namespace Application.Enums
         CategoryImages,
         SubCategoryImages,
         SubSubCategoryImages,
-        ProductImages
+        ProductImages,
+        StoreImages,
+        BannerImages
     }
 }

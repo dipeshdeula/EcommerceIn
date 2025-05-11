@@ -1,33 +1,51 @@
 ﻿using Application.Common;
 using Application.Dto;
+using Application.Enums;
 using Application.Extension;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
 using Domain.Entities;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Features.StoreFeat.Commands
 {
-    public record CreateStoreCommand(
-        int Id,
+    public record CreateStoreCommand(        
         string Name,
-        string OwnerName
+        string OwnerName,
+        IFormFile File
         ) : IRequest<Result<StoreDTO>>;
 
     public class CreateStoreCommandHandler : IRequestHandler<CreateStoreCommand, Result<StoreDTO>>
     {
         private readonly IStoreRepository _storeRepository;
-        public CreateStoreCommandHandler(IStoreRepository storeRepository)
+        private readonly IFileServices _fileService;
+        public CreateStoreCommandHandler(IStoreRepository storeRepository,IFileServices fileService)
         {
             _storeRepository = storeRepository;
+            _fileService = fileService;
 
         }
         public async Task<Result<StoreDTO>> Handle(CreateStoreCommand request, CancellationToken cancellationToken)
         {
+            string fileUrl = null;
+            if (request.File != null && request.File.Length > 0)
+            {
+                try
+                {
+                    fileUrl = await _fileService.SaveFileAsync(request.File, FileType.StoreImages);
+                }
+                catch (Exception ex)
+                {
+                    return Result<StoreDTO>.Failure($"Image upload failed:{ex.Message}");
+                }
+            }
             var store = new Store
             {
-                Id = request.Id,
+               
                 Name = request.Name,
-                OwnerName = request.OwnerName
+                OwnerName = request.OwnerName,
+                ImageUrl = fileUrl
 
             };
             var storeDto = new StoreDTO
@@ -35,6 +53,7 @@ namespace Application.Features.StoreFeat.Commands
                 Id = store.Id,
                 Name = store.Name,
                 OwnerName = store.OwnerName,
+                ImageUrl = fileUrl,
                 IsDeleted = store.IsDeleted,
                 //Address = store.Address
             };
