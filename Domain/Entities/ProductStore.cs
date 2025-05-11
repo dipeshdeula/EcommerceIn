@@ -15,5 +15,7 @@ namespace Domain.Entities
 
         public Product Product { get; set; } // Navigation property to Product entity
         public Store Store { get; set; } // Navigation property to Store entity
+
+   
     }
 }

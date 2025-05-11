@@ -27,8 +27,9 @@ namespace Application.Features.ProductFeat.Module
         {
             app = app.MapGroup("products");
 
-            app.MapPost("/create-product", async ([FromQuery] int subSubCategoryId, ISender mediator, CreateProductCommand command) =>
+            app.MapPost("/create-product", async ([FromQuery] int subSubCategoryId, ISender mediator, CreateProductDTO productDTO) =>
             {
+                var command = new CreateProductCommand(subSubCategoryId, productDTO);
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                 {

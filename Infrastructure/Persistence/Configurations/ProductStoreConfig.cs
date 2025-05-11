@@ -25,6 +25,7 @@ namespace Infrastructure.Persistence.Configurations
                    .HasForeignKey(ps => ps.StoreId)
                    .OnDelete(DeleteBehavior.Cascade);
 
+
             // Indexes for efficient queries
             builder.HasIndex(ps => ps.ProductId);
             builder.HasIndex(ps => ps.StoreId);

@@ -1,24 +1,17 @@
 ﻿using Application.Common;
 using Application.Dto;
 using Application.Extension;
+using Application.Features.SubSubCategoryFeat.Module;
 using Application.Interfaces.Repositories;
 using Domain.Entities;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Application.Features.ProductFeat.Commands
 {
-    public record CreateProductCommand(
-        int subSubCategoryId,
-        string Name,
-        string Slug,
-        string Description,
-        double Price,
-        double DiscountPrice,
-        int StockQuantity,
-        string Sku,
-        string Weight,
-        int Reviews,
-        double Rating
+    public record CreateProductCommand(  
+        int SubSubCategoryId,
+        CreateProductDTO createProductDTO
 
         ) : IRequest<Result<ProductDTO>>;
 
@@ -33,7 +26,7 @@ namespace Application.Features.ProductFeat.Commands
         public async Task<Result<ProductDTO>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
         {
             // Validate SubSubCategoryId
-            var subSubCategory = await _subSubCategoryRepository.FindByIdAsync(request.subSubCategoryId);
+            var subSubCategory = await _subSubCategoryRepository.FindByIdAsync(request.SubSubCategoryId);
             if (subSubCategory == null)
             {
                 return Result<ProductDTO>.Failure("sub-sub category not found");
@@ -49,18 +42,19 @@ namespace Application.Features.ProductFeat.Commands
             // Create the new Product item
             var product = new Product
             {
-                SubSubCategoryId = request.subSubCategoryId,
+                SubSubCategoryId = subSubCategory.Id,
                 CategoryId = categoryId.Value,
-                Name = request.Name,
-                Slug = request.Slug,
-                Description = request.Slug,
-                Price = request.Price,
-                DiscountPrice = request.DiscountPrice,
-                StockQuantity = request.StockQuantity,
-                Sku = request.Sku,
-                Weight = request.Weight,
-                Reviews = request.Reviews,
-                Rating = request.Rating,
+                Name = request.createProductDTO.Name,
+                Slug = request.createProductDTO.Slug,
+                Description = request.createProductDTO.Slug,
+                Price = request.createProductDTO.Price,
+                DiscountPrice = request.createProductDTO.DiscountPrice,
+                StockQuantity = request.createProductDTO.StockQuantity,
+                Sku = request.createProductDTO.Sku,
+                Weight = request.createProductDTO.Weight,
+                Reviews = request.createProductDTO.Reviews,
+                Rating = request.createProductDTO.Rating,
+                Dimensions = request.createProductDTO.Dimensions,
                 SubSubCategory = subSubCategory
 
             };

@@ -1,6 +1,7 @@
 ﻿using Application.Dto;
 using Application.Features.CategoryFeat.Commands;
 using Application.Features.ProductStoreFeat.Commands;
+using Application.Features.ProductStoreFeat.Queries;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -31,6 +32,18 @@ namespace Application.Features.ProductStoreFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
+            });
+
+            app.MapGet("/getAllProductByStoreId/{StoreId}", async (
+                ISender mediator,int StoreId, int PageNumber = 1, int PageSize = 10) =>
+            {
+                var command = new GetAllProductByStoreIdQuery(StoreId, PageNumber, PageSize);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                return Results.Ok(new { result.Message, result.Data });
+
             });
         }
     }

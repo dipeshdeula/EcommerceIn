@@ -34,7 +34,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\ProductStoreFeat\Queries\" />
     <Folder Include="Features\SubCategoryFeat\NewFolder\" />
   </ItemGroup>
 

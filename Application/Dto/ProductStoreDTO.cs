@@ -16,5 +16,8 @@ namespace Application.Dto
 
         public ProductDTO Product { get; set; } // Navigation property to Product entity
         public StoreDTO Store { get; set; } // Navigation property to Store entity
+
+        
+
     }
 }
