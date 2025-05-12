@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Entities
+namespace Application.Dto
 {
-    public class BannerEventSpecial
+    public class BannerEventSpecialDTO
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -19,7 +19,5 @@ namespace Domain.Entities
         public string ImageUrl { get; set; }
 
         public bool IsActive { get; set; } 
-        public bool IsDeleted { get; set; } 
-
     }
 }

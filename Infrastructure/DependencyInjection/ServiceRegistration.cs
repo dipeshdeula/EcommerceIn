@@ -9,6 +9,8 @@ using Application.Features.Authentication.Queries.Login;
 using Application.Features.Authentication.Queries.UserQuery;
 using Application.Features.Authentication.UploadImage.Commands;
 using Application.Features.Authentication.Validation;
+using Application.Features.BannerSpecialEvent.Commands;
+using Application.Features.BannerSpecialEvent.Queries;
 using Application.Features.CartItemFeat.Commands;
 using Application.Features.CartItemFeat.Queries;
 using Application.Features.CategoryFeat.Commands;
@@ -163,6 +165,7 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<ICartItemRepository,CartItemRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IOrderItemRepository, OrderItemRepository>();
+            services.AddScoped<IBannerEventSpecialRepository, BannerEventSpecialRepository>();
 
 
             // Register CQRS handlers with scoped lifetime
@@ -250,6 +253,9 @@ namespace Infrastructure.DependencyInjection
 
             services.AddScoped<IRequestHandler<CreatePlaceOrderCommand,Result<OrderDTO>>, CreatePlaceOrderCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllOrderQuery,Result<IEnumerable<OrderDTO>>>, GetAllOrderQueryHandler>();
+
+            services.AddScoped<IRequestHandler<CreateBannerSpecialEventCommand, Result<BannerEventSpecialDTO>>, CreateBannerSpecialEventCommandHandler>();
+            services.AddScoped<IRequestHandler<GetAllBannerEventSpecialQuery, Result<IEnumerable<BannerEventSpecialDTO>>>, GetAllBannerEventSpecialQueryHandler>();
         }
     }
 

@@ -20,7 +20,7 @@ namespace Infrastructure.Persistence.Configurations
 
             builder.HasOne(b => b.User)
                 .WithMany()
-                .HasForeignKey(b => b.User.Id)
+                .HasForeignKey(b => b.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasOne(b => b.PaymentRequest)

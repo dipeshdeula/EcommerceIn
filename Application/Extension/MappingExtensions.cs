@@ -225,5 +225,21 @@ namespace Application.Extension
             };
         }
 
+        public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpecial)
+        {
+            return new BannerEventSpecialDTO
+            {
+                Id = bannerEventSpecial.Id,
+                Name = bannerEventSpecial.Name,
+                Description = bannerEventSpecial.Description,
+                Offers = bannerEventSpecial.Offers,
+                StartDate = bannerEventSpecial.StartDate,
+                EndDate = bannerEventSpecial.EndDate,
+                ImageUrl = bannerEventSpecial.ImageUrl,
+
+
+            };
+        }
+
     }
 }

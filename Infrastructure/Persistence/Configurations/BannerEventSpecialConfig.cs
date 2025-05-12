@@ -23,6 +23,7 @@ namespace Infrastructure.Persistence.Configurations
 
             builder.Property(b => b.StartDate)
                    .HasColumnType("timestamp with time zone")
+                   .HasDefaultValueSql("NOW()")
                    .IsRequired();
 
             builder.Property(b => b.EndDate)

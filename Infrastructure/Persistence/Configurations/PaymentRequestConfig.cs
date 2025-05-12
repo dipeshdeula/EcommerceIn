@@ -28,7 +28,7 @@ namespace Infrastructure.Persistence.Configurations
 
             builder.HasOne(pr=>pr.User)
                 .WithMany()
-                .HasForeignKey(pr=>pr.User.Id)
+                .HasForeignKey(pr=>pr.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasOne(pr=>pr.Order)

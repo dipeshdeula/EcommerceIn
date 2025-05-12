@@ -23,6 +23,10 @@ namespace Infrastructure.Persistence.Contexts
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<PaymentMethod> PaymentMethods { get; set; }
+        public DbSet<PaymentRequest> PaymentRequests { get; set; }
+        public DbSet<Billing> Billings { get; set; }
+        public DbSet<BannerEventSpecial> BannerEventSpecials { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -43,6 +47,10 @@ namespace Infrastructure.Persistence.Contexts
             builder.ApplyConfiguration(new OrderItemConfig());
             builder.ApplyConfiguration(new CartItemConfig());
             builder.ApplyConfiguration(new RefreshTokenConfig());
+            builder.ApplyConfiguration(new PaymentMethodConfig());
+            builder.ApplyConfiguration(new PaymentRequestConfig());
+            builder.ApplyConfiguration(new BillingConfig());
+            builder.ApplyConfiguration(new BannerEventSpecialConfig());
 
         }
     }
