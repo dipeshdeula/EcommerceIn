@@ -241,5 +241,36 @@ namespace Application.Extension
             };
         }
 
+        public static PaymentMethodDTO ToDTO(this PaymentMethod paymentMethod)
+        {
+            return new PaymentMethodDTO {
+                Id = paymentMethod.Id,
+                Name = paymentMethod.Name,
+                Type = paymentMethod.Type,
+                Logo = paymentMethod.Logo,
+                PaymentRequests = paymentMethod.PaymentRequests != null
+            ? paymentMethod.PaymentRequests.Select(pr => pr.ToDTO()).ToList()
+            : new List<PaymentRequestDTO>()
+            };
+        }
+
+        public static PaymentRequestDTO ToDTO(this PaymentRequest paymentRequest)
+        {
+            return new PaymentRequestDTO
+            {
+                Id = paymentRequest.Id,
+                UserId = paymentRequest.UserId,
+                OrderId = paymentRequest.OrderId,
+                PaymentMethodId = paymentRequest.PaymentMethodId,
+                PaymentAmount = paymentRequest.PaymentAmount,
+                Currency = paymentRequest.Currency,
+                Description = paymentRequest.Description,
+                KhaltiPidx = paymentRequest.KhaltiPidx,
+                EsewaTransactionId = paymentRequest.EsewaTransactionId,
+                CreatedAt = paymentRequest.CreatedAt,
+                UpdatedAt = paymentRequest.UpdatedAt,
+            };
+        }
+
     }
 }

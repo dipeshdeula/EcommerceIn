@@ -19,6 +19,8 @@ using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
 using Application.Features.OrderFeat.Commands;
 using Application.Features.OrderFeat.Queries;
+using Application.Features.PaymentMethodFeat.Commands;
+using Application.Features.PaymentMethodFeat.Queries;
 using Application.Features.ProductFeat.Commands;
 using Application.Features.ProductFeat.DeleteCommands;
 using Application.Features.ProductFeat.Queries;
@@ -166,6 +168,7 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IOrderItemRepository, OrderItemRepository>();
             services.AddScoped<IBannerEventSpecialRepository, BannerEventSpecialRepository>();
+            services.AddScoped<IPaymentMethodRepository,PaymentMethodRepository>();
 
 
             // Register CQRS handlers with scoped lifetime
@@ -256,6 +259,9 @@ namespace Infrastructure.DependencyInjection
 
             services.AddScoped<IRequestHandler<CreateBannerSpecialEventCommand, Result<BannerEventSpecialDTO>>, CreateBannerSpecialEventCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllBannerEventSpecialQuery, Result<IEnumerable<BannerEventSpecialDTO>>>, GetAllBannerEventSpecialQueryHandler>();
+
+            services.AddScoped<IRequestHandler<CreatePaymentMethodCommand, Result<PaymentMethodDTO>>, CreatePaymentMethodCommandHandler>();
+            services.AddScoped<IRequestHandler<GetAllPaymentMethodQuery, Result<IEnumerable<PaymentMethodDTO>>>, GetAllPaymentMethodQueryHanlder>();
         }
     }
 

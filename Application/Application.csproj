@@ -37,4 +37,8 @@
     <Folder Include="Features\SubCategoryFeat\NewFolder\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Features\PaymentMethodFeat\Module\PaymentMethodMod.cs" />
+  </ItemGroup>
+
 </Project>

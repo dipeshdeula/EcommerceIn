@@ -1,0 +1,28 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Application.Dto
+{
+    public class PaymentRequestDTO
+    {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+        public int OrderId { get; set; }
+
+        public int PaymentMethodId { get; set; } // esewa,khalti,cash on delivery
+
+        public double PaymentAmount { get; set; }
+
+        public string Currency { get; set; } = "npr";
+        public string Description { get; set; }
+
+        public string? KhaltiPidx { get; set; } // For khalti
+        public string? EsewaTransactionId { get; set; } // For esewa
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    }
+}
