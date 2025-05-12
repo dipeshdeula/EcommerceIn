@@ -8,6 +8,7 @@ using Application.Features.Authentication.Otp.Commands;
 using Application.Features.Authentication.Queries.Login;
 using Application.Features.Authentication.Queries.UserQuery;
 using Application.Features.Authentication.UploadImage.Commands;
+using Application.Features.Authentication.Validation;
 using Application.Features.CartItemFeat.Commands;
 using Application.Features.CartItemFeat.Queries;
 using Application.Features.CategoryFeat.Commands;
@@ -35,6 +36,7 @@ using Application.Features.SubSubCategoryFeat.Queries;
 using Application.Interfaces.Repositories;
 using Application.Utilities;
 using FluentMigrator;
+using FluentValidation;
 using Infrastructure.Persistence.Messaging;
 using Infrastructure.Persistence.Repositories;
 using MediatR;
@@ -261,6 +263,8 @@ namespace Infrastructure.DependencyInjection
             services.AddSingleton<IRabbitMqConsumer, RabbitMQConsumer>();
             services.AddSingleton<IRabbitMqPublisher, RabbitMQPublisher>();
             services.AddHostedService<RabbitMqConsumerService>();
+
+            services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
 
 
 

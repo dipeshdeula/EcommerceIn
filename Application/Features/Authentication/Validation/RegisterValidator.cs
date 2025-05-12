@@ -1,4 +1,4 @@
-﻿/*using Application.Features.Authentication.Commands;
+﻿using Application.Features.Authentication.Commands;
 using Application.Interfaces.Repositories;
 using FluentValidation;
 using System.Threading.Tasks;
@@ -54,4 +54,3 @@ namespace Application.Features.Authentication.Validation
 }
 
 
-*/

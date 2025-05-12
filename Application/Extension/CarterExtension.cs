@@ -7,7 +7,11 @@ namespace Application.Extension
     {
         public static void AddCarterExtension(this IServiceCollection services)
         {
-            services.AddCarter();
+            //services.AddCarter();
+            services.AddCarter(configurator: c =>
+            {
+                c.WithValidatorLifetime(ServiceLifetime.Scoped);
+            });
         }
     }
 }
