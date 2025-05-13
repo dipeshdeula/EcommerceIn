@@ -51,7 +51,7 @@ namespace Application.Features.StoreFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapPut("/updateStore/{Id}", async (
+            app.MapPut("/updateStore", async (
                 int Id, string? Name, string? OwnerName, IFormFile? File, ISender mediator) =>
             {
                 var command = new UpdateStoreCommand(Id, Name, OwnerName, File);
@@ -65,7 +65,7 @@ namespace Application.Features.StoreFeat.Module
             .Produces<StoreDTO>(StatusCodes.Status200OK)
             .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
 
-            app.MapDelete("/softDeleteStore/{Id}", async (int Id, ISender mediator) =>
+            app.MapDelete("/softDeleteStore", async (int Id, ISender mediator) =>
             {
                 var command = new SoftDeleteStoreCommand(Id);
                 var result = await mediator.Send(command);
@@ -76,7 +76,7 @@ namespace Application.Features.StoreFeat.Module
 
             });
 
-            app.MapDelete("/unDeleteStore/{Id}", async (int Id, ISender mediator) =>
+            app.MapDelete("/unDeleteStore", async (int Id, ISender mediator) =>
             {
                 var command = new UnDeleteStoreCommand(Id);
                 var result = await mediator.Send(command);
@@ -87,7 +87,7 @@ namespace Application.Features.StoreFeat.Module
 
             });
 
-            app.MapDelete("/hardDeleteStore/{Id}", async (int Id, ISender mediator) =>
+            app.MapDelete("/hardDeleteStore", async (int Id, ISender mediator) =>
             {
                 var command = new HardDeleteStoreCommand(Id);
                 var result = await mediator.Send(command);

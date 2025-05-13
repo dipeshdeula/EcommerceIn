@@ -77,7 +77,7 @@ namespace Application.Features.SubCategoryFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapPut("/updateSubCategory/{SubCategoryId}", async (
+            app.MapPut("/updateSubCategory", async (
                 int SubCategoryId,string? Name,string? Slug,string? Description, IFormFile? File, ISender mediator) =>
             {
                 var command = new UpdateSubCategoryCommand(SubCategoryId, Name, Slug, Description, File);
@@ -93,7 +93,7 @@ namespace Application.Features.SubCategoryFeat.Module
               .Produces<SubCategoryDTO>(StatusCodes.Status200OK)
               .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
 
-            app.MapDelete("/softDeleteSubCategory/{SubCategoryId}", async (
+            app.MapDelete("/softDeleteSubCategory", async (
                 int SubCategoryId, ISender mediator
                 ) =>
             {
@@ -106,7 +106,7 @@ namespace Application.Features.SubCategoryFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapDelete("/unDeleteSubCategory/{SubCategoryId}", async (
+            app.MapDelete("/unDeleteSubCategory", async (
                int SubCategoryId, ISender mediator
                ) =>
             {
@@ -119,7 +119,7 @@ namespace Application.Features.SubCategoryFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapDelete("/hardDeleteSubCategory/{SubCategoryId}", async (
+            app.MapDelete("/hardDeleteSubCategory", async (
                int SubCategoryId, ISender mediator
                ) =>
             {

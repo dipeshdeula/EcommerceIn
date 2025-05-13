@@ -62,7 +62,7 @@ namespace Application.Features.Authentication.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapGet("/getUsers/{id:int}", async (int id, [FromServices] ISender mediator )=>
+            app.MapGet("/getUsersById", async (int id, [FromServices] ISender mediator )=>
             {
                 var result = await mediator.Send(new GetUsersQueryById(id));
                 if (!result.Succeeded)
@@ -88,7 +88,7 @@ namespace Application.Features.Authentication.Module
                  .Produces<string>(StatusCodes.Status200OK)
                  .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
 
-            app.MapPut("/updateUser/{id:int}", async (int id, [FromBody] UsersUpdateCommand command, [FromServices] ISender mediator) =>
+            app.MapPut("/updateUser", async (int id, [FromBody] UsersUpdateCommand command, [FromServices] ISender mediator) =>
             {
                 var result = await mediator.Send(command with { Id = id });
                 if (!result.Succeeded)
@@ -98,7 +98,7 @@ namespace Application.Features.Authentication.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapDelete("/softDeleteUser/{id:int}", async (int id, [FromServices] ISender mediator) =>
+            app.MapDelete("/softDeleteUser", async (int id, [FromServices] ISender mediator) =>
             {
                 var result = await mediator.Send(new SoftDeleteUserCommand(id));
                 if (!result.Succeeded)
@@ -108,7 +108,7 @@ namespace Application.Features.Authentication.Module
                 return Results.Ok(new { result.Message });
             });
 
-            app.MapDelete("/hardDeleteUser/{id:int}", async (int id, [FromServices] ISender mediator) =>
+            app.MapDelete("/hardDeleteUser", async (int id, [FromServices] ISender mediator) =>
             {
                 var result = await mediator.Send(new HardDeleteUserCommand(id));
                 if (!result.Succeeded)
@@ -118,7 +118,7 @@ namespace Application.Features.Authentication.Module
                 return Results.Ok(new { result.Message });
             });
 
-            app.MapPut("/undeleteUser/{id:int}", async (int id, [FromServices] ISender mediator) =>
+            app.MapPut("/undeleteUser", async (int id, [FromServices] ISender mediator) =>
             {
                 var result = await mediator.Send(new UnDeleteUserCommnad(id));
                 if (!result.Succeeded)

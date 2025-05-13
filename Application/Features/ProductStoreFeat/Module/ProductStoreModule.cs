@@ -34,7 +34,7 @@ namespace Application.Features.ProductStoreFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapGet("/getAllProductByStoreId/{StoreId}", async (
+            app.MapGet("/getAllProductByStoreId", async (
                 ISender mediator,int StoreId, int PageNumber = 1, int PageSize = 10) =>
             {
                 var command = new GetAllProductByStoreIdQuery(StoreId, PageNumber, PageSize);

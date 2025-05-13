@@ -33,7 +33,7 @@ public class RabbitMqConsumerService : BackgroundService
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
-    {
+        {
         _logger.LogInformation("RabbitMqConsumerService started.");
 
         _consumer.StartConsuming(_queueName, async (message, properties) =>

@@ -68,7 +68,7 @@ namespace Application.Features.CartItemFeat.Module
                 return Results.Ok(result.Data);
             });
 
-            app.MapPut("/updateCartItem/{Id}", async (
+            app.MapPut("/updateCartItem", async (
                 int Id, int UserId, int? ProductId, int? Quantity, ISender mediator) =>
             {
                 var command = new UpdateCartItemCommand(Id, UserId, ProductId, Quantity);
@@ -78,7 +78,7 @@ namespace Application.Features.CartItemFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapDelete("/deleteCartItemByUserId/{UserId}", async (
+            app.MapDelete("/deleteCartItemByUserId", async (
                 int Id, ISender mediator) =>
             {
                 var command = new HardDeleteCartItemCommand(Id);

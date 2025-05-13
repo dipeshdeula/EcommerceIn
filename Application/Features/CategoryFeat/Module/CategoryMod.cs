@@ -71,7 +71,7 @@ namespace Application.Features.CategoryFeat.Module
               
            
 
-            app.MapGet("/getCategoryById/{categoryId}", async ([FromQuery] int categoryId, ISender mediator, int PageNumber = 1, int PageSize = 10) =>
+            app.MapGet("/getCategoryById", async ([FromQuery] int categoryId, ISender mediator, int PageNumber = 1, int PageSize = 10) =>
             {
                 var result = await mediator.Send(new GetCategoryByIdQuery(categoryId, PageNumber, PageSize));
                 if (!result.Succeeded)
@@ -81,7 +81,7 @@ namespace Application.Features.CategoryFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapGet("/getAllProdcutByCategoryById/{categoryId}", async ([FromQuery] int categoryId, ISender mediator, int PageNumber = 1, int PageSize = 10) =>
+            app.MapGet("/getAllProdcutByCategoryById", async ([FromQuery] int categoryId, ISender mediator, int PageNumber = 1, int PageSize = 10) =>
             {
                 var result = await mediator.Send(new GetAllProductsByCategoryId(categoryId, PageNumber, PageSize));
                 if (!result.Succeeded)
@@ -92,7 +92,7 @@ namespace Application.Features.CategoryFeat.Module
             });
 
 
-            app.MapPut("/updateCategory/{categoryId:int}", async (
+            app.MapPut("/updateCategory", async (
                 int CategoryId, string? Name, string? Slug, string? Description, IFormFile? File, ISender mediator) =>
             {
                 var command = new UpdateCategoryCommand(CategoryId, Name, Slug, Description, File);
@@ -109,7 +109,7 @@ namespace Application.Features.CategoryFeat.Module
               .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
 
 
-            app.MapDelete("/softDeleteCategory/{categoryId}", async ([FromQuery] int categoryId, ISender mediator) =>
+            app.MapDelete("/softDeleteCategory", async ([FromQuery] int categoryId, ISender mediator) =>
             {
                 var command = new SoftDeleteCategoryCommand(categoryId);
                 var result = await mediator.Send(command);
@@ -121,7 +121,7 @@ namespace Application.Features.CategoryFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapDelete("/unDeleteCategory/{categoryId}", async ([FromQuery] int categoryId, ISender mediator) =>
+            app.MapDelete("/unDeleteCategory", async ([FromQuery] int categoryId, ISender mediator) =>
             {
                 var command = new UnDeleteCategoryCommand(categoryId);
                 var result = await mediator.Send(command);
@@ -131,7 +131,7 @@ namespace Application.Features.CategoryFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapDelete("/hardDeleteCategory/{categoryId}", async ([FromQuery] int categoryId, ISender mediator) =>
+            app.MapDelete("/hardDeleteCategory", async ([FromQuery] int categoryId, ISender mediator) =>
             {
                 var command = new HardDeleteCategoryCommand(categoryId);
                 var result = await mediator.Send(command);

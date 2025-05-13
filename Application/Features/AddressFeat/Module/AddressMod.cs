@@ -55,7 +55,7 @@ namespace Application.Features.AddressFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapPut("/updateAddress/{Id}", async (
+            app.MapPut("/updateAddress", async (
                 int Id, string? Label, string? Street, string? City,
                 string? Province, string? PostalCode, double? Latitude, double? Longitude, ISender mediator) =>
             {
@@ -68,7 +68,7 @@ namespace Application.Features.AddressFeat.Module
 
             });
 
-            app.MapDelete("/hardDeleteAddress/{Id}", async (int Id, ISender mediator) =>
+            app.MapDelete("/hardDeleteAddress", async (int Id, ISender mediator) =>
             {
                 var command = new HardDeleteAddressCommand(Id);
                 var result = await mediator.Send(command);

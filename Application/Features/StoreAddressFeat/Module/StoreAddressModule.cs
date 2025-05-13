@@ -35,7 +35,7 @@ namespace Application.Features.StoreAddressFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapGet("/getStoreAddressByStoreId/{storeId}", async (int StoreId, ISender mediator) =>
+            app.MapGet("/getStoreAddressByStoreId", async (int StoreId, ISender mediator) =>
             {
                 var command = new GetStoreAddressByStoreIdQuery(StoreId);
                 var result = await mediator.Send(command);
@@ -45,7 +45,7 @@ namespace Application.Features.StoreAddressFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapPut("/updateStoreAddress/{StoreId}", async (
+            app.MapPut("/updateStoreAddress", async (
                 int StoreId, string? Street, string? City, string? Province, string? PostalCode, double? Latitude, double? Longitude, ISender mediator) =>
             {
                 var command = new UpdateStoreAddressCommand(StoreId, Street, City, Province, PostalCode, Latitude, Longitude);
