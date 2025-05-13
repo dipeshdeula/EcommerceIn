@@ -2,6 +2,7 @@
 using Application.Dto;
 using Application.Extension;
 using Application.Features.CartItemFeat.Commands;
+using Application.Features.CartItemFeat.Queries;
 using Application.Interfaces.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -115,6 +116,8 @@ public class RabbitMqConsumerService : BackgroundService
                     return;
                 }
 
+                
+
                 // Check stock
                 if (product.AvailableStock < request.Quantity)
                 {
@@ -122,6 +125,9 @@ public class RabbitMqConsumerService : BackgroundService
                         $"Insufficient stock for product: {product.Name}. Available: {product.AvailableStock}");
                     return;
                 }
+
+                // check time constraint
+                
 
                 // Reserve stock
                 product.ReservedStock += request.Quantity;

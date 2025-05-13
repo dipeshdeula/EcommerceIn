@@ -34,7 +34,7 @@ namespace Application.Features.CartItemFeat.Queries
             var cartItemDtos = cartItem.Select(cd => cd.ToDTO()).ToList();
 
             // Return the result wrapped in a Task
-            return Result<IEnumerable<CartItemDTO>>.Success(cartItemDtos, "Categories fetched successfully");
+            return Result<IEnumerable<CartItemDTO>>.Success(cartItemDtos, "Cart Item fetched successfully");
         }
     }
 }
