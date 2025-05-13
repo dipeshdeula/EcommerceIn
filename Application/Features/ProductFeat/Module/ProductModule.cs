@@ -76,6 +76,7 @@ namespace Application.Features.ProductFeat.Module
             .Accepts<UploadProductImagesCommand>("multipart/form-data")
             .Produces<IEnumerable<ProductImageDTO>>(StatusCodes.Status200OK)
             .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
+
             app.MapGet("/nearby", async (ISender mediator,double lat, double lon, double radius,int skip = 0,int take = 10) =>
             {
                 var query = new GetNearbyProductsQuery(lat, lon, radius,skip,take);

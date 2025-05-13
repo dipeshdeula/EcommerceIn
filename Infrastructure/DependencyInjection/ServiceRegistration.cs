@@ -168,6 +168,7 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IOrderItemRepository, OrderItemRepository>();
             services.AddScoped<IBannerEventSpecialRepository, BannerEventSpecialRepository>();
+            services.AddScoped<IBannerImageRepository, BannerImageRepository>();
             services.AddScoped<IPaymentMethodRepository,PaymentMethodRepository>();
 
 
@@ -259,6 +260,7 @@ namespace Infrastructure.DependencyInjection
 
             services.AddScoped<IRequestHandler<CreateBannerSpecialEventCommand, Result<BannerEventSpecialDTO>>, CreateBannerSpecialEventCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllBannerEventSpecialQuery, Result<IEnumerable<BannerEventSpecialDTO>>>, GetAllBannerEventSpecialQueryHandler>();
+            services.AddScoped < IRequestHandler<UploadBannerImageCommand, Result<IEnumerable<BannerImageDTO>>>, UploadBannerImageCommandHandler>();
 
             services.AddScoped<IRequestHandler<CreatePaymentMethodCommand, Result<PaymentMethodDTO>>, CreatePaymentMethodCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllPaymentMethodQuery, Result<IEnumerable<PaymentMethodDTO>>>, GetAllPaymentMethodQueryHanlder>();

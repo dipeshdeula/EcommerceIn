@@ -16,8 +16,10 @@ namespace Application.Dto
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
 
-        public string ImageUrl { get; set; }
+        public bool IsActive { get; set; }
 
-        public bool IsActive { get; set; } 
+        public ICollection<BannerImageDTO> Images { get; set; } = new List<BannerImageDTO>();
+
+
     }
 }

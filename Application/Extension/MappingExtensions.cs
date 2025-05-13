@@ -234,12 +234,20 @@ namespace Application.Extension
                 Description = bannerEventSpecial.Description,
                 Offers = bannerEventSpecial.Offers,
                 StartDate = bannerEventSpecial.StartDate,
-                EndDate = bannerEventSpecial.EndDate,
-                ImageUrl = bannerEventSpecial.ImageUrl,
-
-
+                EndDate = bannerEventSpecial.EndDate,        
+                Images = bannerEventSpecial.Images.Select(b => b.ToDTO()).ToList() // Map product images
             };
         }
+
+        public static BannerImageDTO ToDTO(this BannerImage bannerImage)
+        {
+            return new BannerImageDTO
+            {
+                Id = bannerImage.Id,
+                ImageUrl = bannerImage.ImageUrl
+            };
+        }
+
 
         public static PaymentMethodDTO ToDTO(this PaymentMethod paymentMethod)
         {

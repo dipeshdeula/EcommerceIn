@@ -33,9 +33,6 @@ namespace Infrastructure.Persistence.Configurations
             builder.Property(b => b.IsActive)
                    .HasDefaultValue(true);
 
-            builder.Property(b => b.ImageUrl)
-                   .HasMaxLength(250)
-                   .IsRequired();
             builder.Property(u => u.IsDeleted).HasDefaultValue(false);
 
 

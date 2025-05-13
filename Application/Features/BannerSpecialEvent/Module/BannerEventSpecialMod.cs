@@ -30,10 +30,10 @@ namespace Application.Features.BannerSpecialEvent.Module
                string Description,
                double Offers,
                DateTime StartDate,
-               DateTime EndDate,
-               IFormFile File) =>
+               DateTime EndDate
+              ) =>
             {
-                var command = new CreateBannerSpecialEventCommand(Name, Description,Offers,StartDate,EndDate, File);
+                var command = new CreateBannerSpecialEventCommand(Name, Description,Offers,StartDate,EndDate);
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                 {
@@ -55,6 +55,22 @@ namespace Application.Features.BannerSpecialEvent.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
+            app.MapPost("/UploadBannerImages", async (ISender mediator, [FromForm] int bannerId, [FromForm] IFormFileCollection files) =>
+            {
+                var command = new UploadBannerImageCommand(bannerId, files);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+
+                return Results.Ok(new { result.Message, result.Data });
+            })
+       .DisableAntiforgery()
+       .Accepts<UploadBannerImageCommand>("multipart/form-data")
+       .Produces<IEnumerable<BannerImageDTO>>(StatusCodes.Status200OK)
+       .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
 
 
 

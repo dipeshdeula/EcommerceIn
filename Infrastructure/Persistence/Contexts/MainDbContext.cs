@@ -27,6 +27,7 @@ namespace Infrastructure.Persistence.Contexts
         public DbSet<PaymentRequest> PaymentRequests { get; set; }
         public DbSet<Billing> Billings { get; set; }
         public DbSet<BannerEventSpecial> BannerEventSpecials { get; set; }
+        public DbSet<BannerImage> BannerImages { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -51,6 +52,7 @@ namespace Infrastructure.Persistence.Contexts
             builder.ApplyConfiguration(new PaymentRequestConfig());
             builder.ApplyConfiguration(new BillingConfig());
             builder.ApplyConfiguration(new BannerEventSpecialConfig());
+            builder.ApplyConfiguration(new BannerImageConfig());
 
         }
     }

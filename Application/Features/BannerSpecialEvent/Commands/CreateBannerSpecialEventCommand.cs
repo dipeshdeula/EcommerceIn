@@ -22,8 +22,8 @@ namespace Application.Features.BannerSpecialEvent.Commands
             string Description,
             double Offers,
             DateTime StartDate,
-            DateTime EndDate,
-            IFormFile File
+            DateTime EndDate
+     
 
         ) : IRequest<Result<BannerEventSpecialDTO>>;
 
@@ -39,20 +39,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
         }
         public async Task<Result<BannerEventSpecialDTO>> Handle(CreateBannerSpecialEventCommand request, CancellationToken cancellationToken)
         {
-            string fileUrl = null;
-            if (request.File != null && request.File.Length > 0)
-            {
-                try
-                {
-                    fileUrl = await _fileService.SaveFileAsync(request.File, FileType.BannerImages);
-                }
-                catch (Exception ex)
-                {
-                    return Result<BannerEventSpecialDTO>.Failure($"Image Upload failed: {ex.Message}");
-
-                }
-            
-            }
+           
 
             // Create the new BannerEvents
             var bannerEvent = new BannerEventSpecial
@@ -62,7 +49,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
                 Offers = Convert.ToDouble(request.Offers),
                 StartDate = DateTime.SpecifyKind(request.StartDate, DateTimeKind.Utc),
                 EndDate = DateTime.SpecifyKind(request.EndDate, DateTimeKind.Utc),
-                ImageUrl = fileUrl
+                
             };
 
             var createBannerEvent = await _bannerSpecialEventRepository.AddAsync(bannerEvent);

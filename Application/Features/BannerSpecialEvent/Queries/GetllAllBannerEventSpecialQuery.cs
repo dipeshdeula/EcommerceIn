@@ -25,7 +25,9 @@ namespace Application.Features.BannerSpecialEvent.Queries
             var bannerEvents = await _bannerEventSpecialRepository.GetAllAsync(
                      orderBy: query => query.OrderByDescending(bannerEvents => bannerEvents.Id),
                      skip: (request.PageNumber - 1) * request.PageSize,
-                     take: request.PageSize);
+                     take: request.PageSize,
+                     includeProperties:"Images");
+                     
 
             var bannerEventsDTOs = bannerEvents.Select(be => be.ToDTO()).ToList();
 
