@@ -49,11 +49,12 @@ var app = builder.Build();
 
 
 // Auto-migrate database on startup
-/*using (var scope = app.Services.CreateScope())
+
+using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<MainDbContext>();
     db.Database.Migrate();
-}*/
+}
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>
@@ -72,7 +73,7 @@ app.UseSwaggerUI(c =>
 //         c.RoutePrefix = string.Empty;
 //     });
 // }
-
+app.UseStaticFiles();
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
@@ -93,5 +94,5 @@ app.MapGet("/dbinfo", async (MainDbContext db) => {
         return $"DB Error: {ex.Message}";
     }
 });
-app.UseStaticFiles();
+
 app.Run();
