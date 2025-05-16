@@ -10,6 +10,7 @@ using Application.Features.Authentication.Queries.UserQuery;
 using Application.Features.Authentication.UploadImage.Commands;
 using Application.Features.Authentication.Validation;
 using Application.Features.BannerSpecialEvent.Commands;
+using Application.Features.BannerSpecialEvent.DeleteCommands;
 using Application.Features.BannerSpecialEvent.Queries;
 using Application.Features.CartItemFeat.Commands;
 using Application.Features.CartItemFeat.Queries;
@@ -243,6 +244,7 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<UpdateStoreAddressCommand, Result<StoreAddressDTO>>, UpdateStoreAddressCommandHandler>();
 
             services.AddScoped<IRequestHandler<CreateProductStoreCommand, Result<ProductStoreDTO>>, CreateProductStoreCommandHandler>();
+            services.AddScoped<IRequestHandler<GetAllProductStoreQuery, Result<IEnumerable<ProductStoreDTO>>>, GetAllProductStoreQueryHandler>();
             services.AddScoped<IRequestHandler<GetAllProductByStoreIdQuery, Result<IEnumerable<StoreWithProductsDTO>>>, GetAllProductByStoreIdQueryHandler>();
 
             services.AddScoped<IRequestHandler<CreateCartItemCommand,Result<CartItemDTO>>, CreateCartItemCommandHandler>();
@@ -257,10 +259,16 @@ namespace Infrastructure.DependencyInjection
 
             services.AddScoped<IRequestHandler<CreatePlaceOrderCommand,Result<OrderDTO>>, CreatePlaceOrderCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllOrderQuery,Result<IEnumerable<OrderDTO>>>, GetAllOrderQueryHandler>();
+            services.AddScoped<IRequestHandler<GetOrderByUserIdQuery, Result<IEnumerable<OrderDTO>>>, GetOrderByUserIdQueryHandler>();
 
             services.AddScoped<IRequestHandler<CreateBannerSpecialEventCommand, Result<BannerEventSpecialDTO>>, CreateBannerSpecialEventCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllBannerEventSpecialQuery, Result<IEnumerable<BannerEventSpecialDTO>>>, GetAllBannerEventSpecialQueryHandler>();
-            services.AddScoped < IRequestHandler<UploadBannerImageCommand, Result<IEnumerable<BannerImageDTO>>>, UploadBannerImageCommandHandler>();
+            services.AddScoped<IRequestHandler<UpdateBannerSpecialEventCommand, Result<BannerEventSpecialDTO>>, UpdateBannerSpecialEventCommandHandler>();
+            services.AddScoped<IRequestHandler<UpdateBannerEventSpecialActiveStatus, Result<BannerEventSpecialDTO>>, UpdateBannerEventSpecialActiveStatusHandler>();
+            services.AddScoped<IRequestHandler<UploadBannerImageCommand, Result<IEnumerable<BannerImageDTO>>>, UploadBannerImageCommandHandler>();
+            services.AddScoped<IRequestHandler<SoftDeleteBannerEventCommand, Result<BannerEventSpecialDTO>>, SoftDeleteBannerEventCommandHandler>();
+            services.AddScoped<IRequestHandler<UnDeleteBannerEventCommand, Result<BannerEventSpecialDTO>>, UnDeleteBannerEventCommandHandler>();
+            services.AddScoped<IRequestHandler<HardDeleteBannerEventCommand, Result<BannerEventSpecialDTO>>, HardDeleteBannerEventCommandHandler>();
 
             services.AddScoped<IRequestHandler<CreatePaymentMethodCommand, Result<PaymentMethodDTO>>, CreatePaymentMethodCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllPaymentMethodQuery, Result<IEnumerable<PaymentMethodDTO>>>, GetAllPaymentMethodQueryHanlder>();

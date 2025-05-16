@@ -16,7 +16,7 @@ namespace Application.Dto
         public double UnitPrice { get; set; } // Price per unit at the time of order
         public double TotalPrice { get; private set; } // Total price for this order item
 
-        public OrderDTO Order { get; set; } // Navigation property to Order entity
-        public ProductDTO Product { get; set; } // Navigation property to Product entity
+        /*public OrderDTO Order { get; set; } // Navigation property to Order entity
+        public ProductDTO Product { get; set; } // Navigation property to Product entity*/
     }
 }

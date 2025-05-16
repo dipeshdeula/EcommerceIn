@@ -152,8 +152,8 @@ namespace Application.Extension
                 Id = productStore.Id,
                 StoreId = productStore.StoreId,
                 ProductId = productStore.ProductId,
-                Product = productStore.Product?.ToDTO(),
-                Store = productStore.Store?.ToDTO()
+                //Product = productStore.Product?.ToDTO(),
+                //Store = productStore.Store?.ToDTO()
 
             };
         }
@@ -201,8 +201,8 @@ namespace Application.Extension
                 ProductId = orderItem.ProductId,
                 Quantity = orderItem.Quantity,
                 UnitPrice = orderItem.UnitPrice,
-                Product = orderItem.Product?.ToDTO(), // Map Product to ProductDTO
-                Order = null // Avoid circular reference
+               /* Product = orderItem.Product?.ToDTO(), // Map Product to ProductDTO
+                Order = null // Avoid circular reference*/
             };
         }
 
@@ -234,7 +234,9 @@ namespace Application.Extension
                 Description = bannerEventSpecial.Description,
                 Offers = bannerEventSpecial.Offers,
                 StartDate = bannerEventSpecial.StartDate,
-                EndDate = bannerEventSpecial.EndDate,        
+                EndDate = bannerEventSpecial.EndDate, 
+                IsActive = bannerEventSpecial.IsActive,
+                IsDeleted = bannerEventSpecial.IsDeleted,
                 Images = bannerEventSpecial.Images.Select(b => b.ToDTO()).ToList() // Map product images
             };
         }

@@ -1,5 +1,7 @@
-﻿using Application.Dto;
+﻿using Application.Common;
+using Application.Dto;
 using Application.Features.BannerSpecialEvent.Commands;
+using Application.Features.BannerSpecialEvent.DeleteCommands;
 using Application.Features.BannerSpecialEvent.Queries;
 using Application.Features.CategoryFeat.Commands;
 using Carter;
@@ -7,6 +9,7 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using System.Xml.Linq;
@@ -72,7 +75,69 @@ namespace Application.Features.BannerSpecialEvent.Module
        .Produces<IEnumerable<BannerImageDTO>>(StatusCodes.Status200OK)
        .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
 
+            app.MapPut("/updateBannerEventSpecial", async (
+                int BannerId,
+                string? Name,
+                string? Description,
+                double? Offers,
+                DateTime? StartDate,
+                DateTime? EndDate,
+                bool? IsActive,
+                ISender mediator) =>
+            {
 
+                var command = new UpdateBannerSpecialEventCommand(
+                    BannerId, Name, Description, Offers, StartDate, EndDate, IsActive);
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                return Results.Ok(new { result.Message, result.Data });
+
+            });
+
+            app.MapPut("/activeStatus", async (int BannerId, bool IsActive, ISender mediator) =>
+            {
+                var command = new UpdateBannerEventSpecialActiveStatus(BannerId, IsActive);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+
+                return Results.Ok(new { result.Message, result.Data });
+
+            });
+
+            app.MapDelete("softDeleteBannerEvent", async (int BannerId, ISender mediator) =>
+            {
+                var command = new SoftDeleteBannerEventCommand(BannerId);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Data });
+
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+            app.MapDelete("UnDeleteBannerEvent", async (int BannerId, ISender mediator) =>
+            {
+                var command = new UnDeleteBannerEventCommand(BannerId);
+                var result = await mediator.Send(command);
+
+                if(!result.Succeeded)
+                    return Results.BadRequest(new {result.Message,result.Data});
+                return Results.Ok(new { result.Message,result.Data});
+            });
+
+            app.MapDelete("HardDeleteBannerEvent", async (int BannerId, ISender mediator) =>
+            {
+                var command = new HardDeleteBannerEventCommand(BannerId);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Data });
+                return Results.Ok(new { result.Message, result.Data });
+
+            });
 
 
         }
