@@ -16,6 +16,8 @@ namespace Infrastructure.Persistence.Configurations
             builder.Property(pm=>pm.Type).IsRequired();
             builder.Property(pm => pm.Name).HasMaxLength(50).IsRequired();
             builder.Property(pm=>pm.Logo).HasMaxLength(250).IsRequired();
+            builder.Property(u => u.IsDeleted).HasDefaultValue(false);
+
         }
     }
 }

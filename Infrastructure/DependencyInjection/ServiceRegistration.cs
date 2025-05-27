@@ -18,9 +18,11 @@ using Application.Features.CategoryFeat.Commands;
 using Application.Features.CategoryFeat.DeleteCommands;
 using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
+using Application.Features.ImageFeat.Queries;
 using Application.Features.OrderFeat.Commands;
 using Application.Features.OrderFeat.Queries;
 using Application.Features.PaymentMethodFeat.Commands;
+using Application.Features.PaymentMethodFeat.DeleteCommands;
 using Application.Features.PaymentMethodFeat.Queries;
 using Application.Features.ProductFeat.Commands;
 using Application.Features.ProductFeat.DeleteCommands;
@@ -272,6 +274,12 @@ namespace Infrastructure.DependencyInjection
 
             services.AddScoped<IRequestHandler<CreatePaymentMethodCommand, Result<PaymentMethodDTO>>, CreatePaymentMethodCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllPaymentMethodQuery, Result<IEnumerable<PaymentMethodDTO>>>, GetAllPaymentMethodQueryHanlder>();
+            services.AddScoped<IRequestHandler<UpdatePaymentMethodCommand, Result<PaymentMethodDTO>>, UpdatePaymentMethodCommandHandler>();
+            services.AddScoped<IRequestHandler<SoftDeletePaymentMethodCommand, Result<PaymentMethodDTO>>, SoftDeletePaymentMethodCommandHandler>();
+            services.AddScoped<IRequestHandler<UnDeletePaymentMethodCommand, Result<PaymentMethodDTO>>,UnDeletePaymentMethodCommandHandler>();
+            services.AddScoped<IRequestHandler<HardDeletePaymentMethodCommand, Result<PaymentMethodDTO>>, HardDeletePaymentMethodCommandHandler>();
+
+            services.AddScoped<IRequestHandler<GetImageQuery, Stream?>, GetImageQueryHandler>();
         }
     }
 

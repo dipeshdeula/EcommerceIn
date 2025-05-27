@@ -13,7 +13,8 @@ namespace Application.Dto
         public string Name { get; set; }
         public string Slug { get; set; } // e.g. "home-appliances"
         public string Description { get; set; } = string.Empty;
-        public double Price { get; set; }
+        public double MarketPrice { get; set; }
+        public double CostPrice { get; set; }
         public double? DiscountPrice { get; set; } // Nullable if no discount
         public int StockQuantity { get; set; }
         public int ReservedStock { get; set; } // Reserved stock for orders

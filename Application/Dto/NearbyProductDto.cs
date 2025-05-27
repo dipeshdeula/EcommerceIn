@@ -14,7 +14,8 @@ namespace Application.Dto
         public string StoreCity { get; set; } = string.Empty; // City where the store is located
 
         public string StoreName { get; set; } = string.Empty; // Store name
-        public double Price { get; set; }  // Price of the product
+        public double MarketPrice { get; set; }  // Price of the product
+        public double CostPrice { get; set; }
         public double Distance { get; set; } // Distance in kilometers
         public int StockQuantity { get; set; } // Quantity of the product available in this store
 

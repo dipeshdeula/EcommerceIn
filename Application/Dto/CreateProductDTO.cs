@@ -11,7 +11,8 @@ namespace Application.Dto
         public string Name { get; set;}
         public string Slug { get; set; }
         public string Description { get; set; }
-        public double Price { get; set; }
+        public double MarketPrice { get; set; }
+        public double CostPrice { get; set; }
         public double DiscountPrice { get; set; }
         public int StockQuantity { get; set; }
         public string Sku { get; set; }

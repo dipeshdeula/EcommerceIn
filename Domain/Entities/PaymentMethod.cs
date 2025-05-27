@@ -15,6 +15,7 @@ namespace Domain.Entities
         public PaymentMethodType Type { get; set; } // enum : 1 = Esewa, 2 = Khalit , 3 = COD
 
         public string Logo { get; set; } 
+        public bool IsDeleted { get; set; }
         public ICollection<PaymentRequest> PaymentRequests { get; set; }
     }
 }

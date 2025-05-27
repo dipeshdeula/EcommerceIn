@@ -54,14 +54,14 @@ namespace Application.Features.OrderFeat.Commands
                 }
 
                 // Calculate total amount
-                totalAmount += product.Price * cartItem.Quantity;
+                totalAmount += product.CostPrice * cartItem.Quantity;
 
                 // create OrderItem
                 var orderItem = new OrderItem
                 {
                     ProductId = cartItem.ProductId,
                     Quantity = cartItem.Quantity,
-                    UnitPrice = cartItem.Product.Price
+                    UnitPrice = cartItem.Product.CostPrice
                 };
                 orderItems.Add(orderItem);
 

@@ -45,7 +45,8 @@ namespace Application.Features.CategoryFeat.Queries
                 Id = p.Id,
                 Name = p.Name,
                 Description = p.Description,
-                Price = p.Price,
+                MarketPrice = p.MarketPrice,
+                CostPrice = p.CostPrice,
                 StockQuantity = p.StockQuantity,
                 Images = p.Images.Select(img=> new ProductImageDTO { 
                     Id = img.Id,

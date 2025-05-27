@@ -30,6 +30,7 @@ namespace Application.Features.CategoryFeat.UpdateCommands
             _logger = logger;
         }
 
+
         public async Task<Result<CategoryDTO>> Handle(UpdateCategoryCommand request, CancellationToken cancellationToken)
         {
             // Fetch the category from the database

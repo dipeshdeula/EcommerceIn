@@ -28,8 +28,11 @@ namespace Infrastructure.Persistence.Configurations
                 .HasMaxLength(500);
 
             // Configure decimal properties
-            builder.Property(p => p.Price).HasColumnType("decimal(18,2)");
-            builder.Property(p => p.DiscountPrice).HasColumnType("decimal(18,2)");
+            builder.Property(p => p.MarketPrice).HasColumnType("decimal(18,2)").IsRequired().HasDefaultValue(0.0);
+            builder.Property(p => p.CostPrice).HasColumnType("decimal(18,2)").IsRequired().HasDefaultValue(0.0);
+            builder.Property(p => p.DiscountPrice).HasColumnType("decimal(18,2)").HasDefaultValue(0.0);
+
+       
 
             builder.Property(p => p.StockQuantity)
            .IsRequired();

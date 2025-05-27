@@ -110,6 +110,16 @@ namespace Infrastructure.Persistence.Services
             return $"{_fileSettings.FileLocation}/{type.ToString()}/{newFileName}";
         }
 
+        public Task<string> GetImage(string fileName, string folderName)
+        {
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(),
+                "wwwroot",
+                _fileSettings.FileLocation,
+                folderName,
+                fileName);
+            return Task.FromResult(filePath);
+           //return Task.FromResult($"{_fileSettings.FileLocation}/{type}/{fileName}");
 
+        }
     }
 }
