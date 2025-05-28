@@ -50,11 +50,11 @@ var app = builder.Build();
 
 // Auto-migrate database on startup
 
-/*using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<MainDbContext>();
-    db.Database.Migrate();
-}*/
+// using (var scope = app.Services.CreateScope())
+// {
+//     var db = scope.ServiceProvider.GetRequiredService<MainDbContext>();
+//     db.Database.Migrate();
+// }
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>
@@ -82,7 +82,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapCarter();
-app.MapGet("/dbinfo", async (MainDbContext db) => {
+app.MapGet("/dbinfo", async (MainDbContext db) =>
+{
     try
     {
         bool canConnect = await db.Database.CanConnectAsync();
@@ -92,6 +93,22 @@ app.MapGet("/dbinfo", async (MainDbContext db) => {
     catch (Exception ex)
     {
         return $"DB Error: {ex.Message}";
+    }
+});
+
+app.MapGet("/health", async (MainDbContext db) => {
+    try
+    {
+        bool canConnect = await db.Database.CanConnectAsync();
+        return Results.Ok(new { 
+            status = "healthy", 
+            timestamp = DateTime.UtcNow,
+            database = canConnect ? "connected" : "disconnected"
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Health check failed: {ex.Message}");
     }
 });
 

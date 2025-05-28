@@ -600,7 +600,7 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDateTimeUtc")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasDefaultValue(new DateTime(2025, 5, 17, 4, 21, 44, 104, DateTimeKind.Utc).AddTicks(2439));
+                        .HasDefaultValue(new DateTime(2025, 5, 27, 10, 25, 17, 249, DateTimeKind.Utc).AddTicks(2407));
 
                     b.Property<DateTime>("ExpiryDateTimeUtc")
                         .HasColumnType("timestamp with time zone");
@@ -796,7 +796,7 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasDefaultValue(new DateTime(2025, 5, 17, 4, 21, 44, 91, DateTimeKind.Utc).AddTicks(4194));
+                        .HasDefaultValue(new DateTime(2025, 5, 27, 10, 25, 17, 245, DateTimeKind.Utc).AddTicks(1116));
 
                     b.Property<string>("Email")
                         .IsRequired()

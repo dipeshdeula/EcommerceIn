@@ -18,21 +18,40 @@ RUN echo "<Project><PropertyGroup><NoWarn>CS8600;CS8605;CS8625;CS0266</NoWarn><T
 # Stage 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
+
+# Install necessary packages
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=build /app/publish .
 
+
+# Create uploads directory
+RUN mkdir -p /app/uploads && chmod 755 /app/uploads
+
 # Environment variables for Render.com
-ENV PORT=8080
-ENV ASPNETCORE_URLS=http://+:${PORT}
+# ENV PORT=8080
+# ENV ASPNETCORE_URLS=http://+:${PORT}
 
-# RabbitMQ CloudAMQP settings
-ENV RabbitMQ__HostName=possum.lmq.cloudamqp.com
-ENV RabbitMQ__Username=pdnbjnjo
-ENV RabbitMQ__Password=c0GzGu_-51U_Fkzb7UnAsVvnz9JDwt8G
-ENV RabbitMQ__VirtualHost=pdnbjnjo
-ENV RabbitMQ__Ssl=true
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
 
-# RabbitMQ settings - using direct URI
-ENV RabbitMQ__Uri=amqps://pdnbjnjo:c0GzGu_-51U_Fkzb7UnAsVvnz9JDwt8G@possum.lmq.cloudamqp.com/pdnbjnjo
-ENV RabbitMQ__QueueName=ReserveStockQueue
+# # RabbitMQ CloudAMQP settings
+# ENV RabbitMQ__HostName=possum.lmq.cloudamqp.com
+# ENV RabbitMQ__Username=pdnbjnjo
+# ENV RabbitMQ__Password=c0GzGu_-51U_Fkzb7UnAsVvnz9JDwt8G
+# ENV RabbitMQ__VirtualHost=pdnbjnjo
+# ENV RabbitMQ__Ssl=true
+
+# # RabbitMQ settings - using direct URI
+# ENV RabbitMQ__Uri=amqps://pdnbjnjo:c0GzGu_-51U_Fkzb7UnAsVvnz9JDwt8G@possum.lmq.cloudamqp.com/pdnbjnjo
+# ENV RabbitMQ__QueueName=ReserveStockQueue
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
+
+# Expose port
+EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "EcommerceBackendAPI.dll"]
