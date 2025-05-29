@@ -12,10 +12,8 @@ services:
       POSTGRES_PASSWORD: dipesh
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    #ports:
-     # - "5433:5432"
     expose:
-      - "5432"  # Expose PostgreSQL port to other services in the same network
+      - "5432"
     networks:
       - ecommerce-network
     healthcheck:
@@ -34,12 +32,9 @@ services:
       RABBITMQ_DEFAULT_PASS: admin123
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
-    #ports:
-      #- "5672:5672"    # AMQP port
-      #- "15672:15672"  # Management UI
     expose:
-      - "5672"    # AMQP port
-      - "15672"   # Management UI
+      - "5672"
+      - "15672"
     networks:
       - ecommerce-network
     healthcheck:
@@ -66,13 +61,11 @@ services:
       - RabbitMQ__QueueName=ReserveStockQueue
       - RabbitMQ__Ssl=false
       # Application Settings
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
       - FileSettings__BaseUrl=http://110.34.2.30:5013
-    #ports:
-     # - "8080:8080"
-     expose:
-      - "8080"  # Expose backend API port to other services in the same network
+    expose:
+      - "8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -83,19 +76,15 @@ services:
     volumes:
       - ./uploads:/app/uploads
 
- # Nginx Reverse Proxy
+  # Nginx Reverse Proxy
   nginx:
     image: nginx:stable-alpine
     container_name: ecommerce_nginx
     restart: always
     ports:
-      #- "80:80"
-      #- "443:443"
       - "110.34.2.30:5013:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      #- ./nginx/conf.d:/etc/nginx/conf.d
-      #- ./ssl:/etc/nginx/ssl
       - ./uploads:/var/www/uploads
     depends_on:
       - backend
@@ -109,4 +98,3 @@ networks:
 volumes:
   postgres_data:
   rabbitmq_data:
-  backend_uploads:
