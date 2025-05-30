@@ -48,7 +48,7 @@ services:
 
   # Backend API
   backend:
-    image: ghcr.io/dipeshdeula/EcommerceIn:latest
+    image: ghcr.io/dipeshdeula/ecommercein:latest
       #context: .
       #dockerfile: Dockerfile
     container_name: ecommerce_backend
