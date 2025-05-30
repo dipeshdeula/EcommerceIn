@@ -13,7 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     expose:
-      - "5432"
+      - "5432:5432"
     networks:
       - ecommerce-network
     healthcheck:
@@ -32,6 +32,9 @@ services:
       RABBITMQ_DEFAULT_PASS: admin123
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "5672:5672"  # RabbitMQ port
+      - "15672:15672"  # RabbitMQ management UI
     expose:
       - "5672"
       - "15672"
@@ -45,14 +48,24 @@ services:
 
   # Backend API
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/dipeshdeula/EcommerceIn:latest
+      #context: .
+      #dockerfile: Dockerfile
     container_name: ecommerce_backend
     restart: always
     environment:
       # Database Connection
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=EcommerceInstant;Username=postgres;Password=dipesh;
+      # JWT Settings (ADDED: Missing JWT configuration)
+      - JwtSettings__Key=AQUCIKBROWNFOXJUMPSOVERALAZYDOG=@34
+      - JwtSettings__Issuer=EcommerceInstant
+      - JwtSettings__Audience=EcommerceInstant
+      - JwtSettings__ExpirationMinutes=60
+      # File Upload Settings (ADDED: Missing file configuration)
+      - FileSettings__Root=wwwroot
+      - FileSettings__FileLocation=uploads
+      - FileSettings__BaseUrl=http://110.34.2.30:5013
+
       # RabbitMQ Settings
       - RabbitMQ__HostName=rabbitmq
       - RabbitMQ__Username=admin
@@ -60,6 +73,11 @@ services:
       - RabbitMQ__VirtualHost=/
       - RabbitMQ__QueueName=ReserveStockQueue
       - RabbitMQ__Ssl=false
+      # SMTP Settings (ADDED: Missing SMTP configuration)
+      - Smtp__Host=smtp.gmail.com
+      - Smtp__Port=587
+      - Smtp__Username=deuladipesh94@gmail.com
+      - Smtp__Password=sdgw pgxy yzeg expx
       # Application Settings
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
@@ -75,6 +93,8 @@ services:
       - ecommerce-network
     volumes:
       - ./uploads:/app/uploads
+      - ./wwwroot:/app/wwwroot  # ADDED: Map wwwroot directory
+
 
   # Nginx Reverse Proxy
   nginx:
@@ -82,10 +102,12 @@ services:
     container_name: ecommerce_nginx
     restart: always
     ports:
-      - "110.34.2.30:5013:80"
+      - "5013:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./uploads:/var/www/uploads
+      - ./wwwroot:/var/www/wwwroot  # ADDED: Map wwwroot for static files
+
     depends_on:
       - backend
     networks:

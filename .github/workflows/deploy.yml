@@ -1,0 +1,102 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-test-push-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # Build Docker images (test build)
+    - name: Build Docker images
+      run: docker-compose -f docker-compose.yml build
+
+    # Run tests (adjust command for your test setup)
+    - name: Run .NET tests
+      run: |
+        dotnet test --no-build --verbosity normal
+
+    # Log in to GitHub Container Registry
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    # Build and push Docker image to GHCR
+    - name: Build and push backend image
+      run: |
+        docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
+        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+    # Copy files to server
+    - name: Copy files to server
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        source: "."
+        target: "~/EcommerceIn"
+
+    # Deploy on server via SSH
+    - name: Deploy on server via SSH
+      id: deploy
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          cd ~/app
+          docker-compose down
+          docker-compose pull
+          docker-compose up --build -d
+          docker image prune -f
+
+    # Email notification on success
+    - name: Send success email
+      if: success()
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        username: ${{ secrets.EMAIL_USER }}
+        password: ${{ secrets.EMAIL_PASS }}
+        subject: "✅ Deployment Success: ${{ github.repository }}"
+        to: deuladipesh94@gmail.com
+        from: ${{ secrets.EMAIL_USER }}
+        body: |
+          Deployment succeeded for ${{ github.repository }} on branch ${{ github.ref }}.
+          Commit: ${{ github.sha }}
+          See details at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+    # Email notification on failure
+    - name: Send failure email
+      if: failure()
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        username: ${{ secrets.EMAIL_USER }}
+        password: ${{ secrets.EMAIL_PASS }}
+        subject: "❌ Deployment Failed: ${{ github.repository }}"
+        to: deuladipesh94@gmail.com
+        from: ${{ secrets.EMAIL_USER }}
+        body: |
+          Deployment failed for ${{ github.repository }} on branch ${{ github.ref }}.
+          Commit: ${{ github.sha }}
+          See details at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

@@ -50,11 +50,53 @@ var app = builder.Build();
 
 // Auto-migrate database on startup
 
-// using (var scope = app.Services.CreateScope())
-// {
-//     var db = scope.ServiceProvider.GetRequiredService<MainDbContext>();
-//     db.Database.Migrate();
-// }
+
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<MainDbContext>();
+        
+        Console.WriteLine("Attempting to connect to database...");
+        
+        // Wait for database to be ready
+        var maxRetries = 30;
+        var retryCount = 0;
+        
+        while (retryCount < maxRetries)
+        {
+            try
+            {
+                if (await db.Database.CanConnectAsync())
+                {
+                    Console.WriteLine("Database connection successful!");
+                    Console.WriteLine("Starting database migration...");
+                    await db.Database.MigrateAsync();
+                    Console.WriteLine("Database migration completed successfully!");
+                    break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Database connection attempt {retryCount + 1}/{maxRetries} failed: {ex.Message}");
+                retryCount++;
+                
+                if (retryCount >= maxRetries)
+                {
+                    Console.WriteLine("Failed to connect to database after maximum retries.");
+                    throw;
+                }
+                
+                await Task.Delay(2000); // Wait 2 seconds before retry
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Database migration failed: {ex.Message}");
+        // Don't crash the app, but log the error
+    }
+}
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>
