@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Domain.Entities;
+using Microsoft.AspNetCore.Identity;
+using Domain.Enums;
 
 namespace Infrastructure.Persistence.Configurations
 {
@@ -17,6 +19,7 @@ namespace Infrastructure.Persistence.Configurations
             builder.Property(u => u.Password).IsRequired().HasMaxLength(100);
             builder.Property(u => u.Contact).IsRequired().HasMaxLength(15);
             builder.Property(u => u.ImageUrl).HasMaxLength(200);
+            builder.Property(u => u.Role).HasDefaultValue(UserRoles.User);
             builder.Property(u => u.IsDeleted).HasDefaultValue(false);
 
             // Configure relationships

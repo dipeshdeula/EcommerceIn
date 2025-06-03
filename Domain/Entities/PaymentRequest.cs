@@ -14,6 +14,8 @@ namespace Domain.Entities
 
         public int PaymentMethodId { get; set; } // esewa,khalti,cash on delivery
 
+        public string PaymentStatus { get; set; } // e.g ,. "Pending","Succeeded","Failed"
+
         public double PaymentAmount { get; set; }
 
         public string Currency { get; set; } = "npr";
@@ -21,6 +23,7 @@ namespace Domain.Entities
 
         public string? KhaltiPidx { get; set; } // For khalti
         public string? EsewaTransactionId { get; set; } // For esewa
+
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

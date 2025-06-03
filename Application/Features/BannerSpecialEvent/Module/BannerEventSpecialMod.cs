@@ -46,7 +46,8 @@ namespace Application.Features.BannerSpecialEvent.Module
             }).DisableAntiforgery()
                .Accepts<CreateBannerSpecialEventCommand>("multipart/form-data")
                .Produces<BannerEventSpecialDTO>(StatusCodes.Status200OK)
-               .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
+               .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest)
+               .RequireAuthorization("RequireAdmin","RequireVendor");
 
             app.MapGet("/getAllBannerEventSpecail", async (ISender mediator, int PageNumber = 1, int PageSize = 10) =>
             {
@@ -73,7 +74,8 @@ namespace Application.Features.BannerSpecialEvent.Module
        .DisableAntiforgery()
        .Accepts<UploadBannerImageCommand>("multipart/form-data")
        .Produces<IEnumerable<BannerImageDTO>>(StatusCodes.Status200OK)
-       .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
+       .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest)
+       .RequireAuthorization("RequireAdmin","RequireVendor");
 
             app.MapPut("/updateBannerEventSpecial", async (
                 int BannerId,
@@ -93,7 +95,7 @@ namespace Application.Features.BannerSpecialEvent.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 return Results.Ok(new { result.Message, result.Data });
 
-            });
+            }).RequireAuthorization("RequireAdmin","RequireVendor");
 
             app.MapPut("/activeStatus", async (int BannerId, bool IsActive, ISender mediator) =>
             {
@@ -105,7 +107,7 @@ namespace Application.Features.BannerSpecialEvent.Module
 
                 return Results.Ok(new { result.Message, result.Data });
 
-            });
+            }).RequireAuthorization("RequireAdmin","RequireVendor");
 
             app.MapDelete("softDeleteBannerEvent", async (int BannerId, ISender mediator) =>
             {
@@ -116,7 +118,7 @@ namespace Application.Features.BannerSpecialEvent.Module
                     return Results.BadRequest(new { result.Message, result.Data });
 
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).RequireAuthorization("RequireAdmin","RequireVendor");
 
             app.MapDelete("UnDeleteBannerEvent", async (int BannerId, ISender mediator) =>
             {
@@ -126,7 +128,7 @@ namespace Application.Features.BannerSpecialEvent.Module
                 if(!result.Succeeded)
                     return Results.BadRequest(new {result.Message,result.Data});
                 return Results.Ok(new { result.Message,result.Data});
-            });
+            }).RequireAuthorization("RequireAdmin","RequireVendor");
 
             app.MapDelete("HardDeleteBannerEvent", async (int BannerId, ISender mediator) =>
             {
@@ -137,7 +139,7 @@ namespace Application.Features.BannerSpecialEvent.Module
                     return Results.BadRequest(new { result.Message, result.Data });
                 return Results.Ok(new { result.Message, result.Data });
 
-            });
+            }).RequireAuthorization("RequireAdmin","RequireVendor");
 
 
         }

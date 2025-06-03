@@ -1,9 +1,12 @@
 ﻿using Application.Common;
 using Application.Dto;
+using Application.Dto.OrderDTOs;
 using Application.Extension;
 using Application.Features.CartItemFeat.Commands;
 using Application.Features.CartItemFeat.Queries;
 using Application.Interfaces.Repositories;
+using Infrastructure.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -20,17 +23,32 @@ public class RabbitMqConsumerService : BackgroundService
     private readonly ILogger<RabbitMqConsumerService> _logger;
     private readonly IRabbitMqConsumer _consumer;
     private readonly string _queueName;
+    private readonly string _queueNameOrderPlace;
+    private readonly IHubContext<AdminNotificationHub> _adminContext;
+    private readonly IHubContext<UserNotificationHub> _userNotificationHub;
+    private readonly IEmailService _emailService;
+
 
     public RabbitMqConsumerService(
         IServiceProvider serviceProvider,
         IConfiguration configuration,
         ILogger<RabbitMqConsumerService> logger,
-        IRabbitMqConsumer consumer)
+        IRabbitMqConsumer consumer,
+        IHubContext<AdminNotificationHub> adminHubContext,
+        IHubContext<UserNotificationHub> userHubContext,
+        IEmailService emailService
+
+        )
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
         _consumer = consumer;
         _queueName = configuration["RabbitMQ:QueueName"] ?? "ReserveStockQueue";
+        _adminContext = adminHubContext;
+        _userNotificationHub = userHubContext;
+        _queueNameOrderPlace = configuration["RabbitMQ:OrderPlacedQueue"] ?? "OrderPlacedQueue";
+        _userNotificationHub = userHubContext;
+        _emailService = emailService;
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -53,9 +71,54 @@ public class RabbitMqConsumerService : BackgroundService
             }
         });
 
+          // Listen to OrderPlacedQueue for admin notifications
+        _consumer.StartConsuming(_queueNameOrderPlace, async (message, properties) =>
+        {
+            try
+            {
+                var orderPlacedEvent = JsonConvert.DeserializeObject<OrderPlacedEventDTO>(message);
+                // Notify all admins via SignalR
+                await _adminContext.Clients.Group("Admins").SendAsync("OrderPlaced", orderPlacedEvent);
+                _logger.LogInformation("Admin notified of new order: {OrderId}", orderPlacedEvent.OrderId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to notify admin for order placed event.");
+            }
+        });
+
+        // Add in ExecuteAsync or similar
+        _consumer.StartConsuming("OrderConfirmedQueue", async (message, properties) =>
+        {
+            try
+            {
+                var orderConfirmedEvent = JsonConvert.DeserializeObject<OrderConfirmedEventDTO>(message);
+
+                // Real-time notification via SignalR
+                await _userNotificationHub.Clients.User(orderConfirmedEvent.UserId.ToString())
+                    .SendAsync("OrderConfirmed", new
+                    {
+                        OrderId = orderConfirmedEvent.OrderId,
+                        Message = $"Your order #{orderConfirmedEvent.OrderId} has been confirmed and will be delivered in approximately {orderConfirmedEvent.EtaMinutes} minutes."
+                    });
+
+                // Email notification
+                await _emailService.SendEmailAsync(
+                    orderConfirmedEvent.UserEmail,
+                    "Order Confirmed",
+                    $"Hello {orderConfirmedEvent.UserName},<br>Your order #{orderConfirmedEvent.OrderId} has been confirmed and will be delivered in approximately {orderConfirmedEvent.EtaMinutes} minutes.<br>Thank you for shopping with us!"
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to notify user for order confirmed event.");
+            }
+        });
+
         return Task.CompletedTask;
     }
 
+   
     private async Task ProcessMessageWithRetry(string message, IBasicProperties properties, string correlationId, string replyTo)
     {
         int retryCount = 0;

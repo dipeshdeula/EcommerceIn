@@ -1,6 +1,8 @@
 ﻿using Application.Common;
 using Application.Dto;
+using Application.Dto.OrderDTOs;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
 using Domain.Entities;
 using MediatR;
 
@@ -18,19 +20,25 @@ namespace Application.Features.OrderFeat.Commands
         private readonly IProductRepository _productRepository;
         private readonly IOrderRepository _orderRepository;
         private readonly IOrderItemRepository _orderItemRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IRabbitMqPublisher _rabbitMqPublisher;
 
         public CreatePlaceOrderCommandHandler(
             ICartItemRepository cartItemRepository,
             IProductRepository productRepository,
             IOrderRepository orderRepository,
-        IOrderItemRepository orderItemRepository
+            IOrderItemRepository orderItemRepository,
+            IUserRepository userRepository,
+            IRabbitMqPublisher rabbitMqPublisher
             )
         {
             _cartItemRepository = cartItemRepository;
             _productRepository = productRepository;
             _orderRepository = orderRepository;
             _orderItemRepository = orderItemRepository;
-                       
+            _userRepository = userRepository;
+            _rabbitMqPublisher = rabbitMqPublisher;
+
         }
         public async Task<Result<OrderDTO>> Handle(CreatePlaceOrderCommand request, CancellationToken cancellationToken)
         {
@@ -46,7 +54,7 @@ namespace Application.Features.OrderFeat.Commands
             var orderItems = new List<OrderItem>();
 
             foreach (var cartItem in cartItems)
-            { 
+            {
                 var product = await _productRepository.FindByIdAsync(cartItem.ProductId);
                 if (product == null || product.ReservedStock < cartItem.Quantity)
                 {
@@ -86,6 +94,24 @@ namespace Application.Features.OrderFeat.Commands
 
             await _orderRepository.AddAsync(order, cancellationToken);
 
+            var user = await _userRepository.FindByIdAsync(order.UserId);
+            if (user == null)
+            {
+                return Result<OrderDTO>.Failure("User id not found");
+            }
+
+            // Publish OrderPlaced event to RabbitMQ
+            var orderPlaceEvent = new OrderPlacedEventDTO
+            {
+                OrderId = order.Id,
+                UserId = request.UserId,
+                UserEmail = user.Email,
+                ProductNames = orderItems.Select(oi => oi.ProductId.ToString()).ToArray(),
+                TotalAmount = order.TotalAmount,
+                OrderDate = order.OrderDate
+            };
+
+            _rabbitMqPublisher.Publish("OrderPlacedQueue", orderPlaceEvent, Guid.NewGuid().ToString(), null);
             // Add OrdersItems
             foreach (var orderItem in orderItems)
             {
@@ -95,6 +121,8 @@ namespace Application.Features.OrderFeat.Commands
 
             // Clear cart 
             await _cartItemRepository.DeleteByUserIdAsync(request.UserId);
+
+
 
             // Return OrderDTO
             var orderDto = new OrderDTO

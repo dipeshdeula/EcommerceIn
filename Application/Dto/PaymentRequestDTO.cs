@@ -19,6 +19,8 @@ namespace Application.Dto
         public string Currency { get; set; } = "npr";
         public string Description { get; set; }
 
+        public string? PaymentUrl { get; set; }
+
         public string? KhaltiPidx { get; set; } // For khalti
         public string? EsewaTransactionId { get; set; } // For esewa
 

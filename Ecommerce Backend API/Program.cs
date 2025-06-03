@@ -1,6 +1,7 @@
 using Application.Extension;
 using Carter;
 using Infrastructure.DependencyInjection;
+using Infrastructure.Hubs;
 using Infrastructure.Persistence.Contexts;
 using Infrastructure.Persistence.Services;
 using Microsoft.EntityFrameworkCore;
@@ -23,10 +24,37 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description = "This API is responsible for overall data distribution and authorization."
     });
+
+    // Add JWT Bearer
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
 });
 builder.Services.AddAuthenticationExtension(builder.Configuration);
 builder.Services.AddCarterExtension();
 builder.Services.AddCorsExtension();
+builder.Services.AddSignalR();
 
 // Configure JSON serializer to handle reference loops and increase maximum depth
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -35,13 +63,50 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.MaxDepth = 128; // Increase the maximum depth
 });
 
+// Validate Khalti and eSewa configurations
+var khaltiKey = builder.Configuration["PaymentGateways:Khalti:SecretKey"];
+var khaltiBaseUrl = builder.Configuration["PaymentGateways:Khalti:BaseUrl"];
+var esewaMerchantId = builder.Configuration["PaymentGateways:Esewa:MerchantId"];
+var esewaBaseUrl = builder.Configuration["PaymentGateways:Esewa:BaseUrl"];
+var esewaSecret = builder.Configuration["PaymentGateways:Esewa:SecretKey"];
+
+Console.WriteLine($"Khalti Key: {khaltiKey}");
+Console.WriteLine($"Khalti Base URL: {khaltiBaseUrl}");
+Console.WriteLine($"eSewa Merchant ID: {esewaMerchantId}");
+Console.WriteLine($"eSewa Base URL: {esewaBaseUrl}");
+Console.WriteLine($"eSewa Secret Key: {esewaSecret}");
+
+if (string.IsNullOrEmpty(khaltiKey) || string.IsNullOrEmpty(khaltiBaseUrl))
+{
+    throw new InvalidOperationException("Khalti SecretKey or BaseUrl is not configured in appsettings.json");
+}
+
+if (string.IsNullOrEmpty(esewaMerchantId) || string.IsNullOrEmpty(esewaBaseUrl))
+{
+    throw new InvalidOperationException("eSewa MerchantId or BaseUrl is not configured in appsettings.json");
+}
+
+// Optional: Configure named HTTP clients for Khalti and eSewa (if needed)
+builder.Services.AddHttpClient("KhaltiClient", client =>
+{
+    client.BaseAddress = new Uri(khaltiBaseUrl);
+    client.DefaultRequestHeaders.Add("Authorization", $"Key {khaltiKey}");
+});
+
+builder.Services.AddHttpClient("EsewaClient", client =>
+{
+    client.BaseAddress = new Uri(esewaBaseUrl);
+});
+
+
+
 // Register services using your modular service registration pattern
 new ServiceRegistration().AddServices(builder.Services, builder.Configuration);
 new ServicesRegistration().AddServices(builder.Services);
 new RepositoryRegistration().AddServices(builder.Services);
 new DatabaseRegistration().AddServices(builder.Services, builder.Configuration);
 new UserServiceManager().AddServices(builder.Services);
-
+new AuthorizationServiceRegistration().AddServices(builder.Services);
 
 
 var app = builder.Build();
@@ -124,6 +189,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapCarter();
+app.MapHub<AdminNotificationHub>("/adminNotifications");
+app.MapHub<UserNotificationHub>("/userNotifications");
 app.MapGet("/dbinfo", async (MainDbContext db) =>
 {
     try
@@ -153,5 +220,6 @@ app.MapGet("/health", async (MainDbContext db) => {
         return Results.Problem($"Health check failed: {ex.Message}");
     }
 });
+
 
 app.Run();

@@ -1,5 +1,7 @@
 ﻿using Application.Common;
 using Application.Dto;
+using Application.Dto.Payment;
+using Application.Extension;
 using Application.Features.AddressFeat.Commands;
 using Application.Features.AddressFeat.Queries;
 using Application.Features.Authentication.Commands;
@@ -18,12 +20,16 @@ using Application.Features.CategoryFeat.Commands;
 using Application.Features.CategoryFeat.DeleteCommands;
 using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
+using Application.Features.CustomAuthorization.Commands;
 using Application.Features.ImageFeat.Queries;
 using Application.Features.OrderFeat.Commands;
 using Application.Features.OrderFeat.Queries;
+using Application.Features.OrderFeat.UpdateCommands;
 using Application.Features.PaymentMethodFeat.Commands;
 using Application.Features.PaymentMethodFeat.DeleteCommands;
 using Application.Features.PaymentMethodFeat.Queries;
+using Application.Features.PaymentRequestFeat.Commands;
+using Application.Features.PaymentRequestFeat.Queries;
 using Application.Features.ProductFeat.Commands;
 using Application.Features.ProductFeat.DeleteCommands;
 using Application.Features.ProductFeat.Queries;
@@ -47,6 +53,7 @@ using FluentValidation;
 using Infrastructure.Persistence.Messaging;
 using Infrastructure.Persistence.Repositories;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using RabbitMQ.Client;
 
 namespace Infrastructure.DependencyInjection
@@ -173,10 +180,15 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IBannerEventSpecialRepository, BannerEventSpecialRepository>();
             services.AddScoped<IBannerImageRepository, BannerImageRepository>();
             services.AddScoped<IPaymentMethodRepository,PaymentMethodRepository>();
+            services.AddScoped<IPaymentRequestRepository, PaymentRequestRepository>();
+
+            // Register Authorization 
+            services.AddScoped<IAuthorizationHandler, PermissionRequirementCommandHandler>();
 
 
             // Register CQRS handlers with scoped lifetime
-            services.AddScoped<IRequestHandler<RegisterCommand, IResult>, RegisterCommandHandler>();
+            services.AddScoped<IRequestHandler<RegisterCommand, Result<UserDTO>>, RegisterCommandHandler>();
+
             services.AddScoped<IRequestHandler<LoginQuery, IResult>, LoginQueryHandler>();
             services.AddScoped<IRequestHandler<VerifyOtpCommand, Result<RegisterCommand>>, VerifyOtpCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllUsersQuery, Result<IEnumerable<UserDTO>>>, GetAllUsersQueryHandler>();
@@ -262,6 +274,7 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<CreatePlaceOrderCommand,Result<OrderDTO>>, CreatePlaceOrderCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllOrderQuery,Result<IEnumerable<OrderDTO>>>, GetAllOrderQueryHandler>();
             services.AddScoped<IRequestHandler<GetOrderByUserIdQuery, Result<IEnumerable<OrderDTO>>>, GetOrderByUserIdQueryHandler>();
+            services.AddScoped<IRequestHandler<UpdateOrderConfirmedCommand,Result<bool>>,UpdateOrderConfirmedCommandHandler>();
 
             services.AddScoped<IRequestHandler<CreateBannerSpecialEventCommand, Result<BannerEventSpecialDTO>>, CreateBannerSpecialEventCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllBannerEventSpecialQuery, Result<IEnumerable<BannerEventSpecialDTO>>>, GetAllBannerEventSpecialQueryHandler>();
@@ -280,6 +293,11 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<HardDeletePaymentMethodCommand, Result<PaymentMethodDTO>>, HardDeletePaymentMethodCommandHandler>();
 
             services.AddScoped<IRequestHandler<GetImageQuery, Stream?>, GetImageQueryHandler>();
+
+            services.AddScoped<IRequestHandler<CreatePaymentRequestCommand,Result<PaymentRequestDTO>>, CreatePaymentRequestCommandHandler>();
+            services.AddScoped<IRequestHandler<GetAllPaymentQuery, Result<IEnumerable<PaymentRequestDTO>>>, GetAllPaymentQueryHandler>();
+            services.AddScoped<IRequestHandler<GetPaymentByUserIdQuery, Result<IEnumerable<PaymentRequestDTO>>>,GetPaymentByUserIdQueryHandler>();
+            services.AddScoped<IRequestHandler<VerifyPaymentCommand, Result<bool>>, VerifyPaymentCommandHandler>();
         }
     }
 
@@ -292,9 +310,11 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IEmailService, EmailService>();
             services.AddSingleton<IRabbitMqConsumer, RabbitMQConsumer>();
             services.AddSingleton<IRabbitMqPublisher, RabbitMQPublisher>();
-            services.AddHostedService<RabbitMqConsumerService>();
+            services.AddScoped<RabbitMqConsumerService>();
 
             services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
+            services.AddValidatorsFromAssemblyContaining<AddressCommandValidator>();
+            services.AddScoped<PaymentContextDto>();
 
 
 
@@ -318,4 +338,12 @@ namespace Infrastructure.DependencyInjection
             services.AddTransient<IFileServices, FileServices>();
         }
     }
+    public class AuthorizationServiceRegistration : IServicesRegistration
+    {
+        public void AddServices(IServiceCollection services)
+        {
+            services.AddCustomAuthorization();
+        }
+    }
+
 }

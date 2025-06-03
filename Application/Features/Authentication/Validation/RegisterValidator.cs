@@ -1,7 +1,6 @@
 ﻿using Application.Features.Authentication.Commands;
 using Application.Interfaces.Repositories;
 using FluentValidation;
-using System.Threading.Tasks;
 
 namespace Application.Features.Authentication.Validation
 {
@@ -15,7 +14,7 @@ namespace Application.Features.Authentication.Validation
 
             RuleFor(x => x.Name)
                 .NotEmpty().WithMessage("Name is required")
-                .Matches("^[a-zA-Z]*$").WithMessage("Name must contain only alphabets")
+                .Matches(@"^[a-zA-Z]+(\s[a-zA-Z]+)*$").WithMessage("Name must begin with letters and can contain spaces between words")    
                 .MinimumLength(3).WithMessage("Name must be at least 3 characters long");
 
             RuleFor(x => x.Contact)

@@ -1,4 +1,6 @@
-﻿namespace Domain.Entities
+﻿using Domain.Enums;
+
+namespace Domain.Entities
 {
     public class User
     {
@@ -10,6 +12,7 @@
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string ImageUrl { get; set; } = string.Empty;
         public bool IsDeleted { get; set; } = false;
+        public UserRoles Role { get; set; } = UserRoles.User;
 
         public ICollection<Address> Addresses { get; set; } = new List<Address>();
 

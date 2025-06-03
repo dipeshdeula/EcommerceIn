@@ -52,15 +52,16 @@ namespace Application.Features.Authentication.Module
                 return await mediator.Send(command);
             });
 
-            app.MapGet("/getUsers", async([FromServices] ISender mediator, int PageNumber = 1, int PageSize = 10) =>
+            app.MapGet("/getUsers", async ([FromServices] ISender mediator, int PageNumber = 1, int PageSize = 10) =>
                 {
-                var result = await mediator.Send(new GetAllUsersQuery(PageNumber, PageSize));
-                if (!result.Succeeded)
-                {
-                    return Results.BadRequest(new { result.Message, result.Errors });
-                }
-                return Results.Ok(new { result.Message, result.Data });
-            });
+                    var result = await mediator.Send(new GetAllUsersQuery(PageNumber, PageSize));
+                    if (!result.Succeeded)
+                    {
+                        return Results.BadRequest(new { result.Message, result.Errors });
+                    }
+                    return Results.Ok(new { result.Message, result.Data });
+                })
+            .RequireAuthorization("RequireAdmin");
 
             app.MapGet("/getUsersById", async (int id, [FromServices] ISender mediator )=>
             {

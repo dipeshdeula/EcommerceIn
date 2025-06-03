@@ -269,6 +269,9 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("IsConfirmed")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -296,6 +299,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<double>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
@@ -416,6 +422,10 @@ namespace Infrastructure.Migrations
 
                     b.Property<int>("PaymentMethodId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("PaymentStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
@@ -600,7 +610,7 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDateTimeUtc")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasDefaultValue(new DateTime(2025, 5, 27, 10, 25, 17, 249, DateTimeKind.Utc).AddTicks(2407));
+                        .HasDefaultValue(new DateTime(2025, 6, 1, 12, 15, 54, 416, DateTimeKind.Utc).AddTicks(9163));
 
                     b.Property<DateTime>("ExpiryDateTimeUtc")
                         .HasColumnType("timestamp with time zone");
@@ -796,7 +806,7 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasDefaultValue(new DateTime(2025, 5, 27, 10, 25, 17, 245, DateTimeKind.Utc).AddTicks(1116));
+                        .HasDefaultValue(new DateTime(2025, 6, 1, 12, 15, 54, 413, DateTimeKind.Utc).AddTicks(9698));
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -822,6 +832,11 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Role")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(5);
 
                     b.HasKey("Id");
 

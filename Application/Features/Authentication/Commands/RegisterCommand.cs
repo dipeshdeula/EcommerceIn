@@ -1,13 +1,12 @@
-﻿using Application.Interfaces.Repositories;
+﻿using Application.Common;
+using Application.Dto;
+using Application.Extension;
+using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Application.Utilities;
 using Domain.Entities;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Application.Features.Authentication.Commands
 {
@@ -17,9 +16,9 @@ namespace Application.Features.Authentication.Commands
         string Email,
         string Password,
         string Contact
-        ) : IRequest<IResult>;
+        ) : IRequest<Result<UserDTO>>;
 
-    public class RegisterCommandHandler : IRequestHandler<RegisterCommand, IResult>
+    public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<UserDTO>>
     {
         private readonly IUserRepository _userRepository;
         private readonly IFileServices _fileService;
@@ -36,18 +35,18 @@ namespace Application.Features.Authentication.Commands
             _otpService = otpService;
         }
 
-        public async Task<IResult> Handle(RegisterCommand request, CancellationToken cancellationToken)
+        public async Task<Result<UserDTO>> Handle(RegisterCommand request, CancellationToken cancellationToken)
         {
             try
             {
                 var userExist = await _userRepository.GetByEmailAsync(request.Email);
                 if (userExist != null)
                 {
-                    return Results.BadRequest("User already exists");
+                    return Result<UserDTO>.Failure("User already exists");
                 }
 
                 var otp = _otpService.GenerateOtp(request.Email);
-                await _emailService.SendEmailAsync(request.Email, "Account Verification", $"Your OTP code is {otp}");
+                await _emailService.SendEmailAsync(request.Email, "Account Verification", $"Your OTP code is: {otp}");
 
                 var user = new User
                 {
@@ -58,21 +57,16 @@ namespace Application.Features.Authentication.Commands
                     CreatedAt = DateTime.UtcNow,
                 };
 
-                //await _userRepository.AddAsync(user, cancellationToken);
+                
                 _otpService.StoreUserInfo(request.Email, user, request.Password);
 
-                return Results.Ok(new
-                {
-                    Message = "OTP has been sent to your email. Please verify your email with the OTP sent to you"
-                });
+                return Result<UserDTO>.Success(user.ToDTO(), "OTP has been sent to your email. Please verify your email with the OTP sent to you");
+
+               
             }
             catch (Exception ex)
             {
-                return Results.BadRequest(new
-                {
-                    Message = ex.Message,
-                    StatusCode = StatusCodes.Status500InternalServerError
-                });
+                return Result<UserDTO>.Failure($"Invalid OTP: {ex.Message}");
             }
         }
     }

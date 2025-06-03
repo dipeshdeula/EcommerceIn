@@ -1,6 +1,8 @@
 ﻿using Application.Features.OrderFeat.Commands;
 using Application.Features.OrderFeat.Queries;
+using Application.Features.OrderFeat.UpdateCommands;
 using Carter;
+using Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -49,6 +51,19 @@ namespace Application.Features.OrderFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 return Results.Ok(new { result.Message, result.Data });
             });
+
+            app.MapPut("/confirmOrderStatus", async (ISender mediator, int OrderId, bool IsConfirmed) =>
+            {
+                var command = new UpdateOrderConfirmedCommand(OrderId, IsConfirmed);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+
+                return Results.Ok(new { result.Message, result.Data });
+            }).RequireAuthorization("RequireAdmin");
         }
     }
 }
