@@ -1,8 +1,124 @@
+# name: CI/CD Pipeline
+
+# on:
+#   push:
+#     branches: [ main ]
+
+# env:
+#   REGISTRY: ghcr.io
+#   IMAGE_NAME: dipeshdeula/ecommercein
+
+# jobs:
+#   build-test-push-deploy:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#     - name: Checkout code
+#       uses: actions/checkout@v4
+
+#     - name: Set up Docker Buildx
+#       uses: docker/setup-buildx-action@v3
+
+#     - name: Install Docker Compose
+#       run: |
+#         sudo curl -L "https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+#         sudo chmod +x /usr/local/bin/docker-compose
+#         docker-compose version
+
+#     # Build Docker images (test build)
+#     - name: Build Docker images
+#       run: docker-compose -f docker-compose.yml build
+
+#     # Run tests (adjust command for your test setup)
+#     - name: Run .NET tests
+#       run: |
+#         dotnet test --no-build --verbosity normal
+
+#     # Log in to GitHub Container Registry
+#     - name: Log in to GitHub Container Registry
+#       uses: docker/login-action@v3
+#       with:
+#         registry: ${{ env.REGISTRY }}
+#         username: ${{ github.actor }}
+#         password: ${{ secrets.GITHUB_TOKEN }}
+
+#     # Build and push Docker image to GHCR
+#     - name: Build and push backend image
+#       run: |
+#         docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
+#         docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+#     # Copy files to server
+#     - name: Copy files to server
+#       uses: appleboy/scp-action@v0.1.7
+#       with:
+#         host: ${{ secrets.SSH_HOST }}
+#         username: ${{ secrets.SSH_USER }}
+#         password: ${{secrets.SSH_PASSWORD }}
+#        # key: ${{ secrets.SSH_KEY }}
+#         source: "."
+#         target: "~/EcommerceIn"
+
+#     # Deploy on server via SSH
+#     - name: Deploy on server via SSH
+#       id: deploy
+#       uses: appleboy/ssh-action@v1.0.3
+#       with:
+#         host: ${{ secrets.SSH_HOST }}
+#         username: ${{ secrets.SSH_USER }}
+#         password: ${{secrets.SSH_PASSWORD }}
+#         #key: ${{ secrets.SSH_KEY }}
+#         script: |
+#           cd ~/EcommerceIn
+#           docker-compose down
+#           docker-compose pull
+#           docker-compose up --build -d
+#           docker image prune -f
+
+#     # Email notification on success
+#     - name: Send success email
+#       if: success()
+#       uses: dawidd6/action-send-mail@v3
+#       with:
+#         server_address: smtp.gmail.com
+#         server_port: 465
+#         username: ${{ secrets.EMAIL_USER }}
+#         password: ${{ secrets.EMAIL_PASS }}
+#         subject: "✅ Deployment Success: ${{ github.repository }}"
+#         to: deuladipesh94@gmail.com
+#         from: ${{ secrets.EMAIL_USER }}
+#         body: |
+#           Deployment succeeded for ${{ github.repository }} on branch ${{ github.ref }}.
+#           Commit: ${{ github.sha }}
+#           See details at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+#     # Email notification on failure
+#     - name: Send failure email
+#       if: failure()
+#       uses: dawidd6/action-send-mail@v3
+#       with:
+#         server_address: smtp.gmail.com
+#         server_port: 465
+#         username: ${{ secrets.EMAIL_USER }}
+#         password: ${{ secrets.EMAIL_PASS }}
+#         subject: "❌ Deployment Failed: ${{ github.repository }}"
+#         to: deuladipesh94@gmail.com
+#         from: ${{ secrets.EMAIL_USER }}
+#         body: |
+#           Deployment failed for ${{ github.repository }} on branch ${{ github.ref }}.
+#           Commit: ${{ github.sha }}
+#           See details at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
 name: CI/CD Pipeline
 
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: read
+  packages: write
 
 env:
   REGISTRY: ghcr.io
@@ -16,25 +132,23 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore
+        
+    - name: Build
+      run: dotnet build --configuration Release
+        
+    - name: Test
+      run: dotnet test --configuration Release
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Install Docker Compose
-      run: |
-        sudo curl -L "https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-        sudo chmod +x /usr/local/bin/docker-compose
-        docker-compose version
-
-    # Build Docker images (test build)
-    - name: Build Docker images
-      run: docker-compose -f docker-compose.yml build
-
-    # Run tests (adjust command for your test setup)
-    - name: Run .NET tests
-      run: |
-        dotnet test --no-build --verbosity normal
-
-    # Log in to GitHub Container Registry
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
       with:
@@ -42,38 +156,67 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    # Build and push Docker image to GHCR
-    - name: Build and push backend image
-      run: |
-        docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
-        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-
-    # Copy files to server
-    - name: Copy files to server
-      uses: appleboy/scp-action@v0.1.7
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
       with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        password: ${{secrets.SSH_PASSWORD }}
-       # key: ${{ secrets.SSH_KEY }}
-        source: "."
-        target: "~/EcommerceIn"
+        context: .
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
-    # Deploy on server via SSH
-    - name: Deploy on server via SSH
-      id: deploy
+    # Test SSH connection before copying files
+    - name: Test SSH connection
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
-        password: ${{secrets.SSH_PASSWORD }}
-        #key: ${{ secrets.SSH_KEY }}
+        password: ${{ secrets.SSH_PASSWORD }}
         script: |
+          echo "SSH connection test successful"
+          whoami
+          pwd
+        debug: true
+
+    # Deploy using direct SSH command instead of SCP + SSH
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        password: ${{ secrets.SSH_PASSWORD }}
+        script: |
+          # Create deployment directory
+          mkdir -p ~/EcommerceIn
           cd ~/EcommerceIn
-          docker-compose down
+          
+          # Create docker-compose.yml
+          cat > docker-compose.yml << 'EOL'
+          version: '3.8'
+          services:
+            api:
+              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+              ports:
+                - "80:80"
+              restart: always
+          EOL
+          
+          # Pull and deploy
+          echo "Logging into container registry..."
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+          
+          echo "Stopping existing containers..."
+          docker-compose down || true
+          
+          echo "Pulling new image..."
           docker-compose pull
-          docker-compose up --build -d
+          
+          echo "Starting containers..."
+          docker-compose up -d
+          
+          echo "Cleaning up..."
           docker image prune -f
+        debug: true
 
     # Email notification on success
     - name: Send success email
@@ -88,7 +231,7 @@ jobs:
         to: deuladipesh94@gmail.com
         from: ${{ secrets.EMAIL_USER }}
         body: |
-          Deployment succeeded for ${{ github.repository }} on branch ${{ github.ref }}.
+          Deployment succeeded for ${{ github.repository }} on branch ${{ github.ref_name }}.
           Commit: ${{ github.sha }}
           See details at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
@@ -105,6 +248,6 @@ jobs:
         to: deuladipesh94@gmail.com
         from: ${{ secrets.EMAIL_USER }}
         body: |
-          Deployment failed for ${{ github.repository }} on branch ${{ github.ref }}.
+          Deployment failed for ${{ github.repository }} on branch ${{ github.ref_name }}.
           Commit: ${{ github.sha }}
           See details at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
