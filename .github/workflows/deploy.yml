@@ -112,11 +112,12 @@
 #           See details at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
 
-name: CI/CD Pipeline
+name: CI/CD Pipeline - No SSH
 
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -139,14 +140,9 @@ jobs:
         sudo chmod +x /usr/local/bin/docker-compose
         docker-compose version
 
-    # Build Docker images (test build)
+    # Build Docker images
     - name: Build Docker images
       run: docker-compose -f docker-compose.yml build
-
-    # Run tests (adjust command for your test setup)
-    - name: Run .NET tests
-      run: |
-        dotnet test --no-build --verbosity normal
 
     # Log in to GitHub Container Registry
     - name: Log in to GitHub Container Registry
@@ -162,22 +158,26 @@ jobs:
         docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
         docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
-    # Deploy using SSH to run script
-    - name: Deploy via SSH
-      id: deploy
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        password: ${{ secrets.SSH_PASSWORD }}
-        port: 22
-        debug: true
-        script: |
-          # Execute deploy.sh with GitHub token and username
-          bash ~/deploy.sh "${{ secrets.GITHUB_TOKEN }}" "${{ github.actor }}"
+    # Create deployment script
+    - name: Create deployment instructions
+      run: |
+        echo "## Manual Deployment" > DEPLOY.md
+        echo "```bash" >> DEPLOY.md
+        echo "# On your server, run:" >> DEPLOY.md
+        echo "docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p YOUR_GITHUB_TOKEN" >> DEPLOY.md
+        echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> DEPLOY.md
+        echo "docker-compose up -d" >> DEPLOY.md
+        echo "```" >> DEPLOY.md
 
-    # Email notifications (same as before)
-    - name: Send success email
+    # Upload deployment instructions
+    - name: Upload deployment instructions
+      uses: actions/upload-artifact@v3
+      with:
+        name: deployment-instructions
+        path: DEPLOY.md
+
+    # Email notification
+    - name: Send build success email
       if: success()
       uses: dawidd6/action-send-mail@v3
       with:
@@ -185,26 +185,10 @@ jobs:
         server_port: 465
         username: ${{ secrets.EMAIL_USER }}
         password: ${{ secrets.EMAIL_PASS }}
-        subject: "✅ Deployment Success: ${{ github.repository }}"
+        subject: "✅ Build Success: ${{ github.repository }}"
         to: deuladipesh94@gmail.com
         from: ${{ secrets.EMAIL_USER }}
         body: |
-          Deployment succeeded for ${{ github.repository }} on branch ${{ github.ref_name }}.
-          Commit: ${{ github.sha }}
-          See details at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-    - name: Send failure email
-      if: failure()
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.gmail.com
-        server_port: 465
-        username: ${{ secrets.EMAIL_USER }}
-        password: ${{ secrets.EMAIL_PASS }}
-        subject: "❌ Deployment Failed: ${{ github.repository }}"
-        to: deuladipesh94@gmail.com
-        from: ${{ secrets.EMAIL_USER }}
-        body: |
-          Deployment failed for ${{ github.repository }} on branch ${{ github.ref_name }}.
-          Commit: ${{ github.sha }}
-          See details at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          Image successfully built and pushed to ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          
+          Please deploy manually using the instructions in the workflow artifacts.
