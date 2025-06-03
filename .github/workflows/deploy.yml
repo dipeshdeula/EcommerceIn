@@ -109,6 +109,7 @@
 #           Commit: ${{ github.sha }}
 #           See details at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
+
 name: CI/CD Pipeline
 
 on:
@@ -165,27 +166,30 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-    # Test SSH connection before copying files
-    - name: Test SSH connection
-      uses: appleboy/ssh-action@v1.0.3
+    # Using the recommended SSH implementation
+    - name: Install SSH key
+      uses: webfactory/ssh-agent@v0.7.0
       with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        password: ${{ secrets.SSH_PASSWORD }}
-        script: |
-          echo "SSH connection test successful"
-          whoami
-          pwd
-        debug: true
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        
+    - name: Add host key
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-    # Deploy using direct SSH command instead of SCP + SSH
-    - name: Deploy via SSH
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        password: ${{ secrets.SSH_PASSWORD }}
-        script: |
+    - name: Deploy to server
+      env:
+        SSH_USER: ${{ secrets.SSH_USER }}
+        SSH_HOST: ${{ secrets.SSH_HOST }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_ACTOR: ${{ github.actor }}
+      run: |
+        # Debug information (safely)
+        echo "Deploying to host: $SSH_HOST"
+        echo "Using username: $SSH_USER"
+        
+        # Create and deploy using direct SSH
+        ssh $SSH_USER@$SSH_HOST "
           # Create deployment directory
           mkdir -p ~/EcommerceIn
           cd ~/EcommerceIn
@@ -195,28 +199,24 @@ jobs:
           version: '3.8'
           services:
             api:
-              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+              image: ${REGISTRY}/${IMAGE_NAME}:latest
               ports:
-                - "80:80"
+                - \"80:80\"
               restart: always
           EOL
           
-          # Pull and deploy
-          echo "Logging into container registry..."
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+          # Login to GitHub Container Registry
+          echo \"${GITHUB_TOKEN}\" | docker login ${REGISTRY} -u ${GITHUB_ACTOR} --password-stdin
           
-          echo "Stopping existing containers..."
+          # Deploy
           docker-compose down || true
-          
-          echo "Pulling new image..."
           docker-compose pull
-          
-          echo "Starting containers..."
           docker-compose up -d
-          
-          echo "Cleaning up..."
           docker image prune -f
-        debug: true
+        "
+      env:
+        REGISTRY: ${{ env.REGISTRY }}
+        IMAGE_NAME: ${{ env.IMAGE_NAME }}
 
     # Email notification on success
     - name: Send success email
