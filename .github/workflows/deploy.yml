@@ -55,6 +55,7 @@ jobs:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
         password: ${{secrets.SSH_PASSWORD }}
+        port :23 
         #key: ${{ secrets.SSH_KEY }}
         source: "."
         target: "~/EcommerceIn"
@@ -67,6 +68,7 @@ jobs:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
         password: ${{secrets.SSH_PASSWORD }}
+        port: 23
         #key: ${{ secrets.SSH_KEY }}
         script: |
           cd ~/EcommerceIn
