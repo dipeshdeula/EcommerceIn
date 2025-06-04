@@ -84,6 +84,13 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
       #- FileSettings__BaseUrl=http://110.34.2.30:5013
+
+      # Payment Gateway Settings
+      - PaymentGateways__Khalti__SecretKey=live_secret_key_68791341fdd94846a146f0457ff7b455ey
+      - PaymentGateways__Khalti__BaseUrl=https://dev.khalti.com/api/v2/
+      - PaymentGateways__Esewa__MerchantId=EPAYTEST
+      - PaymentGateways__Esewa__BaseUrl=https://rc-epay.esewa.com.np/api/epay/main/v2/
+      - PaymentGateways__Esewa__SecretKey=8gBm/:&EnhH.1/q
     expose:
       - "8080"
     depends_on:
