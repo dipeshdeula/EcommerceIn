@@ -50,9 +50,9 @@ services:
 
   # Backend API
   backend:
-    image: ghcr.io/dipeshdeula/ecommercein:latest
-      #context: .
-      #dockerfile: Dockerfile
+    #image: ghcr.io/dipeshdeula/ecommercein:latest
+    context: .
+    dockerfile: Dockerfile
     container_name: ecommerce_backend
     restart: always
     environment:
@@ -83,7 +83,7 @@ services:
       # Application Settings
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
-      - FileSettings__BaseUrl=http://110.34.2.30:5013
+      #- FileSettings__BaseUrl=http://110.34.2.30:5013
     expose:
       - "8080"
     depends_on:
