@@ -182,6 +182,11 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IPaymentMethodRepository,PaymentMethodRepository>();
             services.AddScoped<IPaymentRequestRepository, PaymentRequestRepository>();
 
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IEventProductRepository, EventProductRepository>();
+            services.AddScoped<IEventUsageRepository, EventUsageRepository>();
+            services.AddScoped<IEventRuleRepository, EventRuleRepository>();
+
             // Register Authorization 
             services.AddScoped<IAuthorizationHandler, PermissionRequirementCommandHandler>();
 

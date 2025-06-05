@@ -1,4 +1,6 @@
-﻿using Infrastructure.Persistence.Configurations;
+﻿using Domain.Entities.Common;
+using Domain.Enums.BannerEventSpecial;
+using Infrastructure.Persistence.Configurations;
 
 namespace Infrastructure.Persistence.Contexts
 {
@@ -27,6 +29,9 @@ namespace Infrastructure.Persistence.Contexts
         public DbSet<PaymentRequest> PaymentRequests { get; set; }
         public DbSet<Billing> Billings { get; set; }
         public DbSet<BannerEventSpecial> BannerEventSpecials { get; set; }
+        public DbSet<EventProduct> EventProducts { get; set; }
+        public DbSet<EventUsage> EventUsages { get; set; }
+        public DbSet<EventRule> EventRules { get; set; }
         public DbSet<BannerImage> BannerImages { get; set; }
 
 

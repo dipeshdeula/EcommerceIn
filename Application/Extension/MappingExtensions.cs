@@ -1,10 +1,7 @@
 ﻿using Application.Dto;
+using Application.Dto.BannerEventSpecialDTOs;
 using Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Domain.Entities.Common;
 
 namespace Application.Extension
 {
@@ -234,12 +231,55 @@ namespace Application.Extension
                 Id = bannerEventSpecial.Id,
                 Name = bannerEventSpecial.Name,
                 Description = bannerEventSpecial.Description,
-                Offers = bannerEventSpecial.Offers,
+                TagLine = bannerEventSpecial.TagLine,
+                EventType = bannerEventSpecial.EventType,
+                PromotionType = bannerEventSpecial.PromotionType,
+                DiscountValue = bannerEventSpecial.DiscountValue,
+                MaxDiscountAmount = bannerEventSpecial.MaxDiscountAmount,
+                MinOrderValue = bannerEventSpecial.MinOrderValue,
                 StartDate = bannerEventSpecial.StartDate,
-                EndDate = bannerEventSpecial.EndDate, 
+                EndDate = bannerEventSpecial.EndDate,
+                ActiveTimeSlot = bannerEventSpecial.ActiveTimeSlot,
+                MaxUsageCount = bannerEventSpecial.MaxUsageCount,
+                CurrentUsageCount = bannerEventSpecial.CurrentUsageCount,
+                MaxUsagePerUser = bannerEventSpecial.MaxUsagePerUser,
+                Priority = bannerEventSpecial.Priority,
                 IsActive = bannerEventSpecial.IsActive,
                 IsDeleted = bannerEventSpecial.IsDeleted,
-                Images = bannerEventSpecial.Images.Select(b => b.ToDTO()).ToList() // Map product images
+                Status = bannerEventSpecial.Status,
+                Images = bannerEventSpecial.Images?.Select(i => i.ToDTO()).ToList() ?? new List<BannerImageDTO>(),
+                Rules = bannerEventSpecial.Rules?.Select(r => r.ToDTO()).ToList() ?? new List<EventRuleDTO>(),
+                EventProducts = bannerEventSpecial.EventProducts?.Select(ep => ep.ToDTO()).ToList() ?? new List<EventProductDTO>()
+            };
+        }
+
+        public static EventRuleDTO ToDTO(this EventRule eventRule)
+        {
+            return new EventRuleDTO
+            {
+                Id = eventRule.Id,
+                Type = eventRule.Type,
+                TargetValue = eventRule.TargetValue,
+                Conditions = eventRule.Conditions,
+                DiscountType = eventRule.DiscountType,
+                DiscountValue = eventRule.DiscountValue,
+                MaxDiscount = eventRule.MaxDiscount,
+                MinOrderValue = eventRule.MinOrderValue,
+                IsActive = eventRule.IsActive,
+                Priority = eventRule.Priority
+            };
+        }
+
+        public static EventProductDTO ToDTO(this EventProduct eventProduct)
+        {
+            return new EventProductDTO
+            {
+                Id = eventProduct.Id,
+                BannerEventId = eventProduct.BannerEventId,
+                ProductId = eventProduct.ProductId,
+                ProductName = eventProduct.Product?.Name ?? string.Empty,
+                SpecificDiscount = eventProduct.SpecificDiscount,
+                IsActive = eventProduct.IsActive
             };
         }
 

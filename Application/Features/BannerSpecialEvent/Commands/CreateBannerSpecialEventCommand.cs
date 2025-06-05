@@ -1,64 +1,98 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.BannerEventSpecialDTOs;
 using Application.Enums;
 using Application.Extension;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Domain.Entities;
+using Domain.Entities.Common;
 using MediatR;
 using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Features.BannerSpecialEvent.Commands
 {
     public record CreateBannerSpecialEventCommand
         (
-            
-            string Name,
-            string Description,
-            double Offers,
-            DateTime StartDate,
-            DateTime EndDate
-     
-
+        AddBannerEventSpecialDTO EventDto,
+        List<AddEventRuleDTO>? Rules = null,
+        List<int>? ProductIds = null
         ) : IRequest<Result<BannerEventSpecialDTO>>;
 
     public class CreateBannerSpecialEventCommandHandler : IRequestHandler<CreateBannerSpecialEventCommand, Result<BannerEventSpecialDTO>>
     {
-        private readonly IBannerEventSpecialRepository _bannerSpecialEventRepository;
-        private readonly IFileServices _fileService;
-        public CreateBannerSpecialEventCommandHandler(IBannerEventSpecialRepository bannerSpecialEventRepository,IFileServices fileService)
+        private readonly IUnitOfWork _unitOfWork;
+        public CreateBannerSpecialEventCommandHandler(IUnitOfWork unitOfWork)
         {
-            _bannerSpecialEventRepository = bannerSpecialEventRepository;
-            _fileService = fileService;
-            
+            _unitOfWork = unitOfWork;
         }
         public async Task<Result<BannerEventSpecialDTO>> Handle(CreateBannerSpecialEventCommand request, CancellationToken cancellationToken)
         {
-           
-
-            // Create the new BannerEvents
-            var bannerEvent = new BannerEventSpecial
+            using var transaction = await _unitOfWork.BeginTransactionAsync();
+            try
             {
-                Name = request.Name,
-                Description = request.Description,
-                Offers = Convert.ToDouble(request.Offers),
-                StartDate = DateTime.SpecifyKind(request.StartDate, DateTimeKind.Utc),
-                EndDate = DateTime.SpecifyKind(request.EndDate, DateTimeKind.Utc),
+                var bannerEvent = new BannerEventSpecial
+                {
+                    Name = request.EventDto.Name,
+                    Description = request.EventDto.Description,
+                    TagLine = request.EventDto.TagLine,
+                    EventType = request.EventDto.EventType,
+                    PromotionType = request.EventDto.PromotionType,
+                    DiscountValue = request.EventDto.DiscountValue,
+                    MaxDiscountAmount = request.EventDto.MaxDiscountAmount,
+                    MinOrderValue = request.EventDto.MinOrderValue,
+                    StartDate = DateTime.SpecifyKind(request.EventDto.StartDate, DateTimeKind.Utc),
+                    EndDate = DateTime.SpecifyKind(request.EventDto.EndDate, DateTimeKind.Utc),
+                    ActiveTimeSlot = request.EventDto.ActiveTimeSlot,
+                    MaxUsageCount = request.EventDto.MaxUsageCount ?? int.MaxValue,
+                    MaxUsagePerUser = request.EventDto.MaxUsagePerUser ?? int.MaxValue,
+                    Priority = request.EventDto.Priority ?? 1,
+                    IsActive = false,
+                    Status = Domain.Enums.BannerEventSpecial.EventStatus.Draft
+                };
+
+                var createdEvent = await _unitOfWork.BannerEventSpecials.AddAsync(bannerEvent);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                // Create event rules
+                if (request.Rules?.Any() == true)
+                {
+                    var ruleEntities = request.Rules.Select(ruleDto => new EventRule
+                    {
+                        BannerEventId = createdEvent.Id,
+                        Type = ruleDto.Type,
+                        TargetValue = ruleDto.TargetValue,
+                        Conditions = ruleDto.Conditions,
+                        DiscountType = ruleDto.DiscountType,
+                        DiscountValue = ruleDto.DiscountValue,
+                        MaxDiscount = ruleDto.MaxDiscount,
+                        MinOrderValue = ruleDto.MinOrderValue,
+                        Priority = ruleDto.Priority,
+                    }).ToList();
+
+                    await _unitOfWork.BulkInsertAsync(ruleEntities);
+                }
+
+                // Associate specific products
+                if (request.ProductIds?.Any() == true)
+                {
+                    var productEntities = request.ProductIds.Select(productId => new EventProduct
+                    {
+                        BannerEventId = createdEvent.Id,
+                        ProductId = productId
+                    }).ToList();
+                    await _unitOfWork.BulkInsertAsync(productEntities);
+                }
+
+                    return Result<BannerEventSpecialDTO>.Success(createdEvent.ToDTO(),
+                        "Banner event created successfully. Use activation command to make it live.");
+                }
+            
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                return Result<BannerEventSpecialDTO>.Failure($"Failed to create Event:{ex.Message}");
                 
-            };
-
-            var createBannerEvent = await _bannerSpecialEventRepository.AddAsync(bannerEvent);
-
-            if (createBannerEvent == null)
-                return Result<BannerEventSpecialDTO>.Failure("Failed to create banner special event");
-
-            // Map to DTO 
-            return Result<BannerEventSpecialDTO>.Success(createBannerEvent.ToDTO(), "Banner special event created successfully");
+            }
         }
     }
 
