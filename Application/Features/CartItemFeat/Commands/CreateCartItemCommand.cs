@@ -40,9 +40,14 @@ namespace Application.Features.CartItemFeat.Commands
                 var response = await _rabbitMqPublisher.WaitForResponseAsync(_replyQueueName, correlationId, cancellationToken);
                 return JsonConvert.DeserializeObject<Result<CartItemDTO>>(response.ToString());
             }
-            catch (TaskCanceledException)
+            catch (TaskCanceledException te)
             {
                 return Result<CartItemDTO>.Failure("Timeout waiting for the consumer to process the request.");
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine("Error in creating cart item, Error Message: " + e.Message);
+                return Result<CartItemDTO>.Failure("An error occurred while processing the request.");
             }
         }
     }

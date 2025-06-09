@@ -13,7 +13,7 @@ namespace Application.Interfaces.Services
     {
         string GenerateAccessToken(User user);
         string GenerateRefreshToken(User user);
-
+        string GetServiceToken();
         ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
         Task<TokenResponseDto> RefreshTokenAsync(TokenRequestDto tokenRequest);
     }

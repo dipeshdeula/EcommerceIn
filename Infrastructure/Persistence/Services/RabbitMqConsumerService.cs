@@ -6,12 +6,16 @@ using Application.Features.CartItemFeat.Commands;
 using Application.Features.CartItemFeat.Queries;
 using Application.Interfaces.Repositories;
 using Infrastructure.Hubs;
+using Infrastructure.Persistence.Configurations;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RabbitMQ.Client;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Channels;
 
@@ -27,7 +31,9 @@ public class RabbitMqConsumerService : BackgroundService
     private readonly IHubContext<AdminNotificationHub> _adminContext;
     private readonly IHubContext<UserNotificationHub> _userNotificationHub;
     private readonly IEmailService _emailService;
-
+    private readonly ITokenService _serviceTokenProvider;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly string _baseUrl;
 
     public RabbitMqConsumerService(
         IServiceProvider serviceProvider,
@@ -37,8 +43,11 @@ public class RabbitMqConsumerService : BackgroundService
         IHubContext<AdminNotificationHub> adminHubContext,
         IHubContext<UserNotificationHub> userHubContext,
         IEmailService emailService
-
-        )
+,
+        ITokenService serviceTokenProvider
+,
+        IHttpClientFactory httpClientFactory,
+        IOptions<ApiConfig> apiConfig)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
@@ -49,12 +58,16 @@ public class RabbitMqConsumerService : BackgroundService
         _queueNameOrderPlace = configuration["RabbitMQ:OrderPlacedQueue"] ?? "OrderPlacedQueue";
         _userNotificationHub = userHubContext;
         _emailService = emailService;
+        _serviceTokenProvider = serviceTokenProvider;
+        _httpClientFactory = httpClientFactory;
+
+        _baseUrl = apiConfig.Value.BaseUrl;
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
-        {
+    {
         _logger.LogInformation("RabbitMqConsumerService started.");
-
+        const string functionName = nameof(ExecuteAsync);
         _consumer.StartConsuming(_queueName, async (message, properties) =>
         {
             var correlationId = properties.CorrelationId;
@@ -76,10 +89,38 @@ public class RabbitMqConsumerService : BackgroundService
         {
             try
             {
-                var orderPlacedEvent = JsonConvert.DeserializeObject<OrderPlacedEventDTO>(message);
+                if (string.IsNullOrWhiteSpace(message))
+                {
+                    _logger.LogWarning("{Function}: Received empty message.", functionName);
+                    return;
+                }
+                //var orderPlacedEvent = JsonConvert.DeserializeObject<OrderPlacedEventDTO>(message);
+
+                var jsonMessage = JObject.Parse(message);
+
+                var token = _serviceTokenProvider.GetServiceToken();
+                using var httpClient = _httpClientFactory.CreateClient();
+                var request = new HttpRequestMessage(HttpMethod.Post,
+                    $"{_baseUrl}send-to-admin")
+                {
+                    Content = new StringContent(message, Encoding.UTF8, "application/json")
+                };
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                var response = await httpClient.SendAsync(request, stoppingToken);
+
                 // Notify all admins via SignalR
-                await _adminContext.Clients.Group("Admins").SendAsync("OrderPlaced", orderPlacedEvent);
-                _logger.LogInformation("Admin notified of new order: {OrderId}", orderPlacedEvent.OrderId);
+                
+                var destination = request.RequestUri.ToString();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation("Successfully forwarded notification to {Destination}.", destination);
+                }
+                else
+                {
+                    _logger.LogError("Failed to forward notification. Destination: {Destination}, Status Code: {StatusCode}", destination, response.StatusCode);
+                }
             }
             catch (Exception ex)
             {
@@ -152,6 +193,7 @@ public class RabbitMqConsumerService : BackgroundService
         using var scope = _serviceProvider.CreateScope();
         var services = scope.ServiceProvider;
 
+        var stockService = services.GetRequiredService<IStockReservationService>();
         var request = JsonConvert.DeserializeObject<CreateCartItemCommand>(message);
         if (request == null)
         {
@@ -159,71 +201,14 @@ public class RabbitMqConsumerService : BackgroundService
             return;
         }
 
-        var dbContext = services.GetRequiredService<MainDbContext>();
-        var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+        var result = await stockService.ReserveStockAsync(request, correlationId, replyTo);
 
-        await executionStrategy.ExecuteAsync(async () =>
-        {
-            await using var transaction = await dbContext.Database.BeginTransactionAsync();
-
-            try
-            {
-                var productRepository = services.GetRequiredService<IProductRepository>();
-                var cartItemRepository = services.GetRequiredService<ICartItemRepository>();
-
-                // Get product
-                var product = await productRepository.FindByIdAsync(request.ProductId);
-                if (product == null)
-                {
-                    await SendErrorResponse(replyTo, correlationId, $"Product not found: {request.ProductId}");
-                    return;
-                }
-
-                
-
-                // Check stock
-                if (product.AvailableStock < request.Quantity)
-                {
-                    await SendErrorResponse(replyTo, correlationId,
-                        $"Insufficient stock for product: {product.Name}. Available: {product.AvailableStock}");
-                    return;
-                }
-
-                // check time constraint
-                
-
-                // Reserve stock
-                product.ReservedStock += request.Quantity;
-                await productRepository.UpdateAsync(product);
-
-                // Create cart item
-                var cartItem = new CartItem
-                {
-                    UserId = request.UserId,
-                    ProductId = request.ProductId,
-                    Quantity = request.Quantity
-                };
-
-                await cartItemRepository.AddAsync(cartItem);
-                await dbContext.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                // Load navigation properties
-                await cartItemRepository.LoadNavigationProperties(cartItem);
-
-                // Send success response
-                var responseData = cartItem.ToDTO();
-                await SendSuccessResponse(replyTo, correlationId, responseData);
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, "Transaction failed for request {CorrelationId}", correlationId);
-                await SendErrorResponse(replyTo, correlationId, "Failed to process cart item request.");
-                throw; // Rethrow to trigger retry logic
-            }
-        });
+        if (result.Succeeded)
+            await SendSuccessResponse(replyTo, correlationId, result.Data);
+        else
+            await SendErrorResponse(replyTo, correlationId, result.Message);
     }
+
 
     private async Task SendSuccessResponse(string replyTo, string correlationId, CartItemDTO data)
     {

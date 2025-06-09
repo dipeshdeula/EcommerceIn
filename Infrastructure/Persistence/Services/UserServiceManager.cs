@@ -28,5 +28,7 @@ public class UserServiceManager : IServicesRegistration
         });
 
         services.AddScoped<ApiExceptionFilter>();
+        services.AddScoped<IStockReservationService, StockReservationService>();
+
     }
 }

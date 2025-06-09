@@ -1,6 +1,7 @@
 ﻿using Application.Common;
 using Application.Dto;
 using Application.Dto.OrderDTOs;
+using Application.Features.OrderFeat.Events;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Domain.Entities;
@@ -22,15 +23,15 @@ namespace Application.Features.OrderFeat.Commands
         private readonly IOrderItemRepository _orderItemRepository;
         private readonly IUserRepository _userRepository;
         private readonly IRabbitMqPublisher _rabbitMqPublisher;
-
+        private readonly IMediator _mediator;
         public CreatePlaceOrderCommandHandler(
             ICartItemRepository cartItemRepository,
             IProductRepository productRepository,
             IOrderRepository orderRepository,
             IOrderItemRepository orderItemRepository,
             IUserRepository userRepository,
-            IRabbitMqPublisher rabbitMqPublisher
-            )
+            IRabbitMqPublisher rabbitMqPublisher,
+            IMediator mediator)
         {
             _cartItemRepository = cartItemRepository;
             _productRepository = productRepository;
@@ -38,7 +39,7 @@ namespace Application.Features.OrderFeat.Commands
             _orderItemRepository = orderItemRepository;
             _userRepository = userRepository;
             _rabbitMqPublisher = rabbitMqPublisher;
-
+            _mediator = mediator;
         }
         public async Task<Result<OrderDTO>> Handle(CreatePlaceOrderCommand request, CancellationToken cancellationToken)
         {
@@ -101,17 +102,25 @@ namespace Application.Features.OrderFeat.Commands
             }
 
             // Publish OrderPlaced event to RabbitMQ
-            var orderPlaceEvent = new OrderPlacedEventDTO
-            {
-                OrderId = order.Id,
-                UserId = request.UserId,
-                UserEmail = user.Email,
-                ProductNames = orderItems.Select(oi => oi.ProductId.ToString()).ToArray(),
-                TotalAmount = order.TotalAmount,
-                OrderDate = order.OrderDate
-            };
+            //var orderPlaceEvent = new OrderPlacedEventDTO
+            //{
+            //    OrderId = order.Id,
+            //    UserId = request.UserId,
+            //    UserEmail = user.Email,
+            //    ProductNames = orderItems.Select(oi => oi.ProductId.ToString()).ToArray(),
+            //    TotalAmount = order.TotalAmount,
+            //    OrderDate = order.OrderDate
+            //};
 
-            _rabbitMqPublisher.Publish("OrderPlacedQueue", orderPlaceEvent, Guid.NewGuid().ToString(), null);
+            //_rabbitMqPublisher.Publish("OrderPlacedQueue", orderPlaceEvent, Guid.NewGuid().ToString(), null);
+
+            await _mediator.Publish(new OrderPlacedEvent
+            {
+                Order = order,
+                User = user,
+                ProductNames = orderItems.Select(oi => oi.ProductId.ToString()).ToArray()
+            });
+
             // Add OrdersItems
             foreach (var orderItem in orderItems)
             {

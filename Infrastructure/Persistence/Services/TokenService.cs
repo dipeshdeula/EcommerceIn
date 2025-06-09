@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Runtime;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -21,7 +22,8 @@ namespace Infrastructure.Persistence.Services
         private readonly JwtTokenSetting _jwtSettings;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IUserRepository _userRepository;
-
+        private string _cachedToken;
+        private DateTime _tokenExpiryTime;
         public TokenService(IOptions<JwtTokenSetting> jwtSettings,IRefreshTokenRepository refreshTokenRepository, IUserRepository userRepository)
         {
             _jwtSettings = jwtSettings.Value ?? throw new ArgumentNullException(nameof(jwtSettings));
@@ -40,6 +42,39 @@ namespace Infrastructure.Persistence.Services
             };
 
             return GenerateTokenWithExpiry(claims, TimeSpan.FromMinutes(_jwtSettings.ExpirationMinutes));
+        }
+
+        public string GetServiceToken()
+        {
+            if (!string.IsNullOrEmpty(_cachedToken) && DateTime.UtcNow < _tokenExpiryTime)
+            {
+                return _cachedToken;
+            }
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Iss, _jwtSettings.Issuer),
+                new Claim(JwtRegisteredClaimNames.Aud, _jwtSettings.Audience)
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: _jwtSettings.Issuer,
+                audience: _jwtSettings.Audience,
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes),
+                signingCredentials: creds
+            );
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            _cachedToken = tokenHandler.WriteToken(token);
+            _tokenExpiryTime = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
+
+            return _cachedToken;
         }
 
         public string GenerateRefreshToken(User user)
