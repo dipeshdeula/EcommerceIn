@@ -23,7 +23,7 @@ namespace Infrastructure.Persistence.Repositories
         public async Task<IEnumerable<EventProduct>> GetByProductIdAsync(int productId)
         {
             return await _context.EventProducts.Where(
-                ep => ep.ProductId == productId && ep.IsActive && !ep.IsDeleted)
+                ep => ep.ProductId == productId  && !ep.IsDeleted)
                 .Include(ep => ep.BannerEvent)
                 .Where(ep => ep.BannerEvent.IsActive && !ep.BannerEvent.IsDeleted)
                 .ToListAsync();

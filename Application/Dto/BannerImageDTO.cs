@@ -10,5 +10,7 @@ namespace Application.Dto
     {
         public int Id { get; set; }
         public string ImageUrl { get; set; } = string.Empty;
+
+        public int BannerEventId { get; set; }
     }
 }

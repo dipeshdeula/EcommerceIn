@@ -16,7 +16,7 @@ namespace Domain.Entities
 
         public string PaymentStatus { get; set; } // e.g ,. "Pending","Succeeded","Failed"
 
-        public double PaymentAmount { get; set; }
+        public decimal PaymentAmount { get; set; }
 
         public string Currency { get; set; } = "npr";
         public string Description { get; set; }

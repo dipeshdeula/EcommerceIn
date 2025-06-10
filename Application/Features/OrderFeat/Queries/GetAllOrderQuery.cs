@@ -1,9 +1,9 @@
 ﻿using Application.Common;
-using Application.Dto;
 using Application.Interfaces.Repositories;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Application.Extension;
+using Application.Dto.OrderDTOs;
 
 
 namespace Application.Features.OrderFeat.Queries
@@ -27,7 +27,8 @@ namespace Application.Features.OrderFeat.Queries
                 orderBy:query=>query.OrderByDescending(order=>order.OrderDate),
                 skip:(request.PageNumber-1)*request.PageSize,
                 take:request.PageSize,
-                includeProperties:"Items"
+                includeProperties:"Items",
+                cancellationToken:cancellationToken
                 );
             ;
             // Map order to DTOs

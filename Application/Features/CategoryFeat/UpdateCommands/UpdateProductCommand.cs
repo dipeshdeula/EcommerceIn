@@ -1,5 +1,5 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.ProductDTOs;
 using Application.Interfaces.Repositories;
 using MediatR;
 using Microsoft.Extensions.Logging;

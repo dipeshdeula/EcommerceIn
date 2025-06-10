@@ -58,6 +58,9 @@ namespace Infrastructure.Persistence.Contexts
             builder.ApplyConfiguration(new BillingConfig());
             builder.ApplyConfiguration(new BannerEventSpecialConfig());
             builder.ApplyConfiguration(new BannerImageConfig());
+            builder.ApplyConfiguration(new EventProductConfig());
+            builder.ApplyConfiguration(new EventRuleConfig());
+            builder.ApplyConfiguration(new EventUsageConfig());
 
         }
     }

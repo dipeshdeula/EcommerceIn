@@ -8,12 +8,12 @@ namespace Domain.Enums.BannerEventSpecial
 {
     public enum EventType
     {
-        Seasonal,    // Summer, Winter sales
-        Festive,     // Christmas, Diwali, Eid
-        Occasional,  // Back to school, Valentine's
-        Flash,       // Limited time offers
-        Clearance,   // End of season
-        NewArrival,  // Launch promotions
-        Loyalty      // Member exclusive
+        Seasonal = 0,    // Summer, Winter sales
+        Festive = 1,     // Christmas, Diwali, Eid
+        Occasional = 2,  // Back to school, Valentine's
+        Flash = 3,       // Limited time offers
+        Clearance = 4,   // End of season
+        NewArrival = 5,  // Launch promotions
+        Loyalty = 6      // Member exclusive
     }
 }

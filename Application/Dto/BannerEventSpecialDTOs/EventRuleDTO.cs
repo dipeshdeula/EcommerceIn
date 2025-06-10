@@ -17,7 +17,17 @@ namespace Application.Dto.BannerEventSpecialDTOs
         public decimal DiscountValue { get; set; }
         public decimal? MaxDiscount { get; set; }
         public decimal? MinOrderValue { get; set; }
-        public bool IsActive { get; set; }
         public int Priority { get; set; }
+
+        public string RuleDescription => GenerateRuleDescription();
+
+        private string GenerateRuleDescription()
+        {
+            var discount = DiscountType == PromotionType.Percentage
+                ? $"{DiscountValue}%"
+                : $"${DiscountValue}";
+
+            return $"{Type}: {TargetValue} → {discount} discount";
+        }
     }
 }

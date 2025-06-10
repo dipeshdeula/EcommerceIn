@@ -1,6 +1,11 @@
 ﻿using Application.Common;
+using Application.Common.Models;
 using Application.Dto;
+using Application.Dto.BannerEventSpecialDTOs;
+using Application.Dto.CategoryDTOs;
+using Application.Dto.OrderDTOs;
 using Application.Dto.Payment;
+using Application.Dto.ProductDTOs;
 using Application.Extension;
 using Application.Features.AddressFeat.Commands;
 using Application.Features.AddressFeat.Queries;
@@ -54,7 +59,9 @@ using Infrastructure.Persistence.Messaging;
 using Infrastructure.Persistence.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using RabbitMQ.Client;
+using System.Collections.Generic;
 
 namespace Infrastructure.DependencyInjection
 {
@@ -186,6 +193,8 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IEventProductRepository, EventProductRepository>();
             services.AddScoped<IEventUsageRepository, EventUsageRepository>();
             services.AddScoped<IEventRuleRepository, EventRuleRepository>();
+            services.AddScoped<IProductPricingService, ProductPricingService>();
+            services.AddScoped<ICurrentUserService,CurrentUserService>();
 
             // Register Authorization 
             services.AddScoped<IAuthorizationHandler, PermissionRequirementCommandHandler>();
@@ -252,6 +261,7 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<GetNearbyProductsQuery,Result<IEnumerable<NearbyProductDto>>>,GetNearbyProductQueryHandler>();
             services.AddScoped<IRequestHandler<CreateStoreCommand,Result<StoreDTO>>, CreateStoreCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllStoreQuery, Result<IEnumerable<StoreDTO>>>, GetAllStoreQueryHandler>();
+            services.AddScoped<IRequestHandler<GetProductsWithPricingQuery,Result<IEnumerable<ProductWithPricingDTO>>>, GetProductsWithPricingQueryHandler>();
             services.AddScoped<IRequestHandler<UpdateStoreCommand,Result<StoreDTO>>, UpdateStoreCommandHandler>();
             services.AddScoped<IRequestHandler<SoftDeleteStoreCommand,Result<StoreDTO>>, SoftDeleteStoreCommandHandler>();
             services.AddScoped<IRequestHandler<UnDeleteStoreCommand, Result<StoreDTO>>, UnDeleteStoreCommandHandler>();
@@ -282,9 +292,11 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<UpdateOrderConfirmedCommand,Result<bool>>,UpdateOrderConfirmedCommandHandler>();
 
             services.AddScoped<IRequestHandler<CreateBannerSpecialEventCommand, Result<BannerEventSpecialDTO>>, CreateBannerSpecialEventCommandHandler>();
-            services.AddScoped<IRequestHandler<GetAllBannerEventSpecialQuery, Result<IEnumerable<BannerEventSpecialDTO>>>, GetAllBannerEventSpecialQueryHandler>();
+            services.AddScoped<IRequestHandler<GetAllBannerEventSpecialQuery, Result<PagedResult<BannerEventSpecialDTO>>>, GetAllBannerEventSpecialQueryHandler>();
+            services.AddScoped<IRequestHandler<GetActiveBannerEventsQuery, Result<IEnumerable<BannerEventSpecialDTO>>>, GetActiveBannerEventsQueryHandler>();
+            services.AddScoped<IRequestHandler<GetBannerEventByIdQuery, Result<BannerEventSpecialDTO>>, GetBannerEventByIdQueryHandler>();
             services.AddScoped<IRequestHandler<UpdateBannerSpecialEventCommand, Result<BannerEventSpecialDTO>>, UpdateBannerSpecialEventCommandHandler>();
-            services.AddScoped<IRequestHandler<UpdateBannerEventSpecialActiveStatus, Result<BannerEventSpecialDTO>>, UpdateBannerEventSpecialActiveStatusHandler>();
+            services.AddScoped<IRequestHandler<ActivateBannerEventCommand, Result<BannerEventSpecialDTO>>, ActivateBannerEventCommandHandler>();
             services.AddScoped<IRequestHandler<UploadBannerImageCommand, Result<IEnumerable<BannerImageDTO>>>, UploadBannerImageCommandHandler>();
             services.AddScoped<IRequestHandler<SoftDeleteBannerEventCommand, Result<BannerEventSpecialDTO>>, SoftDeleteBannerEventCommandHandler>();
             services.AddScoped<IRequestHandler<UnDeleteBannerEventCommand, Result<BannerEventSpecialDTO>>, UnDeleteBannerEventCommandHandler>();
@@ -320,12 +332,10 @@ namespace Infrastructure.DependencyInjection
             services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
             services.AddValidatorsFromAssemblyContaining<AddressCommandValidator>();
             services.AddScoped<PaymentContextDto>();
+            services.AddHostedService<EventPriceInvalidationService>();
+            services.AddMemoryCache();
 
-
-
-
-
-
+            services.AddSingleton<INepalTimeZoneService, NepalTimeZoneService>();
 
             // OtpSettings is a configuration setting, so it can be singleton
             services.AddScoped<OtpSettings>();

@@ -16,7 +16,7 @@ namespace Application.Dto
         public string PaymentStatus { get; set; }
         public PaymentMethodDTO PaymentMethod { get; set; }
         public DateTime CreatedAt { get; set; }
-        public double TotalAmount { get; set; }
+        public decimal TotalAmount { get; set; }
 
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Domain.Entities.Common
 {
-    public class EventUsage : BaseEntity
+    public class EventUsage 
     {
         public int Id { get; set; }
         public int BannerEventId { get; set; }
@@ -16,6 +16,6 @@ namespace Domain.Entities.Common
         public int? OrderId { get; set; }
         public decimal DiscountApplied { get; set; }
         public DateTime UsedAt { get; set; } = DateTime.UtcNow;
-        public bool IsDeleted { get; set; } = false;
+        public bool IsDeleted { get; set; }
     }
 }

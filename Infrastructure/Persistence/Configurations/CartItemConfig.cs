@@ -17,11 +17,11 @@ namespace Infrastructure.Persistence.Configurations
 
             builder.Property(ci => ci.CreatedAt)
                   .HasColumnType("timestamp with time zone")
-                  .HasDefaultValueSql("NOW()"); // Default to current UTC time
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP"); // Default to current UTC time
 
             builder.Property(ci => ci.UpdatedAt)
                    .HasColumnType("timestamp with time zone")
-                   .HasDefaultValueSql("NOW()"); // Default to current UTC time
+                   .HasDefaultValueSql("CURRENT_TIMESTAMP"); // Default to current UTC time
 
             builder.Property(ci => ci.IsDeleted)
                    .HasDefaultValue(false);

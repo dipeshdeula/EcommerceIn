@@ -19,16 +19,32 @@ namespace Application.Interfaces.Services
         IEventUsageRepository EventUsages { get; }
         IProductRepository Products { get; }
         ICategoryRepository Categories { get; }
+        ISubCategoryRepository SubCategories { get; }
+        ISubSubCategoryRepository SubSubCategories { get; }
+        IUserRepository Users { get; }
+        IOrderRepository Orders { get; }
+        IOrderItemRepository OrderItems { get; }
+        ICartItemRepository CartItems { get; }
+        IAddressRepository Addresses { get; }
+        IStoreRepository Stores { get; }
+        IStoreAddressRepository StoreAddresses { get; }
+        IPaymentMethodRepository PaymentMethods { get; }
 
         // Transaction management
-        Task<IDbContextTransaction> BeginTransactionAsync();
+       // Task<IDbContextTransaction> BeginTransactionAsync();
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
-        Task CommitTransactionAsync();
-        Task RollbackTransactionAsync();
+        //Task CommitTransactionAsync();
+        //Task RollbackTransactionAsync();
 
         // Bulk operations
         Task<int> ExecuteSqlRawAsync(string sql, params object[] parameters);
         Task BulkInsertAsync<T>(IEnumerable<T> entities) where T : class;
         Task BulkUpdateAsync<T>(IEnumerable<T> entities) where T : class;
+
+        
+        // ✅ Advanced operations
+        Task<int> SaveChangesWithRetryAsync(int maxRetries = 3, CancellationToken cancellationToken = default);
+        Task ExecuteInTransactionAsync(Func<Task> operation);
+        Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> operation);
     }
 }

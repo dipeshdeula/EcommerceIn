@@ -1,5 +1,4 @@
 ﻿using Application.Common;
-using Application.Dto;
 using Application.Dto.OrderDTOs;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
@@ -50,7 +49,7 @@ namespace Application.Features.OrderFeat.Commands
             }
 
             // Validate stock and calcualte total amount
-            double totalAmount = 0;
+            decimal totalAmount = 0;
             var orderItems = new List<OrderItem>();
 
             foreach (var cartItem in cartItems)

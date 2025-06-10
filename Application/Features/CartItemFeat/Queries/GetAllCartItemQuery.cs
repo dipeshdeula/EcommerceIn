@@ -27,7 +27,8 @@ namespace Application.Features.CartItemFeat.Queries
                 orderBy: query => query.OrderByDescending(cartItem => cartItem.Id),
                 skip: (request.PageNumber - 1) * request.PageSize,
                 take: request.PageSize,
-                includeProperties:"User,Product"
+                includeProperties:"User,Product",
+                cancellationToken:cancellationToken
                
                 );
             // Map categories to DTOs

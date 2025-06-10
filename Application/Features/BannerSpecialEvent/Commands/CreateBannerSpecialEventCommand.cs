@@ -1,99 +1,139 @@
 ﻿using Application.Common;
 using Application.Dto.BannerEventSpecialDTOs;
-using Application.Enums;
 using Application.Extension;
-using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Domain.Entities;
 using Domain.Entities.Common;
+using Domain.Enums.BannerEventSpecial;
 using MediatR;
-using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Features.BannerSpecialEvent.Commands
 {
-    public record CreateBannerSpecialEventCommand
-        (
-        AddBannerEventSpecialDTO EventDto,
-        List<AddEventRuleDTO>? Rules = null,
-        List<int>? ProductIds = null
-        ) : IRequest<Result<BannerEventSpecialDTO>>;
+    public record CreateBannerSpecialEventCommand(
+         CreateBannerSpecialEventDTO bannerSpecialDTO
+     ) : IRequest<Result<BannerEventSpecialDTO>>;
 
     public class CreateBannerSpecialEventCommandHandler : IRequestHandler<CreateBannerSpecialEventCommand, Result<BannerEventSpecialDTO>>
     {
         private readonly IUnitOfWork _unitOfWork;
-        public CreateBannerSpecialEventCommandHandler(IUnitOfWork unitOfWork)
+        private readonly ILogger<CreateBannerSpecialEventCommandHandler> _logger;
+        private readonly INepalTimeZoneService _nepalTimeZoneService;
+
+        public CreateBannerSpecialEventCommandHandler(
+            IUnitOfWork unitOfWork,
+            ILogger<CreateBannerSpecialEventCommandHandler> logger,
+            INepalTimeZoneService nepalTimeZoneService)
         {
             _unitOfWork = unitOfWork;
+            _logger = logger;
+            _nepalTimeZoneService = nepalTimeZoneService;
         }
+
         public async Task<Result<BannerEventSpecialDTO>> Handle(CreateBannerSpecialEventCommand request, CancellationToken cancellationToken)
         {
-            using var transaction = await _unitOfWork.BeginTransactionAsync();
             try
             {
-                var bannerEvent = new BannerEventSpecial
+                return await _unitOfWork.ExecuteInTransactionAsync(async () =>
                 {
-                    Name = request.EventDto.Name,
-                    Description = request.EventDto.Description,
-                    TagLine = request.EventDto.TagLine,
-                    EventType = request.EventDto.EventType,
-                    PromotionType = request.EventDto.PromotionType,
-                    DiscountValue = request.EventDto.DiscountValue,
-                    MaxDiscountAmount = request.EventDto.MaxDiscountAmount,
-                    MinOrderValue = request.EventDto.MinOrderValue,
-                    StartDate = DateTime.SpecifyKind(request.EventDto.StartDate, DateTimeKind.Utc),
-                    EndDate = DateTime.SpecifyKind(request.EventDto.EndDate, DateTimeKind.Utc),
-                    ActiveTimeSlot = request.EventDto.ActiveTimeSlot,
-                    MaxUsageCount = request.EventDto.MaxUsageCount ?? int.MaxValue,
-                    MaxUsagePerUser = request.EventDto.MaxUsagePerUser ?? int.MaxValue,
-                    Priority = request.EventDto.Priority ?? 1,
-                    IsActive = false,
-                    Status = Domain.Enums.BannerEventSpecial.EventStatus.Draft
-                };
+                    var inputDto = request.bannerSpecialDTO.EventDto;
 
-                var createdEvent = await _unitOfWork.BannerEventSpecials.AddAsync(bannerEvent);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                    // ✅ PARSE NEPAL TIME STRINGS TO DATETIME
+                    if (!DateTime.TryParse(inputDto.StartDateNepal, out var startDateNepalParsed))
+                        throw new ArgumentException($"Invalid start date format: {inputDto.StartDateNepal}");
 
-                // Create event rules
-                if (request.Rules?.Any() == true)
-                {
-                    var ruleEntities = request.Rules.Select(ruleDto => new EventRule
+                    if (!DateTime.TryParse(inputDto.EndDateNepal, out var endDateNepalParsed))
+                        throw new ArgumentException($"Invalid end date format: {inputDto.EndDateNepal}");
+
+                    // ✅ CONVERT NEPAL TIME TO UTC WITH PROPER DateTimeKind
+                    var startDateUtc = _nepalTimeZoneService.ConvertFromNepalToUtc(startDateNepalParsed);
+                    var endDateUtc = _nepalTimeZoneService.ConvertFromNepalToUtc(endDateNepalParsed);
+
+                    // ✅ ENSURE UTC KIND FOR POSTGRESQL
+                    startDateUtc = DateTime.SpecifyKind(startDateUtc, DateTimeKind.Utc);
+                    endDateUtc = DateTime.SpecifyKind(endDateUtc, DateTimeKind.Utc);
+
+                    // ✅ CREATE BANNER EVENT ENTITY USING MAPPING EXTENSION
+                    var bannerEvent = inputDto.ToEntity(startDateUtc, endDateUtc);
+                    var createdEvent = await _unitOfWork.BannerEventSpecials.AddAsync(bannerEvent, cancellationToken);
+
+                    // ✅ CREATE EVENT RULES
+                    if (request.bannerSpecialDTO.Rules?.Any() == true)
                     {
-                        BannerEventId = createdEvent.Id,
-                        Type = ruleDto.Type,
-                        TargetValue = ruleDto.TargetValue,
-                        Conditions = ruleDto.Conditions,
-                        DiscountType = ruleDto.DiscountType,
-                        DiscountValue = ruleDto.DiscountValue,
-                        MaxDiscount = ruleDto.MaxDiscount,
-                        MinOrderValue = ruleDto.MinOrderValue,
-                        Priority = ruleDto.Priority,
-                    }).ToList();
+                        var ruleEntities = request.bannerSpecialDTO.Rules.Select(ruleDto => new EventRule
+                        {
+                            BannerEventId = createdEvent.Id,
+                            Type = ruleDto.Type,
+                            TargetValue = ruleDto.TargetValue ?? string.Empty,
+                            Conditions = ruleDto.Conditions ?? string.Empty,
+                            DiscountType = ruleDto.DiscountType,
+                            DiscountValue = ruleDto.DiscountValue,
+                            MaxDiscount = ruleDto.MaxDiscount,
+                            MinOrderValue = ruleDto.MinOrderValue,
+                            Priority = ruleDto.Priority
+                        }).ToList();
 
-                    await _unitOfWork.BulkInsertAsync(ruleEntities);
-                }
+                        await _unitOfWork.BulkInsertAsync(ruleEntities);
+                    }
 
-                // Associate specific products
-                if (request.ProductIds?.Any() == true)
-                {
-                    var productEntities = request.ProductIds.Select(productId => new EventProduct
+                    // ✅ ASSOCIATE PRODUCTS (FluentValidation already validated they exist)
+                    if (request.bannerSpecialDTO.ProductIds?.Any() == true)
                     {
-                        BannerEventId = createdEvent.Id,
-                        ProductId = productId
-                    }).ToList();
-                    await _unitOfWork.BulkInsertAsync(productEntities);
-                }
+                        var productEntities = request.bannerSpecialDTO.ProductIds.Select(productId => new EventProduct
+                        {
+                            BannerEventId = createdEvent.Id,
+                            ProductId = productId,
+                            AddedAt = DateTime.UtcNow
+                        }).ToList();
 
-                    return Result<BannerEventSpecialDTO>.Success(createdEvent.ToDTO(),
-                        "Banner event created successfully. Use activation command to make it live.");
-                }
-            
+                        await _unitOfWork.BulkInsertAsync(productEntities);
+                    }
+
+                    // ✅ CONVERT TO DTO WITH NEPAL TIME DISPLAY
+                    var resultDto = createdEvent.ToDTO(_nepalTimeZoneService);
+
+                    _logger.LogInformation("Banner event created successfully: {EventId} - {EventName} | Nepal Time: {StartDateNepal} to {EndDateNepal}",
+                        createdEvent.Id, createdEvent.Name, inputDto.StartDateNepal, inputDto.EndDateNepal);
+
+                    return Result<BannerEventSpecialDTO>.Success(resultDto,
+                        "Banner event created successfully with Nepal time zone support. Use activation command to make it live.");
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(ex, "Invalid input data for banner event: {EventName}",
+                    request.bannerSpecialDTO.EventDto.Name);
+                return Result<BannerEventSpecialDTO>.Failure($"Invalid input: {ex.Message}");
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is Npgsql.PostgresException pgEx)
+            {
+                _logger.LogError(ex, "Database constraint violation: {ErrorCode} - {Message}",
+                    pgEx.ErrorCode, pgEx.MessageText);
+
+                var errorMessage = GetUserFriendlyErrorMessage(pgEx.ErrorCode.ToString(), pgEx.MessageText);
+                return Result<BannerEventSpecialDTO>.Failure(errorMessage);
+            }
             catch (Exception ex)
             {
-                await _unitOfWork.RollbackTransactionAsync();
-                return Result<BannerEventSpecialDTO>.Failure($"Failed to create Event:{ex.Message}");
-                
+                _logger.LogError(ex, "Failed to create banner event: {EventName}",
+                    request.bannerSpecialDTO.EventDto.Name);
+                return Result<BannerEventSpecialDTO>.Failure($"Failed to create banner event: {ex.Message}");
             }
         }
-    }
 
+        private static string GetUserFriendlyErrorMessage(string errorCode, string? defaultMessage)
+        {
+            return errorCode switch
+            {
+                "23503" => "Invalid product reference or foreign key constraint violation",
+                "23505" => "Banner event with this name already exists",
+                "23514" => "Check constraint violation - invalid data provided",
+                "23P01" => "Exclusion constraint violation - conflicting data",
+                "42P01" => "Database table does not exist",
+                "42703" => "Database column does not exist",
+                _ => $"Database error: {defaultMessage ?? "Unknown database error"}"
+            };
+        }
+    }
 }

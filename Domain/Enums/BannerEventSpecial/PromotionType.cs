@@ -8,10 +8,10 @@ namespace Domain.Enums.BannerEventSpecial
 {
     public enum PromotionType
     {
-        Percentage,
-        FixedAmount,
-        BuyOneGetOne,
-        FreeShipping,
-        Bundle
+        Percentage = 0,
+        FixedAmount = 1,
+        BuyOneGetOne = 2,
+        FreeShipping = 3,
+        Bundle = 4
     }
 }

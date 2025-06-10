@@ -16,7 +16,7 @@ namespace Infrastructure.Persistence.Configurations
 
             builder.Property(b => b.BillingDate)
                 .HasColumnType("timestamp with time zone")
-                .HasDefaultValueSql("NOW()");
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             builder.HasOne(b => b.User)
                 .WithMany()

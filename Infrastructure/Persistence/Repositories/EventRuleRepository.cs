@@ -29,7 +29,7 @@ namespace Infrastructure.Persistence.Repositories
         public async Task<IEnumerable<EventRule>> GetActiveRulesByEventIdAsync(int eventId)
         {
             return await _context.EventRules
-                .Where(r => r.BannerEventId == eventId && r.IsActive && !r.IsDeleted)
+                .Where(r => r.BannerEventId == eventId  && !r.IsDeleted)
                 .OrderBy(r => r.Priority)
                 .ToListAsync();
         }
@@ -37,7 +37,7 @@ namespace Infrastructure.Persistence.Repositories
         public async Task<IEnumerable<EventRule>> GetRulesByTypeAsync(RuleType ruleType)
         {
             return await _context.EventRules
-                .Where(r => r.Type == ruleType && r.IsActive && !r.IsDeleted)
+                .Where(r => r.Type == ruleType && !r.IsDeleted)
                 .Include(r => r.BannerEvent)
                 .Where(r => r.BannerEvent.IsActive && !r.BannerEvent.IsDeleted)
                 .ToListAsync();

@@ -1,4 +1,4 @@
-﻿using Application.Dto;
+﻿using Application.Dto.ProductDTOs;
 using Application.Interfaces.Repositories;
 using Application.Utilities;
 using System;
@@ -42,8 +42,8 @@ namespace Infrastructure.Persistence.Repositories
                 Name = ps.Product.Name,
                 StoreName = ps.Store.Name,
                 Distance = GeoUtils.CalculateDistance(lat, lon, ps.Store.Address.Latitude, ps.Store.Address.Longitude),
-                MarketPrice = Convert.ToDouble(ps.Product.MarketPrice),
-                CostPrice = Convert.ToDouble(ps.Product.CostPrice),
+                MarketPrice = ps.Product.MarketPrice,
+                CostPrice = ps.Product.CostPrice,
                 ImageUrl = ps.Product.Images.FirstOrDefault(img => img.IsMain && !img.IsDeleted)?.ImageUrl ?? string.Empty,
                 StoreCity = ps.Store.Address.City,
                 StockQuantity = ps.Product.StockQuantity,

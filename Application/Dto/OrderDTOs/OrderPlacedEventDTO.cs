@@ -12,7 +12,7 @@ namespace Application.Dto.OrderDTOs
         public int UserId { get; set; }
         public string UserEmail { get; set; }
         public string[] ProductNames { get; set; }
-        public double TotalAmount { get; set; }
+        public decimal TotalAmount { get; set; }
         public DateTime OrderDate { get; set; }
     }
 }

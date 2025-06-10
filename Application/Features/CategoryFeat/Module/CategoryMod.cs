@@ -1,5 +1,4 @@
-﻿using Application.Dto;
-using Application.Features.CategoryFeat.Commands;
+﻿using Application.Features.CategoryFeat.Commands;
 using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
 using Application.Features.CategoryFeat.DeleteCommands;
@@ -9,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Application.Dto.CategoryDTOs;
 
 namespace Application.Features.CategoryFeat.Module
 {
@@ -24,20 +24,7 @@ namespace Application.Features.CategoryFeat.Module
         public override async void AddRoutes(IEndpointRouteBuilder app)
         {
             app = app.MapGroup("category");
-
-            /*app.MapPost("/create", async (ISender mediator, [FromForm] CreateCategoryCommand command) =>
-            {
-
-                var result = await mediator.Send(command);
-                if (!result.Succeeded)
-                {
-                    return Results.BadRequest(new { result.Message, result.Errors });
-                }
-                return Results.Ok(new { result.Message, result.Data });
-            }).DisableAntiforgery()
-                .Accepts<CreateCategoryCommand>("multipart/form-data")
-                .Produces<CategoryDTO>(StatusCodes.Status200OK)
-                .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);*/
+           
 
             app.MapPost("/create", async (ISender mediator,
                 string Name,

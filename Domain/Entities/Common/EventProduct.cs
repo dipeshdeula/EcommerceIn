@@ -10,11 +10,11 @@ namespace Domain.Entities.Common
     {
         public int Id { get; set; }
         public int BannerEventId { get; set; }
-        public virtual BannerEventSpecial BannerEvent { get; set; } = null!;
         public int ProductId { get; set; }
-        public virtual Product Product { get; set; } = null!;
         public decimal? SpecificDiscount { get; set; } // Override event discount
-        public bool IsActive { get; set; } = true;
-        public bool IsDeleted { get; set; } = false;
+        public DateTime AddedAt { get; set; }
+        public BannerEventSpecial BannerEvent { get; set; }
+        public Product Product { get; set; } 
+
     }
 }

@@ -1,12 +1,14 @@
 ﻿using Application.Interfaces.Repositories;
 using Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Persistence.Services
 {
     public class UnitOfWork : IUnitOfWork
     {
         private readonly MainDbContext _context;
+        private readonly ILogger<UnitOfWork> _logger;
         private IDbContextTransaction? _transaction;
         private bool _disposed = false;
 
@@ -18,10 +20,22 @@ namespace Infrastructure.Persistence.Services
         private IEventUsageRepository? _eventUsages;
         private IProductRepository? _products;
         private ICategoryRepository? _categories;
+        private ISubCategoryRepository? _subCategories;
+        private ISubSubCategoryRepository? _subSubCategories;
+        private IUserRepository? _users;
+        private IOrderRepository? _orders;
+        private IOrderItemRepository? _orderItems;
+        private ICartItemRepository? _cartItems;
+        private IAddressRepository? _addresses;
+        private IStoreRepository? _stores;
+        private IStoreAddressRepository? _storeAddresses;
+        private IPaymentMethodRepository? _paymentMethods;
 
-        public UnitOfWork(MainDbContext context)
+        public UnitOfWork(MainDbContext context, ILogger<UnitOfWork> logger)
         {
             _context = context;
+            _logger = logger;
+
         }
 
         // Lazy-loaded repositories
@@ -46,53 +60,170 @@ namespace Infrastructure.Persistence.Services
         public ICategoryRepository Categories =>
             _categories ??= new CategoryRepository(_context);
 
+        public ISubCategoryRepository SubCategories =>
+            _subCategories ??= new SubCategoryRepository(_context);
+
+        public ISubSubCategoryRepository SubSubCategories =>
+            _subSubCategories ??= new SubSubCategoryRepository(_context);
+
+        public IUserRepository Users =>
+            _users ??= new UserRepository(_context, null!); // Fix IFileServices injection
+
+        public IOrderRepository Orders =>
+            _orders ??= new OrderRepository(_context);
+
+        public IOrderItemRepository OrderItems =>
+            _orderItems ??= new OrderItemRepository(_context);
+
+        public ICartItemRepository CartItems =>
+            _cartItems ??= new CartItemRepository(_context);
+
+        public IAddressRepository Addresses =>
+            _addresses ??= new AddressRepository(_context);
+
+        public IStoreRepository Stores =>
+            _stores ??= new StoreRepository(_context);
+
+        public IStoreAddressRepository StoreAddresses =>
+            _storeAddresses ??= new StoreAddressRepository(_context);
+
+        public IPaymentMethodRepository PaymentMethods =>
+            _paymentMethods ??= new PaymentMethodRepository(_context);
+
+
         // Transaction management
-        public async Task<IDbContextTransaction> BeginTransactionAsync()
+     /*   public async Task<IDbContextTransaction> BeginTransactionAsync()
         {
             if (_transaction == null)
             {
                 _transaction = await _context.Database.BeginTransactionAsync();
+                _logger.LogInformation("Transaction started");
+
             }
             return _transaction;
-        }
+        }*/
 
-        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                return await _context.SaveChangesAsync(cancellationToken);
+                var result = await _context.SaveChangesAsync(cancellationToken);
+                _logger.LogInformation("Changes saved successfully. {EntitiesChanged} entities changed", result);
+                return result;
             }
             catch (DbUpdateConcurrencyException ex)
             {
-                // Handle concurrency conflicts
+                _logger.LogError(ex, "Concurrency conflict occurred while saving changes");
                 throw new InvalidOperationException("Concurrency conflict occurred", ex);
             }
             catch (DbUpdateException ex)
             {
-                // Handle database update errors
+                _logger.LogError(ex, "Database update failed while saving changes");
                 throw new InvalidOperationException("Database update failed", ex);
             }
         }
+        public async Task<int> SaveChangesWithRetryAsync(int maxRetries = 3, CancellationToken cancellationToken = default)
+        {
+            var retryCount = 0;
+            while (retryCount < maxRetries)
+            {
+                try
+                {
+                    return await SaveChangesAsync(cancellationToken);
+                }
+                catch (DbUpdateConcurrencyException) when (retryCount < maxRetries - 1)
+                {
+                    retryCount++;
+                    _logger.LogWarning("Concurrency conflict, retrying... Attempt {RetryCount}/{MaxRetries}", retryCount, maxRetries);
+                    await Task.Delay(100 * retryCount, cancellationToken); // Exponential backoff
+                }
+            }
+            throw new InvalidOperationException($"Failed to save changes after {maxRetries} retries");
+        }
 
-        public async Task CommitTransactionAsync()
+       /* public async Task CommitTransactionAsync()
         {
             if (_transaction != null)
             {
-                await _transaction.CommitAsync();
-                await _transaction.DisposeAsync();
-                _transaction = null;
+                try
+                {
+                    await _transaction.CommitAsync();
+                    _logger.LogInformation("Transaction committed successfully");
+                }
+                finally
+                {
+                    await _transaction.DisposeAsync();
+                    _transaction = null;
+                }
             }
+        }
+*/
+       /* public async Task RollbackTransactionAsync()
+        {
+           if (_transaction != null)
+            {
+                try
+                {
+                    await _transaction.RollbackAsync();
+                    _logger.LogWarning("Transaction rolled back");
+                }
+                finally
+                {
+                    await _transaction.DisposeAsync();
+                    _transaction = null;
+                }
+            }
+        }
+*/
+         // ✅ Advanced transaction helpers
+         public async Task ExecuteInTransactionAsync(Func<Task> operation)
+        {
+            var strategy = _context.Database.CreateExecutionStrategy();
+            
+            await strategy.ExecuteAsync(async () =>
+            {
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                try
+                {
+                    await operation();
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    
+                    _logger.LogInformation("Transaction completed successfully");
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Transaction failed and was rolled back");
+                    throw;
+                }
+            });
+        }
+        public async Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> operation)
+        {
+            var strategy = _context.Database.CreateExecutionStrategy();
+            
+            return await strategy.ExecuteAsync(async () =>
+            {
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                try
+                {
+                    var result = await operation();
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    
+                    _logger.LogInformation("Transaction completed successfully");
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Transaction failed and was rolled back");
+                    throw;
+                }
+            });
         }
 
-        public async Task RollbackTransactionAsync()
-        {
-            if (_transaction != null)
-            {
-                await _transaction.RollbackAsync();
-                await _transaction.DisposeAsync();
-                _transaction = null;
-            }
-        }
 
         // Bulk operations for performance
         public async Task<int> ExecuteSqlRawAsync(string sql, params object[] parameters)

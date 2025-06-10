@@ -1,5 +1,6 @@
 ﻿using Application.Common;
 using Application.Dto;
+using Application.Dto.ProductDTOs;
 using Application.Extension;
 using Application.Features.SubSubCategoryFeat.Module;
 using Application.Interfaces.Repositories;
@@ -65,6 +66,7 @@ namespace Application.Features.ProductFeat.Commands
 
             // save changes to the database
             await _subSubCategoryRepository.UpdateAsync(subSubCategory, cancellationToken);
+            await _subSubCategoryRepository.SaveChangesAsync(cancellationToken);
 
             // Map to the Dto and return success
             return Result<ProductDTO>.Success(product.ToDTO(), "Product item created successfully");

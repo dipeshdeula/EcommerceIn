@@ -1,7 +1,13 @@
-﻿using Application.Dto;
+﻿using Application.Common.Helper;
+using Application.Dto;
 using Application.Dto.BannerEventSpecialDTOs;
+using Application.Dto.CategoryDTOs;
+using Application.Dto.OrderDTOs;
+using Application.Dto.ProductDTOs;
+using Application.Interfaces.Services;
 using Domain.Entities;
 using Domain.Entities.Common;
+using Domain.Enums.BannerEventSpecial;
 
 namespace Application.Extension
 {
@@ -100,7 +106,24 @@ namespace Application.Extension
                 Reviews = product.Reviews,
                 Rating = product.Rating,
                 IsDeleted = product.IsDeleted,
-                Images = product.Images.Select(pi => pi.ToDTO()).ToList() // Map product images
+
+                CategoryId = product.CategoryId,
+                SubSubCategoryId = product.SubSubCategoryId,
+                Dimensions = product.Dimensions ?? string.Empty,
+                // Initialize dynamic pricing
+                OriginalPrice = product.MarketPrice,
+                CurrentPrice = product.MarketPrice,
+                EffectivePrice = product.MarketPrice,
+                HasActiveEvent = false,
+                HasActiveDiscount = false,
+                DiscountAmount = 0,
+                DiscountPercentage = 0,
+                ActiveEventId = null,
+                ActiveEventName = null,
+                PromotionType = null,
+                EventTagLine = null,
+                EventEndDate = null,
+                Images = product.Images?.Select(pi => pi.ToDTO()).ToList() ?? new List<ProductImageDTO>()
             };
         }
 
@@ -110,10 +133,62 @@ namespace Application.Extension
             return new ProductImageDTO
             {
                 Id = productImage.Id,
-                ImageUrl = productImage.ImageUrl
+                ImageUrl = productImage.ImageUrl,
+                ProductId = productImage.ProductId,
+                AltText = $"Product image {productImage.Id}",
+                IsMain = productImage.Id == productImage.Product?.Images?.FirstOrDefault()?.Id,
+                DisplayOrder = productImage.Id
             };
         }
+        public static ProductDTO ApplyPricing(this ProductDTO productDTO, ProductPriceInfoDTO priceInfo)
+        {
+            if (priceInfo == null) return productDTO;
 
+            productDTO.OriginalPrice = priceInfo.OriginalPrice;
+            productDTO.CurrentPrice = priceInfo.EffectivePrice;
+            productDTO.EffectivePrice = priceInfo.EffectivePrice;
+            productDTO.HasActiveEvent = priceInfo.HasDiscount;
+            productDTO.HasActiveDiscount = priceInfo.HasDiscount;
+            productDTO.DiscountAmount = priceInfo.DiscountAmount;
+            productDTO.DiscountPercentage = priceInfo.DiscountPercentage;
+            productDTO.ActiveEventId = priceInfo.AppliedEventId;
+            productDTO.ActiveEventName = priceInfo.AppliedEventName;
+            productDTO.EventTagLine = priceInfo.EventTagLine;
+            productDTO.PromotionType = priceInfo.PromotionType;
+            productDTO.EventEndDate = priceInfo.EventEndDate;
+
+            return productDTO;
+        }
+
+        public static async Task<List<ProductDTO>> ApplyPricingAsync(
+            this List<ProductDTO> productDTOs,
+            IProductPricingService pricingService,
+            int? userId = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (productDTOs == null || !productDTOs.Any()) return productDTOs ?? new List<ProductDTO>();
+
+            try
+            {
+                var productIds = productDTOs.Select(p => p.Id).ToList();
+                var priceInfos = await pricingService.GetEffectivePricesAsync(productIds, userId, cancellationToken);
+
+                foreach (var productDTO in productDTOs)
+                {
+                    var priceInfo = priceInfos.FirstOrDefault(p => p.ProductId == productDTO.Id);
+                    if (priceInfo != null)
+                    {
+                        productDTO.ApplyPricing(priceInfo);
+                    }
+                }
+
+                return productDTOs;
+            }
+            catch (Exception)
+            {
+                return productDTOs;
+            }
+        }
         public static StoreDTO ToDTO(this Store store)
         {
             return new StoreDTO
@@ -209,50 +284,248 @@ namespace Application.Extension
             return new NearbyProductDto
             {
                 ProductId = productStore.ProductId,
-                Name = productStore.Product.Name,
-                ImageUrl = productStore.Product.Images.FirstOrDefault()?.ImageUrl,
-                StoreCity = productStore.Store.Address?.City,
-                StoreName = productStore.Store.Name,
-                MarketPrice = productStore.Product.MarketPrice,
-                CostPrice = productStore.Product.CostPrice,
-                DiscountPrice = productStore.Product.DiscountPrice,
-                StockQuantity = productStore.Product.StockQuantity,
+                Name = productStore.Product?.Name ?? "Unknown Product",
+                ImageUrl = productStore.Product?.Images.FirstOrDefault()?.ImageUrl ?? string.Empty,
+                StoreCity = productStore.Store?.Address?.City?? string.Empty,
+                StoreName = productStore.Store?.Name?? "Unknown Store",
+                MarketPrice = productStore.Product?.MarketPrice ?? 0,
+                CostPrice = productStore.Product?.CostPrice ?? 0,
+                DiscountPrice = productStore.Product?.DiscountPrice,
+                StockQuantity = productStore.Product?.StockQuantity ?? 0,
                 StoreId = productStore.StoreId,
-                StoreAddress = $"{productStore.Store.Address?.Street},{productStore.Store.Address?.City}",
+                StoreAddress = $"{productStore.Store?.Address?.Street},{productStore.Store?.Address?.City}",
                 Distance = distance,
-                HasDiscount = productStore.Product.DiscountPrice.HasValue
+                HasDiscount = productStore.Product?.DiscountPrice.HasValue == true,
+
+                // initialize dynaimc pricing
+                CurrentPrice = productStore.Product?.MarketPrice ?? 0,
+                EffectivePrice = productStore.Product?.MarketPrice ?? 0,
+                HasActiveEvent = false,
+                DiscountAmount = 0,
+                DiscountPercentage = 0,
+                ActiveEventName = null
+            };
+        }      
+
+        public static EventRule ToEntity(this EventRuleDTO dto, int bannerEventId)
+        {
+            return new EventRule
+            {
+                Id = dto.Id,
+                BannerEventId = bannerEventId,
+                Type = dto.Type,
+                TargetValue = dto.TargetValue,
+                Conditions = dto.Conditions,
+                DiscountType = dto.DiscountType,
+                DiscountValue = dto.DiscountValue,
+                MaxDiscount = dto.MaxDiscount,
+                MinOrderValue = dto.MinOrderValue,
+                Priority = dto.Priority,
             };
         }
-
-        public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpecial)
+        public static EventRule ToEntity(this AddEventRuleDTO dto, int bannerEventId)
         {
-            return new BannerEventSpecialDTO
+            return new EventRule
             {
+                BannerEventId = bannerEventId,
+                Type = dto.Type,
+                TargetValue = dto.TargetValue,
+                Conditions = dto.Conditions,
+                DiscountType = dto.DiscountType,
+                DiscountValue = dto.DiscountValue,
+                MaxDiscount = dto.MaxDiscount,
+                MinOrderValue = dto.MinOrderValue,
+                Priority = dto.Priority,
+            };
+        }
+         // ✅ ENHANCED: Updated BannerEventSpecial to DTO mapping WITH Nepal timezone support
+        public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpecial, INepalTimeZoneService nepalTimeService)
+        {
+            if (bannerEventSpecial == null) throw new ArgumentNullException(nameof(bannerEventSpecial));
+            if (nepalTimeService == null) throw new ArgumentNullException(nameof(nepalTimeService));
+
+            var currentNepalTime = nepalTimeService.GetNepalCurrentTime();
+            var currentUtcTime = nepalTimeService.GetUtcCurrentTime();
+
+            // ✅ CONVERT UTC DATES TO NEPAL TIME FOR DISPLAY
+            var startDateNepal = nepalTimeService.ConvertFromUtcToNepal(bannerEventSpecial.StartDate);
+            var endDateNepal = nepalTimeService.ConvertFromUtcToNepal(bannerEventSpecial.EndDate);
+
+            var dto = new BannerEventSpecialDTO
+            {
+                // ✅ SYSTEM FIELDS
                 Id = bannerEventSpecial.Id,
-                Name = bannerEventSpecial.Name,
-                Description = bannerEventSpecial.Description,
+                CreatedAt = bannerEventSpecial.CreatedAt,
+                UpdatedAt = bannerEventSpecial.UpdatedAt ?? bannerEventSpecial.CreatedAt,
+                CurrentUsageCount = bannerEventSpecial.CurrentUsageCount,
+                IsDeleted = bannerEventSpecial.IsDeleted,
+
+                // ✅ BASIC EVENT INFO
+                Name = bannerEventSpecial.Name ?? string.Empty,
+                Description = bannerEventSpecial.Description ?? string.Empty,
                 TagLine = bannerEventSpecial.TagLine,
                 EventType = bannerEventSpecial.EventType,
                 PromotionType = bannerEventSpecial.PromotionType,
                 DiscountValue = bannerEventSpecial.DiscountValue,
                 MaxDiscountAmount = bannerEventSpecial.MaxDiscountAmount,
                 MinOrderValue = bannerEventSpecial.MinOrderValue,
+
+                // ✅ UTC DATES (Database storage)
                 StartDate = bannerEventSpecial.StartDate,
                 EndDate = bannerEventSpecial.EndDate,
+
+                // ✅ NEPAL DATES (Display)
+                StartDateNepal = startDateNepal,
+                EndDateNepal = endDateNepal,
+
+                // ✅ CONFIGURATION
                 ActiveTimeSlot = bannerEventSpecial.ActiveTimeSlot,
                 MaxUsageCount = bannerEventSpecial.MaxUsageCount,
-                CurrentUsageCount = bannerEventSpecial.CurrentUsageCount,
                 MaxUsagePerUser = bannerEventSpecial.MaxUsagePerUser,
                 Priority = bannerEventSpecial.Priority,
                 IsActive = bannerEventSpecial.IsActive,
-                IsDeleted = bannerEventSpecial.IsDeleted,
                 Status = bannerEventSpecial.Status,
+
+                // ✅ RELATED DATA
+                ProductIds = bannerEventSpecial.EventProducts?.Select(ep => ep.ProductId).ToList() ?? new List<int>(),
+                TotalProductsCount = bannerEventSpecial.EventProducts?.Count ?? 0,
+                TotalRulesCount = bannerEventSpecial.Rules?.Count ?? 0,
+
+                // ✅ COMPUTED PROPERTIES (Using Nepal timezone logic)
+                IsCurrentlyActive = nepalTimeService.IsEventActiveNow(bannerEventSpecial.StartDate, bannerEventSpecial.EndDate),
+                IsExpired = endDateNepal < currentNepalTime,
+                TimeStatus = nepalTimeService.GetEventTimeStatus(bannerEventSpecial.StartDate, bannerEventSpecial.EndDate),
+
+                // ✅ TIMEZONE INFO
+                TimeZoneInfo = new TimeZoneDisplayInfo
+                {
+                    DisplayTimeZone = "Nepal Standard Time",
+                    OffsetString = "UTC+05:45",
+                    CurrentNepalTime = currentNepalTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                    CurrentUtcTime = currentUtcTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                    TimeZoneAbbreviation = "NPT",
+                    IsDaylightSavingTime = false
+                },
+
+                // ✅ NESTED ENTITIES
                 Images = bannerEventSpecial.Images?.Select(i => i.ToDTO()).ToList() ?? new List<BannerImageDTO>(),
                 Rules = bannerEventSpecial.Rules?.Select(r => r.ToDTO()).ToList() ?? new List<EventRuleDTO>(),
                 EventProducts = bannerEventSpecial.EventProducts?.Select(ep => ep.ToDTO()).ToList() ?? new List<EventProductDTO>()
             };
+
+            // ✅ CALCULATE DAYS REMAINING USING NEPAL TIME
+            dto.DaysRemaining = dto.IsExpired ? 0 : (int)Math.Ceiling((endDateNepal - currentNepalTime).TotalDays);
+
+            return dto;
         }
 
+        /// <summary>
+        /// ✅ FALLBACK METHOD (without timezone service)
+        /// </summary>
+        public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial entity)
+        {
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
+
+            var dto = new BannerEventSpecialDTO
+            {
+                Id = entity.Id,
+                Name = entity.Name ?? string.Empty,
+                Description = entity.Description ?? string.Empty,
+                TagLine = entity.TagLine,
+                EventType = entity.EventType,
+                PromotionType = entity.PromotionType,
+                DiscountValue = entity.DiscountValue,
+                MaxDiscountAmount = entity.MaxDiscountAmount,
+                MinOrderValue = entity.MinOrderValue,
+                
+                // ✅ UTC DATES
+                StartDate = entity.StartDate,
+                EndDate = entity.EndDate,
+                
+                // ⚠️ FALLBACK: Assume UTC = Nepal (incorrect but safe)
+                StartDateNepal = entity.StartDate,
+                EndDateNepal = entity.EndDate,
+                
+                ActiveTimeSlot = entity.ActiveTimeSlot,
+                MaxUsageCount = entity.MaxUsageCount,
+                CurrentUsageCount = entity.CurrentUsageCount,
+                MaxUsagePerUser = entity.MaxUsagePerUser,
+                Priority = entity.Priority,
+                IsActive = entity.IsActive,
+                IsDeleted = entity.IsDeleted,
+                Status = entity.Status,
+                CreatedAt = entity.CreatedAt,
+                UpdatedAt = entity.UpdatedAt ?? entity.CreatedAt,
+
+                // ⚠️ FALLBACK TIME LOGIC (UTC-based)
+                TimeStatus = "Timezone service not available",
+                IsCurrentlyActive = entity.IsActive && entity.StartDate <= DateTime.UtcNow && entity.EndDate >= DateTime.UtcNow,
+                IsExpired = entity.EndDate < DateTime.UtcNow,
+                DaysRemaining = entity.EndDate < DateTime.UtcNow ? 0 : (int)Math.Ceiling((entity.EndDate - DateTime.UtcNow).TotalDays),
+
+                // ✅ RELATED DATA
+                ProductIds = entity.EventProducts?.Select(ep => ep.ProductId).ToList() ?? new List<int>(),
+                TotalProductsCount = entity.EventProducts?.Count ?? 0,
+                TotalRulesCount = entity.Rules?.Count ?? 0,
+
+                // ✅ FALLBACK TIMEZONE INFO
+                TimeZoneInfo = new TimeZoneDisplayInfo
+                {
+                    DisplayTimeZone = "Service Unavailable",
+                    OffsetString = "N/A",
+                    CurrentNepalTime = "Service Unavailable",
+                    CurrentUtcTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
+                    TimeZoneAbbreviation = "UTC",
+                    IsDaylightSavingTime = false
+                },
+
+                // ✅ NESTED ENTITIES
+                Images = entity.Images?.Select(i => i.ToDTO()).ToList() ?? new List<BannerImageDTO>(),
+                Rules = entity.Rules?.Select(r => r.ToDTO()).ToList() ?? new List<EventRuleDTO>(),
+                EventProducts = entity.EventProducts?.Select(ep => ep.ToDTO()).ToList() ?? new List<EventProductDTO>()
+            };
+
+            return dto;
+        }
+
+        // ✅ FIXED: ToEntity mapping with proper parameters
+        public static BannerEventSpecial ToEntity(this AddBannerEventSpecialDTO dto, DateTime startDateUtc, DateTime endDateUtc)
+        {
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            return new BannerEventSpecial
+            {
+                Name = dto.Name?.Trim() ?? throw new ArgumentException("Name is required"),
+                Description = dto.Description?.Trim() ?? throw new ArgumentException("Description is required"),
+                TagLine = dto.TagLine?.Trim(),
+                EventType = dto.EventType,
+                PromotionType = dto.PromotionType,
+                DiscountValue = dto.DiscountValue,
+                MaxDiscountAmount = dto.MaxDiscountAmount,
+                MinOrderValue = dto.MinOrderValue,
+                
+                // ✅ USE PRE-CONVERTED UTC DATES FROM SERVICE
+                StartDate = startDateUtc,
+                EndDate = endDateUtc,
+                
+                // ✅ PARSE TIMESPAN FROM STRING
+                ActiveTimeSlot = dto.ActiveTimeSlotParsed,
+                
+                MaxUsageCount = dto.MaxUsageCount ?? int.MaxValue,
+                CurrentUsageCount = 0,
+                MaxUsagePerUser = dto.MaxUsagePerUser ?? int.MaxValue,
+                Priority = dto.Priority ?? 1,
+                IsActive = false,
+                IsDeleted = false,
+                Status = EventStatus.Draft,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+        }
+
+
+        
+        // ✅ ENHANCED: EventRule to DTO mapping
         public static EventRuleDTO ToDTO(this EventRule eventRule)
         {
             return new EventRuleDTO
@@ -265,21 +538,25 @@ namespace Application.Extension
                 DiscountValue = eventRule.DiscountValue,
                 MaxDiscount = eventRule.MaxDiscount,
                 MinOrderValue = eventRule.MinOrderValue,
-                IsActive = eventRule.IsActive,
                 Priority = eventRule.Priority
             };
         }
 
+        // ✅ ENHANCED: EventProduct to DTO mapping
         public static EventProductDTO ToDTO(this EventProduct eventProduct)
         {
             return new EventProductDTO
             {
                 Id = eventProduct.Id,
-                BannerEventId = eventProduct.BannerEventId,
+                BannerEventId = eventProduct.BannerEventId, // ✅ Use correct property name
                 ProductId = eventProduct.ProductId,
-                ProductName = eventProduct.Product?.Name ?? string.Empty,
+                ProductName = eventProduct.Product?.Name ?? "Unknown Product",
                 SpecificDiscount = eventProduct.SpecificDiscount,
-                IsActive = eventProduct.IsActive
+                ProductImageUrl = eventProduct.Product?.Images?.FirstOrDefault()?.ImageUrl,
+                ProductMarketPrice = eventProduct.Product?.MarketPrice ?? 0,
+                CalculatedDiscountPrice = eventProduct.SpecificDiscount.HasValue
+                    ? (eventProduct.Product?.MarketPrice ?? 0) - eventProduct.SpecificDiscount.Value
+                    : eventProduct.Product?.MarketPrice ?? 0
             };
         }
 
@@ -288,7 +565,9 @@ namespace Application.Extension
             return new BannerImageDTO
             {
                 Id = bannerImage.Id,
-                ImageUrl = bannerImage.ImageUrl
+                ImageUrl = bannerImage.ImageUrl,
+                BannerEventId = bannerImage.BannerId // ✅ Use correct property name
+
             };
         }
 

@@ -1,5 +1,5 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.CategoryDTOs;
 using Application.Enums;
 using Application.Extension;
 using Application.Interfaces.Repositories;
@@ -61,6 +61,7 @@ namespace Application.Features.CategoryFeat.Commands
 
             // Save the category to the database
             var createdCategory = await _categoryRepository.AddAsync(category, cancellationToken);
+            await _categoryRepository.SaveChangesAsync(cancellationToken);
 
             if (createdCategory == null)
             {

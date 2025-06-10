@@ -14,7 +14,7 @@ namespace Application.Dto
 
         public int PaymentMethodId { get; set; } // esewa,khalti,cash on delivery
 
-        public double PaymentAmount { get; set; }
+        public decimal PaymentAmount { get; set; }
 
         public string Currency { get; set; } = "npr";
         public string Description { get; set; }

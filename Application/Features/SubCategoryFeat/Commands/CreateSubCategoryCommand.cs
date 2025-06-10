@@ -72,6 +72,7 @@ namespace Application.Features.SubCategoryFeat.Commands
 
             // Save changes to the database
             await _categoryRepository.UpdateAsync(parentCategory, cancellationToken);
+            await _categoryRepository.SaveChangesAsync(cancellationToken);
 
             // Map to DTO and return success
             return Result<SubCategoryDTO>.Success(subCategory.ToDTO(), "Subcategory created successfully");

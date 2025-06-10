@@ -9,6 +9,17 @@ namespace Application.Interfaces.Repositories
         IQueryable<TEntity> GetQueryable();
         IQueryable<TEntity> GetQueryable(bool includeDeleted);
 
+        // ✅ Single entity operations
+        Task<TEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+
+        // ✅ ADDED: Missing GetAsync method
+        Task<TEntity?> GetAsync(
+            Expression<Func<TEntity, bool>> predicate,
+            string? includeProperties = null,
+            bool includeDeleted = false,
+            CancellationToken cancellationToken = default);
+
+
         // Find methods
         TEntity FindById(object id);
         Task<TEntity> FindByIdAsync(object id);
@@ -28,7 +39,27 @@ namespace Application.Interfaces.Repositories
             bool includeDeleted = false,
             string includeProperties = null
             );
+        Task<IEnumerable<TEntity>> GetAllAsync(
+            Expression<Func<TEntity, bool>> predicate = null,
+            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
+            int? skip = null,
+            int? take = null,
+            bool includeDeleted = false,
+            string includeProperties = null,
+            CancellationToken cancellationToken = default
+            );
+        Task<IEnumerable<TEntity>> GetWithIncludesAsync(
+            Expression<Func<TEntity, bool>> predicate = null,
+            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
+            params Expression<Func<TEntity, object>>[] includes);
 
+        Task<IEnumerable<TEntity>> GetPagedAsync(
+            Expression<Func<TEntity, bool>> predicate = null,
+            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
+            int pageNumber = 1,
+            int pageSize = 10,
+            bool includeDeleted = false,
+            params Expression<Func<TEntity, object>>[] includes);
         // Add methods
         TEntity Add(TEntity entity);
         Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default);

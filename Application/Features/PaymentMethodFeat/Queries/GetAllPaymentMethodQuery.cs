@@ -23,7 +23,8 @@ namespace Application.Features.PaymentMethodFeat.Queries
             var paymentMethods = await _paymentMethodRepository.GetAllAsync(
                 orderBy: query => query.OrderByDescending(paymentMethods => paymentMethods.Id),
                 skip: (request.PageNumber - 1) * request.PageSize,
-                take: request.PageSize
+                take: request.PageSize,
+                cancellationToken:cancellationToken
                 );
             var paymentMethodDTOs = paymentMethods.Select(pm => pm.ToDTO()).ToList();
 

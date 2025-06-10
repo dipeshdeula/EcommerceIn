@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
-
+﻿using Domain.Enums.BannerEventSpecial;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Infrastructure.Persistence.Configurations
 {
     public class BannerEventSpecialConfig : IEntityTypeConfiguration<BannerEventSpecial>
@@ -29,40 +29,60 @@ namespace Infrastructure.Persistence.Configurations
                 .HasColumnType("decimal(10,2)");
 
             builder.Property(b => b.StartDate)
+                    .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'")
                    .HasColumnType("timestamp with time zone")
-                   .HasDefaultValueSql("NOW()")
                    .IsRequired();
 
             builder.Property(b => b.EndDate)
                    .HasColumnType("timestamp with time zone")
                    .IsRequired();
 
+            // Explicit enum conversions
+
             builder.Property(b => b.EventType)
-                  .HasConversion<string>()
-                  .HasMaxLength(50);
+                 .HasConversion(
+                    v => v.ToString(),
+                    v => Enum.Parse<EventType>(v))
+                .HasMaxLength(50)
+                .IsRequired();
 
             builder.Property(b => b.PromotionType)
-                .HasConversion<string>()
-                .HasMaxLength(50);
+                 .HasConversion(
+                    v => v.ToString(),
+                    v => Enum.Parse<PromotionType>(v))
+                .HasMaxLength(50)
+                .IsRequired();
 
             builder.Property(b => b.Status)
-                .HasConversion<string>()
-                .HasMaxLength(50);
+                  .HasConversion(
+                    v => v.ToString(),
+                    v => Enum.Parse<EventStatus>(v))
+                .HasMaxLength(50)
+                .HasDefaultValue(EventStatus.Draft)
+                .IsRequired();
 
-           
+            builder.Property(b => b.CreatedAt)
+                   .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'")
+                  .HasColumnType("timestamp with time zone")
+                .IsRequired();
+
+            builder.Property(b => b.UpdatedAt)
+               .HasColumnType("timestamp with time zone");
+
             builder.Property(b => b.IsActive)
                    .HasDefaultValue(false);
 
-            builder.Property(u => u.IsDeleted).HasDefaultValue(false);
+            builder.Property(b => b.IsDeleted)
+                .HasDefaultValue(false);
 
             builder.Property(b => b.Priority)
                 .HasDefaultValue(1);
 
             builder.Property(b => b.MaxUsageCount)
-                .HasDefaultValue(int.MaxValue);
+                .HasDefaultValue(2147483647);
 
             builder.Property(b => b.MaxUsagePerUser)
-                .HasDefaultValue(int.MaxValue);
+                .HasDefaultValue(10);
 
             builder.Property(b => b.CurrentUsageCount)
                 .HasDefaultValue(0);
@@ -89,19 +109,19 @@ namespace Infrastructure.Persistence.Configurations
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Indexes for performance
-            builder.HasIndex(b => new { b.StartDate, b.EndDate, b.IsActive, b.Status })
-                .HasDatabaseName("IX_BannerEvents_ActivePeriod");
+            builder.HasIndex(b => new { b.Status, b.IsActive, b.StartDate, b.EndDate })
+                .HasFilter("\"Status\" = 'Active' AND \"IsActive\" = true")
+                .HasDatabaseName("IX_BannerEvents_ActiveTimeRange");
 
             builder.HasIndex(b => b.EventType)
                 .HasDatabaseName("IX_BannerEvents_Type");
 
             builder.HasIndex(b => b.Priority)
                 .HasDatabaseName("IX_BannerEvents_Priority");
+
+            builder.HasIndex(b => new { b.IsActive, b.IsDeleted })
+                .HasDatabaseName("IX_BannerEvents_ActiveDeleted");
         }
-
-
-
-
     }
-    
+
 }

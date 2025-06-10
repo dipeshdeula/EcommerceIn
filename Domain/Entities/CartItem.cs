@@ -13,6 +13,8 @@ namespace Domain.Entities
         public int ProductId { get; set; }
         public int Quantity { get; set; }
 
+        // Pricing snapshot fields
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
