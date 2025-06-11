@@ -92,6 +92,7 @@ namespace Application.Features.OrderFeat.Commands
             };
 
             await _orderRepository.AddAsync(order, cancellationToken);
+            await _orderRepository.SaveChangesAsync(cancellationToken);
 
             var user = await _userRepository.FindByIdAsync(order.UserId);
             if (user == null)

@@ -2,11 +2,9 @@
 using Application.Dto;
 using Application.Dto.ProductDTOs;
 using Application.Extension;
-using Application.Features.SubSubCategoryFeat.Module;
 using Application.Interfaces.Repositories;
 using Domain.Entities;
 using MediatR;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Application.Features.ProductFeat.Commands
 {
@@ -40,6 +38,20 @@ namespace Application.Features.ProductFeat.Commands
                 return Result<ProductDTO>.Failure("Category not found for the given sub-sub category");
             }
 
+            // Calculate discount price from percentage
+            decimal? discountPrice = null;
+            if (request.createProductDTO.DiscountPercentage.HasValue && 
+                request.createProductDTO.DiscountPercentage.Value > 0 && 
+                request.createProductDTO.DiscountPercentage.Value <= 100)
+            {
+                var discountAmount = (request.createProductDTO.MarketPrice * request.createProductDTO.DiscountPercentage.Value) / 100;
+                discountPrice = request.createProductDTO.MarketPrice - discountAmount;
+
+                discountPrice = Math.Max(0, discountPrice.Value);
+            }
+
+
+
             // Create the new Product item
             var product = new Product
             {
@@ -50,7 +62,7 @@ namespace Application.Features.ProductFeat.Commands
                 Description = request.createProductDTO.Slug,
                 MarketPrice = request.createProductDTO.MarketPrice,
                 CostPrice = request.createProductDTO.CostPrice,
-                DiscountPrice = request.createProductDTO.DiscountPrice,
+                DiscountPrice = discountPrice,
                 StockQuantity = request.createProductDTO.StockQuantity,
                 Sku = request.createProductDTO.Sku,
                 Weight = request.createProductDTO.Weight,

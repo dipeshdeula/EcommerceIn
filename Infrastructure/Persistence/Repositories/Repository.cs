@@ -335,6 +335,7 @@ namespace Infrastructure.Persistence.Repositories
             if (entity == null)
                 throw new ArgumentNullException(nameof(entity));
             await _dbSet.AddAsync(entity, cancellationToken);
+            
             //await _dbContext.SaveChangesAsync(cancellationToken); // Ensure this line is present
             return entity;
         }

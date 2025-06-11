@@ -121,8 +121,8 @@ namespace Application.Features.ProductFeat.Queries
                 if (request.PrioritizeEventProducts)
                 {
                     productDTOs = productDTOs
-                        .OrderByDescending(p => p.HasActiveEvent) // Event products first
-                        .ThenByDescending(p => p.DiscountPercentage) // Highest discount first
+                        .OrderByDescending(p => p.Pricing.HasActiveEvent) // Event products first
+                        .ThenByDescending(p => p.Pricing.TotalDiscountPercentage) // Highest discount first
                         .ThenByDescending(p => p.Id) // Newest first
                         .Take(request.PageSize)
                         .ToList();
@@ -131,7 +131,7 @@ namespace Application.Features.ProductFeat.Queries
                 var onSaleCount = productDTOs.Count(p => p.IsOnSale);
 
                 _logger.LogInformation("Retrieved {Count} products with dynamic pricing for user {UserId}. {OnSaleCount} items on sale, {EventCount} event products",
-                    productDTOs.Count, request.UserId, onSaleCount, productDTOs.Count(p => p.HasActiveEvent));
+                    productDTOs.Count, request.UserId, onSaleCount, productDTOs.Count(p => p.Pricing.HasActiveEvent));
 
                 return Result<IEnumerable<ProductDTO>>.Success(productDTOs,
                     $"Products retrieved successfully. {onSaleCount} items on sale.");

@@ -1,4 +1,5 @@
 ﻿////filepath: e:\EcomerceDeployPostgres\EcommerceBackendAPI\Infrastructure\Persistence\Services\ProductPricingService.cs
+using Application.Dto.CartItemDTOs;
 using Application.Dto.ProductDTOs;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
@@ -47,12 +48,18 @@ namespace Infrastructure.Persistence.Services
         {
             _logger.LogDebug("Getting effective price for product {ProductId} - {ProductName}", product.Id, product.Name);
 
+            var basePrice = product.DiscountPrice ?? product.MarketPrice;
+
             var priceInfo = new ProductPriceInfoDTO
             {
                 ProductId = product.Id,
                 ProductName = product.Name,
                 OriginalPrice = product.MarketPrice,
-                EffectivePrice = product.MarketPrice
+                BasePrice = basePrice,
+                EffectivePrice = basePrice,
+                EventDiscountAmount = 0       
+
+
             };
 
             try
@@ -68,10 +75,12 @@ namespace Infrastructure.Persistence.Services
                     // Calculate Discount
                     var discountResult = CalculateDiscount(product, activeEvent);
 
-                    _logger.LogDebug("Discount calculation result: Original={OriginalPrice}, Final={FinalPrice}, HasDiscount={HasDiscount}",
-                        discountResult.OriginalPrice, discountResult.FinalPrice, discountResult.HasDiscount);
+                    _logger.LogDebug(" Discount calculation result: Original=Rs.{OriginalPrice}, Base=Rs.{BasePrice}, Final=Rs.{FinalPrice}, " +
+                           "ProductDiscount=Rs.{ProductDiscount}, EventDiscount=Rs.{EventDiscount}",
+                discountResult.OriginalPrice, discountResult.BasePrice, discountResult.FinalPrice,
+                discountResult.ProductDiscountAmount, discountResult.EventDiscountAmount);
 
-                    if (discountResult.HasDiscount)
+                    if (discountResult.HasEventDiscount)
                     {
                         priceInfo.EffectivePrice = discountResult.FinalPrice;
                         priceInfo.AppliedEventId = activeEvent.Id;
@@ -79,14 +88,18 @@ namespace Infrastructure.Persistence.Services
                         priceInfo.EventTagLine = activeEvent.TagLine;
                         priceInfo.PromotionType = activeEvent.PromotionType;
                         priceInfo.EventEndDate = activeEvent.EndDate;
+                        priceInfo.EventDiscountAmount = discountResult.EventDiscountAmount;
 
-                        _logger.LogInformation("Applied discount to product {ProductId}: {OriginalPrice} → {FinalPrice} (Saved: Rs.{DiscountAmount})",
-                            product.Id, priceInfo.OriginalPrice, priceInfo.EffectivePrice, priceInfo.DiscountAmount);
+                        _logger.LogInformation("✅ Applied pricing to product {ProductId}: Rs.{OriginalPrice} → Rs.{FinalPrice} " +
+                                     "(Product: -Rs.{ProductDiscount}, Event: -Rs.{EventDiscount}, Total saved: Rs.{TotalSavings})",
+                    product.Id, priceInfo.OriginalPrice, priceInfo.EffectivePrice, 
+                    priceInfo.RegularDiscountAmount, priceInfo.EventDiscountAmount, priceInfo.TotalDiscountAmount);
                     }
                 }
                 else
                 {
-                    _logger.LogDebug(" No active events found for product {ProductId}", product.Id);
+                   _logger.LogDebug("📭 No active events found for product {ProductId}. Using base price: Rs.{BasePrice}", 
+                product.Id, basePrice);
                 }
             }
             catch (Exception ex)
@@ -139,15 +152,15 @@ namespace Infrastructure.Persistence.Services
             var nowNepal = _nepalTimeZoneService.GetNepalCurrentTime();
            
 
-            _logger.LogDebug("🔍 Looking for active events for product {ProductId} at {UtcTime} (Nepal: {NepalTime})",
+            _logger.LogDebug("Looking for active events for product {ProductId} at {UtcTime} (Nepal: {NepalTime})",
                productId, nowUtc.ToString("yyyy-MM-dd HH:mm:ss"), nowNepal.ToString("yyyy-MM-dd HH:mm:ss"));
 
             var activeEvents = await _unitOfWork.BannerEventSpecials.GetAllAsync(
                 predicate: e => e.IsActive &&
                                !e.IsDeleted &&
                                e.Status == EventStatus.Active &&
-                               e.StartDate <= nowNepal &&
-                               e.EndDate >= nowNepal &&
+                               e.StartDate <= nowUtc &&
+                               e.EndDate >= nowUtc &&
                                e.CurrentUsageCount < e.MaxUsageCount,
                 includeProperties: "EventProducts",
                 cancellationToken: cancellationToken);
@@ -168,8 +181,19 @@ namespace Infrastructure.Persistence.Services
                     .ThenByDescending(e => e.DiscountValue)
                     .First();
 
-                _logger.LogInformation(" Selected best event for product {ProductId}: {EventName} (Priority: {Priority}, Discount: {DiscountValue}%)",
-                    productId, bestEvent.Name, bestEvent.Priority, bestEvent.DiscountValue);
+               //  Log in both UTC and Nepal time for debugging (AFTER selection)
+        var startNepal = _nepalTimeZoneService.ConvertFromUtcToNepal(bestEvent.StartDate);
+        var endNepal = _nepalTimeZoneService.ConvertFromUtcToNepal(bestEvent.EndDate);
+
+        _logger.LogInformation("✅ Selected best event for product {ProductId}: {EventName} " +
+                             "(Priority: {Priority}, Discount: {DiscountValue}%) " +
+                             "UTC: {StartUtc} - {EndUtc}, Nepal: {StartNepal} - {EndNepal}, Now Nepal: {NowNepal}",
+            productId, bestEvent.Name, bestEvent.Priority, bestEvent.DiscountValue,
+            bestEvent.StartDate.ToString("yyyy-MM-dd HH:mm:ss"),
+            bestEvent.EndDate.ToString("yyyy-MM-dd HH:mm:ss"),
+            startNepal.ToString("yyyy-MM-dd HH:mm:ss"),
+            endNepal.ToString("yyyy-MM-dd HH:mm:ss"),
+            nowNepal.ToString("yyyy-MM-dd HH:mm:ss"));
 
                 return bestEvent;
             }
@@ -183,59 +207,80 @@ namespace Infrastructure.Persistence.Services
         {
             _logger.LogInformation(" CALCULATE DISCOUNT CALLED! Product: {ProductId}, Event: {EventId}", product.Id, activeEvent.Id);
 
+            var basePrice = product.DiscountPrice ?? product.MarketPrice;
+            var hasProductDiscount = product.DiscountPrice.HasValue && product.DiscountPrice < product.MarketPrice;
             var result = new DiscountResult
             {
                 OriginalPrice = product.MarketPrice,
-                FinalPrice = product.MarketPrice,
-                HasDiscount = false
+                BasePrice = basePrice,
+                FinalPrice = basePrice,
+                HasDiscount = hasProductDiscount, // Track if product has discount
+                ProductDiscountAmount = hasProductDiscount ? product.MarketPrice - basePrice : 0,
+                EventDiscountAmount = 0
             };
+
+            // Handle no event scenario
 
             if (activeEvent == null)
             {
-                _logger.LogDebug(" No active event provided for discount calculation");
+                _logger.LogDebug("No active event provided. Using base price: Rs.{BasePrice}", basePrice);
                 return result;
             }
 
-            // Check for specific product discount
+            // Check for specific product discount and event discount
             var specificDiscount = activeEvent.EventProducts?.FirstOrDefault(ep => ep.ProductId == product.Id)?.SpecificDiscount;
             var discountValue = specificDiscount ?? activeEvent.DiscountValue;
 
-            _logger.LogDebug("💡 Using discount value: {DiscountValue} (Specific: {SpecificDiscount}, Event: {EventDiscount})",
-                discountValue, specificDiscount, activeEvent.DiscountValue);
+            _logger.LogDebug("Base price: Rs.{BasePrice} (Market: Rs.{MarketPrice}, Product discount: Rs.{ProductDiscount})",
+            basePrice, product.MarketPrice, result.ProductDiscountAmount);
 
+            _logger.LogDebug("🎯 Using event discount value: {DiscountValue} (Specific: {SpecificDiscount}, Event: {EventDiscount})",
+            discountValue, specificDiscount, activeEvent.DiscountValue);
+
+            // STEP 4: Calculate event discount (apply to basePrice, not MarketPrice)
             if (discountValue > 0)
             {
-                decimal discountAmount = 0;
+                decimal eventDiscountAmount = 0;
 
                 if (activeEvent.PromotionType == PromotionType.Percentage)
                 {
-                    discountAmount = (product.MarketPrice * discountValue) / 100;
-                    _logger.LogDebug("Percentage discount: {MarketPrice} * {DiscountValue}% = Rs.{DiscountAmount}",
-                        product.MarketPrice, discountValue, discountAmount);
+                    eventDiscountAmount = (basePrice * discountValue) / 100;
+                    _logger.LogDebug("📊 Percentage discount: Rs.{BasePrice} * {DiscountValue}% = Rs.{EventDiscountAmount}",
+                basePrice, discountValue, eventDiscountAmount);
                 }
                 else if (activeEvent.PromotionType == PromotionType.FixedAmount)
                 {
-                    discountAmount = discountValue;
-                    _logger.LogDebug("Fixed amount discount: Rs.{DiscountAmount}", discountAmount);
+                    eventDiscountAmount = discountValue;
+                 _logger.LogDebug(" Fixed amount discount: Rs.{EventDiscountAmount}", eventDiscountAmount);
                 }
 
                 // Apply maximum discount cap if set
-                if (activeEvent.MaxDiscountAmount.HasValue && discountAmount > activeEvent.MaxDiscountAmount.Value)
+                if (activeEvent.MaxDiscountAmount.HasValue && eventDiscountAmount > activeEvent.MaxDiscountAmount.Value)
                 {
-                    _logger.LogDebug("Applying max discount cap: Rs.{DiscountAmount} → Rs.{MaxDiscount}",
-                        discountAmount, activeEvent.MaxDiscountAmount.Value);
-                    discountAmount = activeEvent.MaxDiscountAmount.Value;
+                    _logger.LogDebug("Applying max discount cap: Rs.{EventDiscountAmount} → Rs.{MaxDiscount}",
+                        eventDiscountAmount, activeEvent.MaxDiscountAmount.Value);
+                    eventDiscountAmount = activeEvent.MaxDiscountAmount.Value;
                 }
 
-                result.FinalPrice = Math.Max(0, product.MarketPrice - discountAmount);
-                result.HasDiscount = discountAmount > 0 && result.FinalPrice < product.MarketPrice;
+                //  Calculate final price (subtract event discount from basePrice)
+                var finalPrice = Math.Max(0, basePrice - eventDiscountAmount);
+                var hasEventDiscount = eventDiscountAmount > 0 && finalPrice < basePrice;
 
-                _logger.LogInformation("DISCOUNT CALCULATED: {OriginalPrice} - {DiscountAmount} = {FinalPrice} (HasDiscount: {HasDiscount})",
-                    product.MarketPrice, discountAmount, result.FinalPrice, result.HasDiscount);
+                // Update result with final price and discount info
+                result.FinalPrice = finalPrice;
+                result.HasDiscount = hasProductDiscount || hasEventDiscount;
+                result.EventDiscountAmount = eventDiscountAmount;
+                result.TotalDiscountAmount = result.ProductDiscountAmount + eventDiscountAmount;
+
+
+                _logger.LogInformation("DISCOUNT CALCULATED: Rs.{OriginalPrice} → Rs.{BasePrice} → Rs.{FinalPrice} " +
+                              "(Product: -Rs.{ProductDiscount}, Event: -Rs.{EventDiscount}, Total: -Rs.{TotalDiscount})",
+            product.MarketPrice, basePrice, finalPrice, 
+            result.ProductDiscountAmount, eventDiscountAmount, result.TotalDiscountAmount);
             }
             else
             {
-                _logger.LogDebug(" No valid discount value found");
+                _logger.LogDebug("No valid event discount value found. Using base price: Rs.{BasePrice}", basePrice);
             }
 
             return result;
@@ -253,6 +298,11 @@ namespace Infrastructure.Persistence.Services
         {
             var nowUtc = _nepalTimeZoneService.GetUtcCurrentTime();
 
+            _logger.LogDebug(" Getting event highlighted products at UTC: {UtcTime}", 
+            nowUtc.ToString("yyyy-MM-dd HH:mm:ss"));
+
+            try{
+
             var activeEvents = await _unitOfWork.BannerEventSpecials.GetAllAsync(
                 predicate: e => e.IsActive &&
                                !e.IsDeleted &&
@@ -261,31 +311,46 @@ namespace Infrastructure.Persistence.Services
                                e.EndDate >= nowUtc,
                 includeProperties: "EventProducts",
                 cancellationToken: cancellationToken);
+                _logger.LogDebug("🔍 Getting event highlighted products at UTC: {UtcTime}", 
+                nowUtc.ToString("yyyy-MM-dd HH:mm:ss"));
 
-            var timeActiveEvents = activeEvents.Where(e => _nepalTimeZoneService.IsEventActiveNow(e.StartDate, e.EndDate)).ToList();
+            
 
             var productIds = new List<int>();
 
             foreach (var eventItem in activeEvents)
             {
-                if (eventItem.EventProducts?.Any() == true)
-                {
-                    // Event has specific products
-                    productIds.AddRange(eventItem.EventProducts.Select(ep => ep.ProductId));
-                }
-                else
-                {
-                    // Global event - get all product IDs (limit for performance)
-                    var allProducts = await _unitOfWork.Products.GetAllAsync(
-                        predicate: p => !p.IsDeleted,
-                        take: 50,
-                        cancellationToken: cancellationToken);
+                    if (eventItem.EventProducts?.Any() == true)
+                    {
+                        // Event has specific products
+                        productIds.AddRange(eventItem.EventProducts.Select(ep => ep.ProductId));
+                        _logger.LogDebug("Added {Count} specific products from event {EventName}",
+                        eventItem.EventProducts.Count, eventItem.Name);
+                    }
+                    else
+                    {
+                        // Global event - get all product IDs (limit for performance)
+                        var allProducts = await _unitOfWork.Products.GetAllAsync(
+                            predicate: p => !p.IsDeleted,
+                            take: 50,
+                            cancellationToken: cancellationToken);
 
-                    productIds.AddRange(allProducts.Select(p => p.Id));
-                }
+                        productIds.AddRange(allProducts.Select(p => p.Id));
+
+                        _logger.LogDebug("Added {Count} products from global event {EventName}", 
+                        allProducts.Count(), eventItem.Name);
+                    }
             }
 
-            return productIds.Distinct().ToList();
+            var distinctProductIds = productIds.Distinct().ToList();
+            _logger.LogDebug("Found {Count} distinct product IDs for active events", distinctProductIds.Count);
+
+            return distinctProductIds;
+        }catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting event highlighted product IDs");
+                return new List<int>();
+            }
         }
 
         public async Task<bool> IsProductOnSaleAsync(int productId, CancellationToken cancellationToken = default)
@@ -312,13 +377,119 @@ namespace Infrastructure.Persistence.Services
             // Since we don't have a cache registry, this is a placeholder
             _logger.LogInformation("Invalidated ALL price cache");
         }
+
+        public async Task<ProductPriceInfoDTO> GetCartPriceAsync(int productId, int quantity, int? userId = null, CancellationToken cancellationToken = default)
+        {
+            _logger.LogDebug("Getting cart price for product {ProductId}, quantity {Quantity}", productId, quantity);
+
+            //  Use your existing pricing logic
+            var priceInfo = await GetEffectivePriceAsync(productId, userId, cancellationToken);
+
+            //  Stock validation for cart
+            var product = await _unitOfWork.Products.GetByIdAsync(productId, cancellationToken);
+            if (product != null)
+            {
+                var availableStock = product.StockQuantity - product.ReservedStock;
+                var canReserve = availableStock >= quantity;
+
+                priceInfo.WithStockInfo(availableStock, canReserve);
+
+                _logger.LogDebug("Cart price calculated: Product {ProductId}, Price {Price}, Stock {Stock}, CanReserve {CanReserve}",
+                    productId, priceInfo.EffectivePrice, availableStock, canReserve);
+            }
+
+            return priceInfo;
+        }
+
+        // Bulk cart pricing
+        public async Task<List<ProductPriceInfoDTO>> GetCartPricesAsync(List<CartPriceRequestDTO> requests, int? userId = null, CancellationToken cancellationToken = default)
+        {
+            _logger.LogDebug("Getting cart prices for {Count} items", requests.Count);
+
+            var results = new List<ProductPriceInfoDTO>();
+
+            foreach (var request in requests)
+            {
+                try
+                {
+                    var priceInfo = await GetCartPriceAsync(request.ProductId, request.Quantity, userId, cancellationToken);
+
+                    //  Price protection check
+                    if (request.MaxAcceptablePrice.HasValue && priceInfo.EffectivePrice > request.MaxAcceptablePrice.Value)
+                    {
+                        priceInfo.IsPriceStable = false;
+                        priceInfo.StockMessage = $"Price changed. Current: Rs.{priceInfo.EffectivePrice:F2}, Max: Rs.{request.MaxAcceptablePrice:F2}";
+                    }
+
+                    // Event validation
+                    if (request.PreferredEventId.HasValue && priceInfo.AppliedEventId != request.PreferredEventId.Value)
+                    {
+                        priceInfo.IsPriceStable = false;
+                        priceInfo.StockMessage = "Preferred event is no longer active";
+                    }
+
+                    results.Add(priceInfo);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error getting cart price for product {ProductId}", request.ProductId);
+
+                    // Add error result
+                    results.Add(new ProductPriceInfoDTO
+                    {
+                        ProductId = request.ProductId,
+                        IsStockAvailable = false,
+                        CanReserveStock = false,
+                        IsPriceStable = false,
+                        StockMessage = "Error calculating price"
+                    });
+                }
+            }
+
+            return results;
+        }
+
+        //  Price validation for cart operations
+
+
+        public async Task<bool> ValidateCartPriceAsync(int productId, decimal expectedPrice, int? userId = null, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var currentPrice = await GetEffectivePriceAsync(productId, userId, cancellationToken);
+                var tolerance = 0.01m; // 1 cent tolerance for rounding differences
+
+                var isValid = Math.Abs(currentPrice.EffectivePrice - expectedPrice) <= tolerance;
+
+                _logger.LogDebug("Price validation: Product {ProductId}, Expected {Expected}, Current {Current}, Valid {Valid}",
+                    productId, expectedPrice, currentPrice.EffectivePrice, isValid);
+
+                return isValid;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error validating cart price for product {ProductId}", productId);
+                return false;
+            }
+        }
     }
 
     // Helper class for discount calculation results
     public class DiscountResult
     {
         public decimal OriginalPrice { get; set; }
+        public decimal BasePrice { get; set; }
         public decimal FinalPrice { get; set; }
         public bool HasDiscount { get; set; }
+
+        // Track different discount types
+        public decimal ProductDiscountAmount { get; set; }
+        public decimal EventDiscountAmount { get; set; }
+        public decimal TotalDiscountAmount { get; set; }
+
+        // Convenience properties for easy access
+        public bool HasProductDiscount => ProductDiscountAmount > 0;
+        public bool HasEventDiscount => EventDiscountAmount > 0;
+        public decimal DiscountPercentage => OriginalPrice > 0 ? (TotalDiscountAmount / OriginalPrice) * 100 : 0;
     }
 }

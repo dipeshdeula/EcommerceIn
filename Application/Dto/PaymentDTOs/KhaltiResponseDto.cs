@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace Application.Dto.Payment
+namespace Application.Dto.PaymentDTOs
 {
     public class KhaltiResponseDto
     {

@@ -1,5 +1,5 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.PaymentMethodDTOs;
 using Application.Features.PaymentMethodFeat.Commands;
 using Application.Features.PaymentMethodFeat.DeleteCommands;
 using Application.Features.PaymentMethodFeat.Queries;

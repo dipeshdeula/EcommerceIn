@@ -2,9 +2,11 @@
 using Application.Common.Models;
 using Application.Dto;
 using Application.Dto.BannerEventSpecialDTOs;
+using Application.Dto.CartItemDTOs;
 using Application.Dto.CategoryDTOs;
 using Application.Dto.OrderDTOs;
-using Application.Dto.Payment;
+using Application.Dto.PaymentDTOs;
+using Application.Dto.PaymentMethodDTOs;
 using Application.Dto.ProductDTOs;
 using Application.Extension;
 using Application.Features.AddressFeat.Commands;
@@ -196,6 +198,8 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IProductPricingService, ProductPricingService>();
             services.AddScoped<ICurrentUserService,CurrentUserService>();
 
+            services.AddScoped<ICartItemRepository, CartItemRepository>();
+
             // Register Authorization 
             services.AddScoped<IAuthorizationHandler, PermissionRequirementCommandHandler>();
 
@@ -351,6 +355,10 @@ namespace Infrastructure.DependencyInjection
 
             // FileServices can be transient
             services.AddTransient<IFileServices, FileServices>();
+
+            // CartItem services
+            services.AddScoped<ICartService, CartService>();
+            services.AddScoped<ICartStockService, CartStockService>();
         }
     }
     public class AuthorizationServiceRegistration : IServicesRegistration

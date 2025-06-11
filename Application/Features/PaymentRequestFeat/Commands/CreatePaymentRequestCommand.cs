@@ -1,6 +1,6 @@
 ﻿using Application.Common;
 using Application.Dto;
-using Application.Dto.Payment;
+using Application.Dto.PaymentDTOs;
 using Application.Interfaces.Repositories;
 using Domain.Entities;
 using MediatR;

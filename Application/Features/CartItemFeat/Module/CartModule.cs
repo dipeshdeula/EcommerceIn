@@ -79,9 +79,9 @@ namespace Application.Features.CartItemFeat.Module
             });
 
             app.MapDelete("/deleteCartItemByUserId", async (
-                int Id, ISender mediator) =>
+                int Id,int? UserId, ISender mediator) =>
             {
-                var command = new HardDeleteCartItemCommand(Id);
+                var command = new HardDeleteCartItemCommand(Id, UserId);
                 var result = await mediator.Send(command);
 
                 if (!result.Succeeded)

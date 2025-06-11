@@ -13,7 +13,7 @@ namespace Application.Dto
         public string Description { get; set; }
         public decimal MarketPrice { get; set; }
         public decimal CostPrice { get; set; }
-        public decimal DiscountPrice { get; set; }
+        public decimal? DiscountPercentage { get; set; } // percentage discount (0-100)
         public int StockQuantity { get; set; }
         public string Sku { get; set; }
         public string Weight { get; set; }

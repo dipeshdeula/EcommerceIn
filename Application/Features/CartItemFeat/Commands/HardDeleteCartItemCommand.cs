@@ -1,38 +1,86 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.CartItemDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Features.CartItemFeat.Commands
 {
-    public record HardDeleteCartItemCommand (int Id) : IRequest<Result<CartItemDTO>>;
+    public record HardDeleteCartItemCommand(int CartItemId, int? UserId) : IRequest<Result<CartItemDTO>>;
 
     public class HardDeleteCartItemCommandHandler : IRequestHandler<HardDeleteCartItemCommand, Result<CartItemDTO>>
     {
-        private readonly ICartItemRepository _cartItemRepository;
-        private readonly IUserRepository _userRepository;
-        public HardDeleteCartItemCommandHandler(ICartItemRepository cartItemRepository, IUserRepository userRepository)
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly ICartStockService _stockService;
+        private readonly ILogger<HardDeleteCartItemCommandHandler> _logger;
+        private readonly ICurrentUserService _userService;
+
+        public HardDeleteCartItemCommandHandler(
+            IUnitOfWork unitOfWork,
+            ICartStockService stockService,
+            ILogger<HardDeleteCartItemCommandHandler> logger,
+            ICurrentUserService userService
+            )
         {
-            _cartItemRepository = cartItemRepository;
-            _userRepository = userRepository;
+            _unitOfWork = unitOfWork;
+            _stockService = stockService;
+            _logger = logger;
+            _userService = userService;
+          
         }
 
         public async Task<Result<CartItemDTO>> Handle(HardDeleteCartItemCommand request, CancellationToken cancellationToken)
         {
-           var user = await _userRepository.FindByIdAsync(request.Id);
-            if (user == null)
-                return Result<CartItemDTO>.Failure($"cart item with Id: {request.Id} is not found");
+            try
+            {
+                var UserId = Convert.ToInt32(_userService.UserId);
+                return await _unitOfWork.ExecuteInTransactionAsync(async () =>
+                {
+                    _logger.LogInformation("🗑️ Deleting cart item: CartItemId={CartItemId}, UserId={UserId}",
+                        request.CartItemId, request.UserId);
 
-            await _cartItemRepository.DeleteByUserIdAsync(request.Id);
+                    // 1. Find cart item using your repository pattern
+                    var cartItem = await _unitOfWork.CartItems.FirstOrDefaultAsync(
+                        predicate: c => c.Id == request.CartItemId && c.UserId == UserId && !c.IsDeleted);
 
-            return Result<CartItemDTO>.Success(null, $"cart item with id {request.Id} is not found");
+                    if (cartItem == null)
+                    {
+                        return Result<CartItemDTO>.Failure($"Cart item with ID {request.CartItemId} not found for user {request.UserId}");
+                    }
 
+                    // 2. Release stock reservation
+                    if (cartItem.IsStockReserved)
+                    {
+                        var stockReleased = await _stockService.ReleaseStockAsync(cartItem.ProductId, cartItem.Quantity, cancellationToken);
+                        if (!stockReleased)
+                        {
+                            _logger.LogWarning("⚠️ Failed to release stock for ProductId={ProductId}, Quantity={Quantity}",
+                                cartItem.ProductId, cartItem.Quantity);
+                        }
+                    }
+
+                    // 3. Convert to DTO before deletion
+                    var cartItemDto = cartItem.ToDTO();
+
+                    // 4. ✅ Hard delete using your repository's RemoveAsync method (better performance)
+                    await _unitOfWork.CartItems.RemoveAsync(cartItem, cancellationToken);
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                    _logger.LogInformation("✅ Cart item deleted successfully: CartItemId={CartItemId}",
+                        request.CartItemId);
+
+                    return Result<CartItemDTO>.Success(cartItemDto, "Cart item removed successfully");
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Failed to delete cart item: CartItemId={CartItemId}, UserId={UserId}",
+                    request.CartItemId, request.UserId);
+                return Result<CartItemDTO>.Failure($"Failed to remove cart item: {ex.Message}");
+            }
         }
     }
 }

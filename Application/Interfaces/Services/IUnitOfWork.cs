@@ -24,7 +24,7 @@ namespace Application.Interfaces.Services
         IUserRepository Users { get; }
         IOrderRepository Orders { get; }
         IOrderItemRepository OrderItems { get; }
-        ICartItemRepository CartItems { get; }
+        public ICartItemRepository CartItems { get; }
         IAddressRepository Addresses { get; }
         IStoreRepository Stores { get; }
         IStoreAddressRepository StoreAddresses { get; }

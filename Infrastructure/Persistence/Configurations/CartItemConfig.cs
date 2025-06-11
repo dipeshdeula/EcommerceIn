@@ -1,9 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Persistence.Configurations
 {
@@ -15,24 +10,44 @@ namespace Infrastructure.Persistence.Configurations
 
             builder.HasKey(c => c.Id);
 
-            builder.Property(ci => ci.CreatedAt)
+            builder.Property(c => c.ReservedPrice)
+                .HasColumnType("decimal(18,2)");
+
+            builder.Property(c => c.EventDiscountAmount)
+                .HasColumnType("decimal(18,2)");
+
+            builder.Property(c => c.EventDiscountPercentage)
+           .HasColumnType("decimal(5,2)");
+
+            builder.Property(c => c.CreatedAt)
                   .HasColumnType("timestamp with time zone")
-                  .HasDefaultValueSql("CURRENT_TIMESTAMP"); // Default to current UTC time
+                  .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC' "); // Default to current UTC time
 
-            builder.Property(ci => ci.UpdatedAt)
-                   .HasColumnType("timestamp with time zone")
-                   .HasDefaultValueSql("CURRENT_TIMESTAMP"); // Default to current UTC time
+            builder.Property(c => c.UpdatedAt)
+                   .HasColumnType("timestamp with time zone");
 
-            builder.Property(ci => ci.IsDeleted)
+
+            builder.Property(c => c.IsDeleted)
                    .HasDefaultValue(false);
 
             builder.HasOne(c => c.User)
                    .WithMany()
-                   .HasForeignKey(c => c.UserId);
+                   .HasForeignKey(c => c.UserId)
+                   .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasOne(c => c.Product)
                    .WithMany()
-                   .HasForeignKey(c => c.ProductId);
+                   .HasForeignKey(c => c.ProductId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(c => c.AppliedEvent)
+           .WithMany()
+           .HasForeignKey(c => c.AppliedEventId)
+           .OnDelete(DeleteBehavior.SetNull);
+
+            //  INDEXES for performance
+            builder.HasIndex(ci => ci.ExpiresAt);
+            builder.HasIndex(ci => new { ci.UserId, ci.IsDeleted });
         }
     }
 }

@@ -79,12 +79,12 @@ namespace Application.Features.CategoryFeat.Queries
                     // ✅ Pricing statistics
                     TotalProducts = productDTOs.Count,
                     ProductsOnSale = productDTOs.Count(p => p.IsOnSale),
-                    AveragePrice = productDTOs.Any() ? productDTOs.Average(p => p.EffectivePrice) : 0,
-                    MinPrice = productDTOs.Any() ? productDTOs.Min(p => p.EffectivePrice) : 0,
-                    MaxPrice = productDTOs.Any() ? productDTOs.Max(p => p.EffectivePrice) : 0,
-                    TotalSavings = productDTOs.Sum(p => p.DiscountAmount)
+                    AveragePrice = productDTOs.Any() ? productDTOs.Average(p => p.Pricing.EffectivePrice) : 0,
+                    MinPrice = productDTOs.Any() ? productDTOs.Min(p => p.Pricing.EffectivePrice) : 0,
+                    MaxPrice = productDTOs.Any() ? productDTOs.Max(p => p.Pricing.EffectivePrice) : 0,
+                   // TotalSavings = productDTOs.Sum(p => p.Pricing.DiscountAmount)
                 };
-
+                
                 _logger.LogInformation("Retrieved category {CategoryId} with {ProductCount} products, {OnSaleCount} on sale, total savings: Rs.{TotalSavings}",
                     request.CategoryId, productDTOs.Count, categoryWithProductsDto.ProductsOnSale, categoryWithProductsDto.TotalSavings);
 
@@ -103,10 +103,10 @@ namespace Application.Features.CategoryFeat.Queries
         {
             return sortBy?.ToLower() switch
             {
-                "price" => products.OrderBy(p => p.EffectivePrice).ToList(),
+                "price" => products.OrderBy(p => p.Pricing.EffectivePrice).ToList(),
                 "name" => products.OrderBy(p => p.Name).ToList(),
                 "rating" => products.OrderByDescending(p => p.Rating).ToList(),
-                "discount" => products.OrderByDescending(p => p.DiscountPercentage).ToList(),
+                "discount" => products.OrderByDescending(p => p.Pricing.TotalDiscountPercentage).ToList(),
                 _ => products.OrderByDescending(p => p.Id).ToList()
             };
         }
