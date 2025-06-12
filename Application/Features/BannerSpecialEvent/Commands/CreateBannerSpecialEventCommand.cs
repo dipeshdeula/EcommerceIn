@@ -159,7 +159,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
                         await CreateEventRules(createdEvent.Id, request.bannerSpecialDTO.Rules, cancellationToken);
                     }
 
-                    // ✅ ASSOCIATE PRODUCTS (if any) - FIXED BULK INSERT
+                    //  ASSOCIATE PRODUCTS (if any) - FIXED BULK INSERT
                     if (request.bannerSpecialDTO.ProductIds?.Any() == true)
                     {
                         await AssociateProductsWithEvent(createdEvent.Id, request.bannerSpecialDTO.ProductIds, cancellationToken);
@@ -197,7 +197,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to create banner event: {EventName}",
+                _logger.LogError(ex, " Failed to create banner event: {EventName}",
                     request.bannerSpecialDTO.EventDto.Name);
                 return Result<BannerEventSpecialDTO>.Failure($"Failed to create banner event: {ex.Message}");
             }
@@ -228,12 +228,12 @@ namespace Application.Features.BannerSpecialEvent.Commands
             if (lowStockProducts.Any())
             {
                 var lowStockIds = string.Join(", ", lowStockProducts.Select(p => $"{p.Id} ({p.Name})"));
-                _logger.LogWarning("⚠️ Products with low/no stock included in event: {LowStockProducts}", lowStockIds);
+                _logger.LogWarning("Products with low/no stock included in event: {LowStockProducts}", lowStockIds);
 
                 // Don't throw exception, just warn - business decision to allow events on low stock items
             }
 
-            _logger.LogInformation("✅ Validated {ValidCount}/{TotalCount} products for event. Stock status checked.",
+            _logger.LogInformation(" Validated {ValidCount}/{TotalCount} products for event. Stock status checked.",
                 existingProductIds.Count, productIds.Count);
         }
 
@@ -299,7 +299,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
                 await _unitOfWork.EventProducts.AddAsync(product, cancellationToken);
             }
 
-            _logger.LogInformation("✅ Associated {Count} products with event", productEntities.Count);
+            _logger.LogInformation("Associated {Count} products with event", productEntities.Count);
         }
 
         /// <summary>
@@ -307,7 +307,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
         /// </summary>
         private string ProcessActiveTimeSlot(string? inputTimeSlot, EventType eventType, DateTime startDate, DateTime endDate)
         {
-            // ✅ CASE 1: If provided, validate format
+            // CASE 1: If provided, validate format
             if (!string.IsNullOrWhiteSpace(inputTimeSlot))
             {
                 if (IsValidTimeSlotFormat(inputTimeSlot))
@@ -318,7 +318,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
                 _logger.LogWarning("⚠️ Invalid time slot format provided: {TimeSlot}. Auto-generating from dates.", inputTimeSlot);
             }
 
-            // ✅ CASE 2: Auto-generate based on YOUR ACTUAL EVENT TYPES
+            // CASE 2: Auto-generate based on YOUR ACTUAL EVENT TYPES
             return eventType switch
             {
                 EventType.Flash => $"{startDate:HH:mm}-{endDate:HH:mm}",     // Precise timing for flash sales

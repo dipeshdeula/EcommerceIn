@@ -1,5 +1,4 @@
-﻿////filepath: e:\EcomerceDeployPostgres\EcommerceBackendAPI\Application\Features\ProductFeat\Queries\GetAllProductQuery.cs
-using Application.Common;
+﻿using Application.Common;
 using Application.Dto.ProductDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
@@ -15,7 +14,7 @@ namespace Application.Features.ProductFeat.Queries
         int PageSize = 10,
         int? UserId = null,
         bool OnSaleOnly = false,
-        bool PrioritizeEventProducts = true, // ✅ NEW: Show event products first
+        bool PrioritizeEventProducts = true, 
         string? SearchTerm = null
     ) : IRequest<Result<IEnumerable<ProductDTO>>>;
 
@@ -41,7 +40,7 @@ namespace Application.Features.ProductFeat.Queries
             {
                 var productDTOs = new List<ProductDTO>();
 
-                // ✅ 1. Get event-highlighted products first (if prioritization enabled)
+                //  1. Get event-highlighted products first (if prioritization enabled)
                 if (request.PrioritizeEventProducts)
                 {
                     var eventProductIds = await _pricingService.GetEventHighlightedProductIdsAsync(cancellationToken);
@@ -80,7 +79,7 @@ namespace Application.Features.ProductFeat.Queries
                     }
                 }
 
-                // ✅ 2. Fill remaining slots with regular products (if needed)
+                // 2. Fill remaining slots with regular products (if needed)
                 var remainingSlots = request.PageSize - productDTOs.Count;
                 if (remainingSlots > 0)
                 {
@@ -117,7 +116,7 @@ namespace Application.Features.ProductFeat.Queries
                     productDTOs.AddRange(regularProductDTOs);
                 }
 
-                // ✅ 3. Final sorting - event products first, then regular products
+                //  3. Final sorting - event products first, then regular products
                 if (request.PrioritizeEventProducts)
                 {
                     productDTOs = productDTOs

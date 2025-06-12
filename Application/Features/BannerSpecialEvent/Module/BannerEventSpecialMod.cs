@@ -47,7 +47,7 @@ namespace Application.Features.BannerSpecialEvent.Module
                 .WithSummary("Create a new banner event")
                 .WithDescription("Creates a new banner event with optional rules and product associations");
 
-            // ✅ READ: Get all banner events with filtering and pagination
+            // Get all banner events with filtering and pagination
             app.MapGet("/", async (
                 ISender mediator,
                 [FromQuery] int pageNumber = 1,

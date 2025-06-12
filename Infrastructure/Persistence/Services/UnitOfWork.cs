@@ -67,7 +67,7 @@ namespace Infrastructure.Persistence.Services
             _subSubCategories ??= new SubSubCategoryRepository(_context);
 
         public IUserRepository Users =>
-            _users ??= new UserRepository(_context, null!); // Fix IFileServices injection
+            _users ??= new UserRepository(_context, null!); 
 
         public IOrderRepository Orders =>
             _orders ??= new OrderRepository(_context);

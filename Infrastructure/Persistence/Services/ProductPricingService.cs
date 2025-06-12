@@ -90,7 +90,7 @@ namespace Infrastructure.Persistence.Services
                         priceInfo.EventEndDate = activeEvent.EndDate;
                         priceInfo.EventDiscountAmount = discountResult.EventDiscountAmount;
 
-                        _logger.LogInformation("✅ Applied pricing to product {ProductId}: Rs.{OriginalPrice} → Rs.{FinalPrice} " +
+                        _logger.LogInformation("Applied pricing to product {ProductId}: Rs.{OriginalPrice} → Rs.{FinalPrice} " +
                                      "(Product: -Rs.{ProductDiscount}, Event: -Rs.{EventDiscount}, Total saved: Rs.{TotalSavings})",
                     product.Id, priceInfo.OriginalPrice, priceInfo.EffectivePrice, 
                     priceInfo.RegularDiscountAmount, priceInfo.EventDiscountAmount, priceInfo.TotalDiscountAmount);
@@ -185,7 +185,7 @@ namespace Infrastructure.Persistence.Services
         var startNepal = _nepalTimeZoneService.ConvertFromUtcToNepal(bestEvent.StartDate);
         var endNepal = _nepalTimeZoneService.ConvertFromUtcToNepal(bestEvent.EndDate);
 
-        _logger.LogInformation("✅ Selected best event for product {ProductId}: {EventName} " +
+        _logger.LogInformation(" Selected best event for product {ProductId}: {EventName} " +
                              "(Priority: {Priority}, Discount: {DiscountValue}%) " +
                              "UTC: {StartUtc} - {EndUtc}, Nepal: {StartNepal} - {EndNepal}, Now Nepal: {NowNepal}",
             productId, bestEvent.Name, bestEvent.Priority, bestEvent.DiscountValue,
@@ -245,7 +245,7 @@ namespace Infrastructure.Persistence.Services
                 if (activeEvent.PromotionType == PromotionType.Percentage)
                 {
                     eventDiscountAmount = (basePrice * discountValue) / 100;
-                    _logger.LogDebug("📊 Percentage discount: Rs.{BasePrice} * {DiscountValue}% = Rs.{EventDiscountAmount}",
+                    _logger.LogDebug(" Percentage discount: Rs.{BasePrice} * {DiscountValue}% = Rs.{EventDiscountAmount}",
                 basePrice, discountValue, eventDiscountAmount);
                 }
                 else if (activeEvent.PromotionType == PromotionType.FixedAmount)
@@ -369,7 +369,7 @@ namespace Infrastructure.Persistence.Services
         {
             var cacheKey = $"price_info_{productId}";
             _cache.Remove(cacheKey);
-            _logger.LogDebug("🗑️ Invalidated price cache for product {ProductId}", productId);
+            _logger.LogDebug(" Invalidated price cache for product {ProductId}", productId);
         }
 
         public async Task InvalidateAllPriceCacheAsync()

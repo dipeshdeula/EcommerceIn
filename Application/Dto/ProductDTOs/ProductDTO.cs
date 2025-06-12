@@ -6,7 +6,7 @@ namespace Application.Dto.ProductDTOs
 {
     public class ProductDTO
     {
-        // ===== BASIC PRODUCT DATA =====
+        //  BASIC PRODUCT DATA 
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
@@ -25,7 +25,7 @@ namespace Application.Dto.ProductDTOs
         public int CategoryId { get; set; }
         public int SubSubCategoryId { get; set; }
 
-        // ===== COMPUTED BASIC PROPERTIES =====
+        //  COMPUTED BASIC PROPERTIES 
         public int AvailableStock => Math.Max(0, StockQuantity - ReservedStock);
         public bool IsInStock => AvailableStock > 0;
         public bool HasProductDiscount => DiscountPrice.HasValue && DiscountPrice < MarketPrice;
@@ -33,7 +33,7 @@ namespace Application.Dto.ProductDTOs
         public decimal ProductDiscountAmount => HasProductDiscount ? MarketPrice - DiscountPrice.Value : 0;
 
 
-        // ===== DISPLAY FORMATTING =====
+        //  DISPLAY FORMATTING 
         public string FormattedMarketPrice => $"Rs. {MarketPrice:F2}";
         public string FormattedBasePrice => $"Rs. {BasePrice:F2}";
         public string FormattedDiscountAmount => HasProductDiscount ? $"Rs. {ProductDiscountAmount:F2}" : "Rs. 0.00";
@@ -42,10 +42,10 @@ namespace Application.Dto.ProductDTOs
                                    : AvailableStock <= 10 ? "Low Stock"
                                    : "In Stock";
 
-        // ===== NAVIGATION PROPERTIES =====
+        //  NAVIGATION PROPERTIES 
         public ICollection<ProductImageDTO> Images { get; set; } = new List<ProductImageDTO>();
 
-        // ===== COMPOSITION PROPERTIES (Set by services) =====
+        //  COMPOSITION PROPERTIES (Set by services) 
         public ProductPricingDTO? Pricing { get; set; }
         public ProductStockDTO? Stock { get; set; }
 

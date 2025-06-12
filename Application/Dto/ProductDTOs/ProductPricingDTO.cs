@@ -12,25 +12,25 @@ namespace Application.Dto.ProductDTOs
     {
         public int ProductId { get; set; }
 
-        // ===== CORE PRICING =====
+        //  CORE PRICING 
         public decimal OriginalPrice { get; set; }      // Market price
         public decimal BasePrice { get; set; }          // After product discount
         public decimal EffectivePrice { get; set; }     // Final price after all discounts
 
-        // ===== DISCOUNT BREAKDOWN =====
+        //  DISCOUNT BREAKDOWN 
         public decimal ProductDiscountAmount { get; set; }
         public decimal EventDiscountAmount { get; set; }
         public decimal TotalDiscountAmount => ProductDiscountAmount + EventDiscountAmount;
         public decimal TotalDiscountPercentage => OriginalPrice > 0
             ? Math.Round((TotalDiscountAmount / OriginalPrice) * 100, 2) : 0;
 
-        // ===== DISCOUNT FLAGS =====
+        //  DISCOUNT FLAGS 
         public bool HasProductDiscount => ProductDiscountAmount > 0;
         public bool HasEventDiscount => EventDiscountAmount > 0;
         public bool HasAnyDiscount => TotalDiscountAmount > 0;
         public bool IsOnSale => HasAnyDiscount;
 
-        // ===== EVENT INFORMATION =====
+        //  EVENT INFORMATION 
         public int? ActiveEventId { get; set; }
         public string? ActiveEventName { get; set; }
         public string? EventTagLine { get; set; }
@@ -38,7 +38,7 @@ namespace Application.Dto.ProductDTOs
         public DateTime? EventStartDate { get; set; }
         public DateTime? EventEndDate { get; set; }
 
-        // ===== EVENT STATUS =====
+        //  EVENT STATUS 
         public bool HasActiveEvent => ActiveEventId.HasValue;
         public bool IsEventActive => HasActiveEvent &&
                                    DateTime.UtcNow >= EventStartDate &&
@@ -48,7 +48,7 @@ namespace Application.Dto.ProductDTOs
         public bool IsEventExpiringSoon => EventTimeRemaining.HasValue &&
                                           EventTimeRemaining.Value.TotalHours <= 24;
 
-        // ===== FORMATTED DISPLAY =====
+        //  FORMATTED DISPLAY 
         public string FormattedOriginalPrice => $"Rs. {OriginalPrice:F2}";
         public string FormattedEffectivePrice => $"Rs. {EffectivePrice:F2}";
         public string FormattedSavings => HasAnyDiscount ? $"Save Rs. {TotalDiscountAmount:F2}" : string.Empty;
@@ -72,13 +72,13 @@ namespace Application.Dto.ProductDTOs
                                    EventTimeRemaining.HasValue ?
                                    FormatTimeRemaining(EventTimeRemaining.Value) : "Event Active";
 
-        // ===== PRICING VALIDATION =====
+        //  PRICING VALIDATION 
         public bool IsPriceStable { get; set; } = true;
         public DateTime CalculatedAt { get; set; } = DateTime.UtcNow;
         public bool IsPriceValidWithTolerance(decimal expectedPrice, decimal tolerance = 0.01m) =>
             Math.Abs(EffectivePrice - expectedPrice) <= tolerance;
 
-        // ===== HELPER METHODS =====
+        //  HELPER METHODS 
         private string FormatTimeRemaining(TimeSpan timeRemaining)
         {
             if (timeRemaining.TotalDays >= 1)
@@ -90,7 +90,7 @@ namespace Application.Dto.ProductDTOs
             return "Ends soon";
         }
 
-        // ===== PRICING BREAKDOWN FOR DETAILED ANALYSIS =====
+        //  PRICING BREAKDOWN FOR DETAILED ANALYSIS 
         public PricingBreakdown GetDetailedBreakdown() => new()
         {
             OriginalPrice = OriginalPrice,

@@ -27,7 +27,7 @@ namespace Application.Features.BannerSpecialEvent.Validators
 
         private void SetupValidationRules()
         {
-            // ✅ BASIC INFO VALIDATION
+            // BASIC INFO VALIDATION
             RuleFor(x => x.Name)
                 .NotEmpty()
                 .WithMessage("Event name is required.")
@@ -47,7 +47,7 @@ namespace Application.Features.BannerSpecialEvent.Validators
                 .WithMessage("Tag line cannot exceed 200 characters.")
                 .When(x => !string.IsNullOrEmpty(x.TagLine));
 
-            // ✅ BUSINESS RULES VALIDATION
+            // BUSINESS RULES VALIDATION
             RuleFor(x => x.EventType)
                 .IsInEnum()
                 .WithMessage("Invalid event type selected.");
@@ -56,7 +56,7 @@ namespace Application.Features.BannerSpecialEvent.Validators
                 .IsInEnum()
                 .WithMessage("Invalid promotion type selected.");
 
-            // ✅ DISCOUNT VALIDATION WITH COMPLEX BUSINESS RULES
+            // DISCOUNT VALIDATION WITH COMPLEX BUSINESS RULES
             RuleFor(x => x.DiscountValue)
                 .GreaterThan(0)
                 .WithMessage("Discount value must be greater than 0.")
@@ -76,7 +76,7 @@ namespace Application.Features.BannerSpecialEvent.Validators
                 .When(x => x.MinOrderValue.HasValue)
                 .WithMessage("Minimum order value must be greater than 0.");
 
-            // ✅ NEPAL TIME VALIDATION (Using correct STRING properties)
+            // NEPAL TIME VALIDATION (Using correct STRING properties)
             RuleFor(x => x.StartDateNepal)
                 .NotEmpty()
                 .WithMessage("Start date is required.")
@@ -91,17 +91,17 @@ namespace Application.Features.BannerSpecialEvent.Validators
                 .Must(BeValidNepalTimeString)
                 .WithMessage("End date must be a valid date/time format (YYYY-MM-DDTHH:mm:ss).");
 
-            // ✅ DATE RANGE VALIDATION
+            //  DATE RANGE VALIDATION
             RuleFor(x => x)
                 .Must(HaveValidDateRange)
                 .WithMessage("End date must be after start date.");
 
-            // ✅ DURATION VALIDATION
+            // DURATION VALIDATION
             RuleFor(x => x)
                 .Must(HaveValidDuration)
                 .WithMessage("Event duration must be between 30 minutes and 365 days.");
 
-            // ✅ USAGE LIMITS VALIDATION
+            //  USAGE LIMITS VALIDATION
             RuleFor(x => x.MaxUsageCount)
                 .GreaterThan(0)
                 .When(x => x.MaxUsageCount.HasValue)
@@ -123,19 +123,19 @@ namespace Application.Features.BannerSpecialEvent.Validators
                 .When(x => x.Priority.HasValue)
                 .WithMessage("Priority must be between 1 and 100.");
 
-            // ✅ ACTIVE TIME SLOT VALIDATION
+            // ACTIVE TIME SLOT VALIDATION
             RuleFor(x => x.ActiveTimeSlot)
                 .Must(BeValidTimeSpanString)
                 .When(x => !string.IsNullOrEmpty(x.ActiveTimeSlot))
                 .WithMessage("Active time slot must be in format HH:mm:ss (e.g., 14:30:00).");
 
-            // ✅ BUSINESS LOGIC VALIDATION
+            // BUSINESS LOGIC VALIDATION
             RuleFor(x => x)
                 .MustAsync(NotConflictWithExistingEvents)
                 .WithMessage("Event conflicts with existing high-priority events during the specified time period.");
         }
 
-        // ✅ CUSTOM VALIDATION METHODS
+        // CUSTOM VALIDATION METHODS
         private bool BeValidDiscountValue(AddBannerEventSpecialDTO dto, decimal discountValue)
         {
             return dto.PromotionType switch
@@ -164,7 +164,7 @@ namespace Application.Features.BannerSpecialEvent.Validators
 
             if (!DateTime.TryParse(dateTimeString, out var parsedDate)) return false;
 
-            // ✅ REASONABLE DATE RANGE
+            //  REASONABLE DATE RANGE
             return parsedDate > new DateTime(2020, 1, 1) && parsedDate < new DateTime(2030, 12, 31);
         }
 
@@ -223,15 +223,15 @@ namespace Application.Features.BannerSpecialEvent.Validators
         {
             try
             {
-                // ✅ PARSE STRING DATES TO DATETIME
+                // PARSE STRING DATES TO DATETIME
                 if (!DateTime.TryParse(dto.StartDateNepal, out var startDateNepal)) return true;
                 if (!DateTime.TryParse(dto.EndDateNepal, out var endDateNepal)) return true;
 
-                // ✅ CONVERT TO UTC FOR DATABASE QUERY
+                // CONVERT TO UTC FOR DATABASE QUERY
                 var startDateUtc = _nepalTimeService.ConvertFromNepalToUtc(startDateNepal);
                 var endDateUtc = _nepalTimeService.ConvertFromNepalToUtc(endDateNepal);
 
-                // ✅ ENSURE UTC KIND FOR POSTGRESQL
+                // ENSURE UTC KIND FOR POSTGRESQL
                 startDateUtc = DateTime.SpecifyKind(startDateUtc, DateTimeKind.Utc);
                 endDateUtc = DateTime.SpecifyKind(endDateUtc, DateTimeKind.Utc);
 

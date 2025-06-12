@@ -140,18 +140,18 @@ namespace Application.Extension
                 BasePrice = priceInfo.BasePrice,
                 EffectivePrice = priceInfo.EffectivePrice,
 
-                // ✅ MAP DISCOUNT AMOUNTS
+                // MAP DISCOUNT AMOUNTS
                 ProductDiscountAmount = priceInfo.RegularDiscountAmount,
                 EventDiscountAmount = priceInfo.EventDiscountAmount,
 
-                // ✅ MAP EVENT INFO
+                // MAP EVENT INFO
                 ActiveEventId = priceInfo.AppliedEventId,
                 ActiveEventName = priceInfo.AppliedEventName,
                 EventTagLine = priceInfo.EventTagLine,
                 PromotionType = priceInfo.PromotionType,
                 EventEndDate = priceInfo.EventEndDate,
 
-                // ✅ MAP METADATA
+                //  MAP METADATA
                 IsPriceStable = priceInfo.IsPriceStable,
                 CalculatedAt = priceInfo.PriceCalculatedAt
             };
@@ -165,7 +165,7 @@ namespace Application.Extension
                 ReservedStock = product.ReservedStock,
                 CanReserve = product.CanReserve(1),
                 IsAvailableForSale = !product.IsDeleted && product.IsInStock,
-                MaxOrderQuantity = Math.Min(product.AvailableStock, 10) // Example business rule
+                MaxOrderQuantity = Math.Min(product.AvailableStock, 10) 
             };
         }
 
@@ -186,12 +186,12 @@ namespace Application.Extension
         {
             if (priceInfo == null)
             {
-                // ✅ NO PRICING DATA - Create default pricing
+                //  NO PRICING DATA - Create default pricing
                 productDTO.Pricing = CreateDefaultPricing(productDTO);
                 return productDTO;
             }
 
-            // ✅ APPLY PRICING DATA via composition
+            // APPLY PRICING DATA via composition
             productDTO.Pricing = priceInfo.ToPricingDTO();
 
             return productDTO;
@@ -299,14 +299,16 @@ namespace Application.Extension
 
         public static CartItemDTO ToDTO(this CartItem cartItem)
         {
+            if (cartItem == null) throw new ArgumentNullException(nameof(cartItem));
+
             return new CartItemDTO
             {
                 Id = cartItem.Id,
                 UserId = cartItem.UserId,
                 ProductId = cartItem.ProductId,
                 Quantity = cartItem.Quantity,
-
-                ReservedPrice = cartItem.Ef.
+                OriginalPrice = CalculateOriginalPrice(cartItem),
+                ReservedPrice = cartItem.ReservedPrice,
                 EventDiscountAmount = cartItem.EventDiscountAmount,
                 AppliedEventId = cartItem.AppliedEventId,
                 IsStockReserved = cartItem.IsStockReserved,
@@ -315,8 +317,9 @@ namespace Application.Extension
                 CreatedAt = cartItem.CreatedAt,
                 UpdatedAt = cartItem.UpdatedAt,
                 IsDeleted = cartItem.IsDeleted,
+                Product = cartItem.Product?.ToDTO(),
                 User = cartItem.User?.ToDTO(),
-                Product = cartItem.Product?.ToDTO()
+                
             };
         }
 
@@ -352,9 +355,9 @@ namespace Application.Extension
                 UserId = userId,
                 TotalItems = activeItems.Count,
                 TotalQuantity = activeItems.Sum(c => c.Quantity),
-                SubTotal = activeItems.Sum(c => (c.ReservedPrice ?? 0) * c.Quantity),
+                SubTotal = activeItems.Sum(c => c.ReservedPrice * c.Quantity),
                 TotalDiscount = activeItems.Sum(c => (c.EventDiscountAmount ?? 0) * c.Quantity),
-                EstimatedTotal = activeItems.Sum(c => ((c.ReservedPrice ?? 0) - (c.EventDiscountAmount ?? 0)) * c.Quantity),
+                EstimatedTotal = activeItems.Sum(c => c.ReservedPrice * c.Quantity),
                 CanCheckout = activeItems.Any() && !expiredItems.Any() && !outOfStockItems.Any(),
                 HasExpiredItems = expiredItems.Any(),
                 HasOutOfStockItems = outOfStockItems.Any(),
@@ -362,6 +365,62 @@ namespace Application.Extension
                 EarliestExpiration = activeItems.Any() ? activeItems.Min(c => c.ExpiresAt) : null,
                 ValidationErrors = validationErrors,
                 Items = activeItems.Select(c => c.ToDTO()).ToList()
+            };
+        }
+        public static CartItemDTO ToEnhancedDTO(this CartItem cartItem, ProductPriceInfoDTO? currentPricing = null)
+        {
+            if (cartItem == null) throw new ArgumentNullException(nameof(cartItem));
+
+            // Convert to basic DTO first
+            var dto = cartItem.ToDTO();
+
+            // If current pricing is available, we can show price comparison
+            if (currentPricing != null)
+            {
+                // Calculate if price has changed since cart creation
+                var currentEffectivePrice = currentPricing.EffectivePrice;
+                var priceDifference = currentEffectivePrice - cartItem.ReservedPrice;
+
+                // You could add properties to show price changes, but since you don't want to modify DTO,
+                // this information would be handled at the service level
+            }
+
+            return dto;
+        }
+
+
+        // ✅ HELPER: Calculate original price from available CartItem data
+        private static decimal? CalculateOriginalPrice(CartItem cartItem)
+        {
+            // Try to reconstruct original price from available data
+            // Original Price = Reserved Price + Regular Discount + Event Discount
+
+            var eventDiscount = cartItem.EventDiscountAmount ?? 0;
+            var regularDiscount = cartItem.RegularDiscountAmount;
+
+            // Calculate estimated original price
+            var estimatedOriginal = cartItem.ReservedPrice + regularDiscount + eventDiscount;
+
+            return estimatedOriginal > 0 ? estimatedOriginal : cartItem.ReservedPrice;
+        }
+
+        // ✅ FALLBACK: Create fallback pricing when service is unavailable
+        private static ProductPriceInfoDTO CreateFallbackPricing(CartItem cartItem)
+        {
+            var estimatedOriginal = CalculateOriginalPrice(cartItem) ?? cartItem.ReservedPrice;
+
+            return new ProductPriceInfoDTO
+            {
+                ProductId = cartItem.ProductId,
+                OriginalPrice = estimatedOriginal,
+                BasePrice = cartItem.ReservedPrice + (cartItem.EventDiscountAmount ?? 0), // Add back event discount to get base
+                EffectivePrice = cartItem.ReservedPrice,
+                EventDiscountAmount = cartItem.EventDiscountAmount ?? 0,
+                AppliedEventId = cartItem.AppliedEventId,
+                AppliedEventName = cartItem.AppliedEvent?.Name,
+                EventTagLine = cartItem.AppliedEvent?.TagLine,
+                IsPriceStable = true,
+                PriceCalculatedAt = DateTime.UtcNow
             };
         }
 

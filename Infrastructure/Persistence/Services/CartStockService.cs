@@ -43,14 +43,14 @@ namespace Infrastructure.Persistence.Services
                 await _unitOfWork.Products.UpdateAsync(product, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("✅ Reserved {Quantity} units for product {ProductId}, user {UserId}. Token: {Token}",
+                _logger.LogInformation("Reserved {Quantity} units for product {ProductId}, user {UserId}. Token: {Token}",
                     quantity, productId, userId, reservationToken);
 
                 return StockReservationResult.Succeeded(reservationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error reserving stock for product {ProductId}", productId);
+                _logger.LogError(ex, "Error reserving stock for product {ProductId}", productId);
                 return StockReservationResult.Failed("Error reserving stock");
             }
         }
@@ -62,13 +62,13 @@ namespace Infrastructure.Persistence.Services
                 var product = await _unitOfWork.Products.GetByIdAsync(productId, cancellationToken);
                 if (product == null)
                 {
-                    _logger.LogWarning("⚠️ Product {ProductId} not found for stock release", productId);
+                    _logger.LogWarning("Product {ProductId} not found for stock release", productId);
                     return false;
                 }
 
                 if (product.ReservedStock < quantity)
                 {
-                    _logger.LogWarning("⚠️ Cannot release {Quantity} units for product {ProductId}. Reserved: {Reserved}",
+                    _logger.LogWarning("Cannot release {Quantity} units for product {ProductId}. Reserved: {Reserved}",
                         quantity, productId, product.ReservedStock);
                     return false;
                 }
@@ -79,14 +79,14 @@ namespace Infrastructure.Persistence.Services
                 await _unitOfWork.Products.UpdateAsync(product, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("✅ Released {Quantity} reserved units for product {ProductId}. Reserved now: {Reserved}",
+                _logger.LogInformation("Released {Quantity} reserved units for product {ProductId}. Reserved now: {Reserved}",
                     quantity, productId, product.ReservedStock);
 
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error releasing stock for product {ProductId}", productId);
+                _logger.LogError(ex, "Error releasing stock for product {ProductId}", productId);
                 return false;
             }
         }
@@ -98,13 +98,13 @@ namespace Infrastructure.Persistence.Services
                 var product = await _unitOfWork.Products.GetByIdAsync(productId, cancellationToken);
                 if (product == null)
                 {
-                    _logger.LogWarning("⚠️ Product {ProductId} not found for stock confirmation", productId);
+                    _logger.LogWarning("Product {ProductId} not found for stock confirmation", productId);
                     return false;
                 }
 
                 if (product.ReservedStock < quantity || product.StockQuantity < quantity)
                 {
-                    _logger.LogWarning("⚠️ Cannot confirm {Quantity} units for product {ProductId}. Reserved: {Reserved}, Stock: {Stock}",
+                    _logger.LogWarning("Cannot confirm {Quantity} units for product {ProductId}. Reserved: {Reserved}, Stock: {Stock}",
                         quantity, productId, product.ReservedStock, product.StockQuantity);
                     return false;
                 }
@@ -116,14 +116,14 @@ namespace Infrastructure.Persistence.Services
                 await _unitOfWork.Products.UpdateAsync(product, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("✅ Confirmed {Quantity} units for product {ProductId}. Stock: {Stock}, Reserved: {Reserved}",
+                _logger.LogInformation("Confirmed {Quantity} units for product {ProductId}. Stock: {Stock}, Reserved: {Reserved}",
                     quantity, productId, product.StockQuantity, product.ReservedStock);
 
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error confirming stock for product {ProductId}", productId);
+                _logger.LogError(ex, "Error confirming stock for product {ProductId}", productId);
                 return false;
             }
         }
@@ -135,7 +135,7 @@ namespace Infrastructure.Persistence.Services
                 var product = await _unitOfWork.Products.GetByIdAsync(productId, cancellationToken);
                 if (product == null)
                 {
-                    _logger.LogWarning("⚠️ Product {ProductId} not found for reservation update", productId);
+                    _logger.LogWarning("Product {ProductId} not found for reservation update", productId);
                     return false;
                 }
 
@@ -147,7 +147,7 @@ namespace Infrastructure.Persistence.Services
                     var availableStock = product.StockQuantity - product.ReservedStock;
                     if (availableStock < quantityDiff)
                     {
-                        _logger.LogWarning("⚠️ Cannot reserve additional {Quantity} units for product {ProductId}. Available: {Available}",
+                        _logger.LogWarning("Cannot reserve additional {Quantity} units for product {ProductId}. Available: {Available}",
                             quantityDiff, productId, availableStock);
                         return false;
                     }
@@ -166,14 +166,14 @@ namespace Infrastructure.Persistence.Services
                 await _unitOfWork.Products.UpdateAsync(product, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("✅ Updated reservation for product {ProductId}: {OldQty} → {NewQty}. Reserved now: {Reserved}",
+                _logger.LogInformation("Updated reservation for product {ProductId}: {OldQty} → {NewQty}. Reserved now: {Reserved}",
                     productId, oldQuantity, newQuantity, product.ReservedStock);
 
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error updating reservation for product {ProductId}", productId);
+                _logger.LogError(ex, "Error updating reservation for product {ProductId}", productId);
                 return false;
             }
         }

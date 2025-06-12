@@ -297,10 +297,13 @@ namespace Infrastructure.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("RegularDiscountAmount")
+                        .HasColumnType("numeric");
+
                     b.Property<string>("ReservationToken")
                         .HasColumnType("text");
 
-                    b.Property<decimal?>("ReservedPrice")
+                    b.Property<decimal>("ReservedPrice")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("UpdatedAt")

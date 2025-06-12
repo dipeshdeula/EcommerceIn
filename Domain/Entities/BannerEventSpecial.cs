@@ -35,7 +35,7 @@ namespace Domain.Entities
         public bool IsDeleted { get; set; } = false;
         public EventStatus Status { get; set; } = EventStatus.Draft;
 
-         // ✅ ADDED: Computed property for debugging
+         //  Computed property for debugging
         public bool IsTimeActive => DateTime.UtcNow >= StartDate && DateTime.UtcNow <= EndDate;
 
         // Relationships

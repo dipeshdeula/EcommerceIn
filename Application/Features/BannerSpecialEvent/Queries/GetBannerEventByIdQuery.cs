@@ -39,16 +39,16 @@ namespace Application.Features.BannerSpecialEvent.Queries
                     return Result<BannerEventSpecialDTO>.Failure("Banner event not found");
                 }
 
-                // ✅ Initialize DTO with base properties
+                // Initialize DTO with base properties
                 var dto = bannerEvent.ToDTO();
 
-                // ✅ FIXED: Initialize all collections
+                //  Initialize all collections
                 dto.Images = new List<BannerImageDTO>();
                 dto.Rules = new List<EventRuleDTO>();
                 dto.EventProducts = new List<EventProductDTO>();
                 dto.ProductIds = new List<int>();
 
-                // ✅ Map Banner Images
+                // Map Banner Images
                 if (bannerEvent.Images?.Any() == true)
                 {
                     dto.Images = bannerEvent.Images.Select(image => new BannerImageDTO
@@ -61,7 +61,7 @@ namespace Application.Features.BannerSpecialEvent.Queries
                     _logger.LogDebug("Mapped {Count} images for banner event {EventId}", dto.Images.Count, request.Id);
                 }
 
-                // ✅ Map Event Rules with detailed logging
+                // Map Event Rules with detailed logging
                 if (bannerEvent.Rules?.Any() == true)
                 {
                     dto.Rules = bannerEvent.Rules.Select(rule => new EventRuleDTO
@@ -84,7 +84,7 @@ namespace Application.Features.BannerSpecialEvent.Queries
                     _logger.LogDebug("No rules found for banner event {EventId}", request.Id);
                 }
 
-                // ✅ Map Event Products with enhanced product details
+                // Map Event Products with enhanced product details
                 if (bannerEvent.EventProducts?.Any() == true)
                 {
                     dto.EventProducts = bannerEvent.EventProducts.Select(ep => new EventProductDTO
@@ -95,14 +95,14 @@ namespace Application.Features.BannerSpecialEvent.Queries
                         ProductName = ep.Product?.Name ?? "Unknown Product",
                         SpecificDiscount = ep.SpecificDiscount,
                         AddedAt = ep.AddedAt,
-                        // ✅ Enhanced product information
+                        // Enhanced product information
                         ProductMarketPrice = ep.Product?.MarketPrice ?? 0,
                         ProductImageUrl = ep.Product?.Images?.FirstOrDefault(img => img.IsMain)?.ImageUrl ??
                                          ep.Product?.Images?.FirstOrDefault()?.ImageUrl,
                         CategoryName = ep.Product?.Category?.Name
                     }).OrderBy(ep => ep.ProductName).ToList();
 
-                    // ✅ Set ProductIds for backward compatibility
+                    // Set ProductIds for backward compatibility
                     dto.ProductIds = bannerEvent.EventProducts
                         .Select(ep => ep.ProductId)
                         .Distinct()
@@ -116,11 +116,11 @@ namespace Application.Features.BannerSpecialEvent.Queries
                     _logger.LogDebug("No event products found for banner event {EventId}", request.Id);
                 }
 
-                // ✅ Set statistics with null safety
+                // Set statistics with null safety
                 dto.TotalProductsCount = bannerEvent.EventProducts?.Count ?? 0;
                 dto.TotalRulesCount = bannerEvent.Rules?.Count ?? 0;
 
-                // ✅ Log summary
+                // Log summary
                 _logger.LogInformation(
                     "Successfully retrieved banner event {EventId} - {EventName} with {RulesCount} rules, {ProductsCount} products, and {ImagesCount} images",
                     request.Id,

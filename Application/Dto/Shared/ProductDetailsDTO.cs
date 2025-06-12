@@ -13,13 +13,13 @@ namespace Application.Dto.Shared
         public ProductPriceInfoDTO Pricing { get; set; } = new();
         public ProductStockDTO Stock { get; set; } = new();
 
-        // ===== CONVENIENCE PROPERTIES =====
+        //  CONVENIENCE PROPERTIES 
         public bool IsAvailableForPurchase => Product.IsInStock && Stock.CanAddToCart() && Pricing.IsPriceStable;
         public bool HasDiscount => Pricing.HasDiscount;
         public string DisplayPrice => Pricing.FormattedEffectivePrice;
         public string DisplaySavings => Pricing.FormattedSavings;
 
-        // ===== CART VALIDATION =====
+        //  CART VALIDATION 
         public CartValidationResult ValidateForCart(int quantity, decimal? maxAcceptablePrice = null)
         {
             var errors = new List<string>();

@@ -5,7 +5,7 @@ namespace Domain.Entities
 {
     public class Product
     {
-        // ===== PERSISTENT PROPERTIES =====
+        
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
@@ -23,18 +23,18 @@ namespace Domain.Entities
         public bool IsDeleted { get; set; } = false;
         public uint Version { get; set; }
 
-        // ===== FOREIGN KEYS =====
+        //  FOREIGN KEYS 
         public int SubSubCategoryId { get; set; }
         public int CategoryId { get; set; }
 
-        // ===== NAVIGATION PROPERTIES =====
+        //  NAVIGATION PROPERTIES 
         public SubSubCategory? SubSubCategory { get; set; }
         public Category? Category { get; set; }
         public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
         public ICollection<ProductStore> ProductStores { get; set; } = new List<ProductStore>();
         public ICollection<EventProduct> EventProducts { get; set; } = new List<EventProduct>();
 
-        // ===== ESSENTIAL DOMAIN COMPUTED PROPERTIES =====
+        //  ESSENTIAL DOMAIN COMPUTED PROPERTIES 
         [NotMapped]
         public int AvailableStock => Math.Max(0, StockQuantity - ReservedStock);
 
@@ -47,7 +47,7 @@ namespace Domain.Entities
         [NotMapped]
         public decimal BasePrice => DiscountPrice ?? MarketPrice;
 
-        // ===== DOMAIN BUSINESS METHODS =====
+        //  DOMAIN BUSINESS METHODS 
         public bool CanReserve(int quantity) =>
             quantity > 0 && !IsDeleted && AvailableStock >= quantity;
 

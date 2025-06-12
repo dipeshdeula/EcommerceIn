@@ -25,7 +25,7 @@ namespace Application.Dto.CategoryDTOs
         public decimal MaxPrice { get; set; }
         public decimal TotalSavings { get; set; }
 
-        // ✅ Computed properties
+        // Computed properties
         public bool HasActiveDeals => ProductsOnSale > 0;
         public decimal SalePercentage => TotalProducts > 0 ? Math.Round((decimal)ProductsOnSale / TotalProducts * 100, 1) : 0;
         public string FormattedPriceRange => MinPrice != MaxPrice ? $"Rs.{MinPrice:F2} - Rs.{MaxPrice:F2}" : $"Rs.{MinPrice:F2}";

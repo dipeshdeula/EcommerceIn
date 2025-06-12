@@ -32,7 +32,7 @@ namespace Infrastructure.Persistence.Services
                     var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
                     var pricingService = scope.ServiceProvider.GetRequiredService<IProductPricingService>();
 
-                    // ✅ 1. Check for expired events and update their status
+                    // 1. Check for expired events and update their status
                     var expiredEvents = await unitOfWork.BannerEventSpecials.GetExpiredEventsAsync(stoppingToken);
 
                     foreach (var expiredEvent in expiredEvents)
@@ -47,7 +47,7 @@ namespace Infrastructure.Persistence.Services
 
                         await unitOfWork.BannerEventSpecials.UpdateAsync(expiredEvent, stoppingToken);
 
-                        // ✅ 2. Invalidate price cache for affected products
+                        //  2. Invalidate price cache for affected products
                         if (expiredEvent.EventProducts?.Any() == true)
                         {
                             foreach (var eventProduct in expiredEvent.EventProducts)
@@ -65,7 +65,7 @@ namespace Infrastructure.Persistence.Services
                         }
                     }
 
-                    // ✅ 3. Check for events that should start now
+                    //  3. Check for events that should start now
                     var now = DateTime.UtcNow;
                     var eventsToActivate = await unitOfWork.BannerEventSpecials.GetAllAsync(
                         predicate: e => !e.IsDeleted &&
@@ -87,7 +87,7 @@ namespace Infrastructure.Persistence.Services
                             eventToActivate.Name, eventToActivate.Id);
                     }
 
-                    // ✅ 4. Save all changes
+                    // 4. Save all changes
                     if (expiredEvents.Any() || eventsToActivate.Any())
                     {
                         await unitOfWork.SaveChangesAsync(stoppingToken);
@@ -95,7 +95,7 @@ namespace Infrastructure.Persistence.Services
                             expiredEvents.Count(), eventsToActivate.Count());
                     }
 
-                    // ✅ 5. Run every 2 minutes for real-time responsiveness
+                    // 5. Run every 2 minutes for real-time responsiveness
                     await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken);
                 }
                 catch (Exception ex)

@@ -7,11 +7,12 @@ namespace Domain.Entities
         public int Id { get; set; }
         public int UserId { get; set; }
         public int ProductId { get; set; }
-        public int Quantity { get; set; }
+        public int Quantity { get; set; } 
 
         // Event Integration
         public int? AppliedEventId { get; set; }
-        public decimal? ReservedPrice { get; set; }
+        public decimal ReservedPrice { get; set; } // Final Effective Price (what Customer Pays)
+        public decimal RegularDiscountAmount { get; set; }
         public decimal? EventDiscountAmount { get; set; }
         public decimal? EventDiscountPercentage { get; set; }
 
@@ -34,6 +35,9 @@ namespace Domain.Entities
 
         [NotMapped]
         public bool IsActive => !IsDeleted && !IsExpired && IsStockReserved;
+
+        [NotMapped]
+        public decimal FinalItemPrice => ReservedPrice * Quantity;
 
         [NotMapped]
         public TimeSpan TimeRemaining => ExpiresAt > DateTime.UtcNow ? ExpiresAt - DateTime.UtcNow : TimeSpan.Zero;

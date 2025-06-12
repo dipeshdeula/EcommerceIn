@@ -8,12 +8,11 @@ namespace Application.Dto.ProductDTOs
         public int ProductId { get; set; }
         public string ProductName { get; set; } = string.Empty;
 
-        // ✅ PRICING BREAKDOWN
+        //  PRICING BREAKDOWN
         public decimal OriginalPrice { get; set; }        // Market price (full price)
         public decimal BasePrice { get; set; }            // Product discount price (DiscountPrice ?? MarketPrice)
         public decimal EffectivePrice { get; set; }       // Final price after all discounts
 
-        // Typo in property name and add EventDiscountAmount
         public decimal RegularDiscountAmount => Math.Max(0, OriginalPrice - BasePrice); // Product discount
         public decimal EventDiscountAmount { get; set; }    // Event discount amount
         public decimal TotalDiscountAmount => RegularDiscountAmount + EventDiscountAmount; // Combined savings
@@ -38,13 +37,7 @@ namespace Application.Dto.ProductDTOs
             ? EventEndDate - DateTime.UtcNow
             : null;
 
-        //  USER CONTEXT (Currently commented - ready for future use)
-        // public bool IsEligible { get; set; } = true;
-        // public string? IneligibilityReason { get; set; }
-        // public int? UserUsageCount { get; set; }
-        // public int? MaxUsagePerUser { get; set; }
-        // public bool CanUseEvent => UserUsageCount < MaxUsagePerUser;
-
+        
         // FORMATTED DISPLAY STRINGS
         public string FormattedOriginalPrice => $"Rs.{OriginalPrice:F2}";
         public string FormattedBasePrice => $"Rs.{BasePrice:F2}";

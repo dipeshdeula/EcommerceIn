@@ -1,8 +1,6 @@
 ﻿using Application.Common;
 using Application.Dto.CartItemDTOs;
 using Application.Extension;
-using Application.Interfaces.Services;
-using Domain.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Persistence.Services
@@ -32,7 +30,7 @@ namespace Infrastructure.Persistence.Services
             {
                 return await _unitOfWork.ExecuteInTransactionAsync(async () =>
                 {
-                    _logger.LogInformation("🛒 Adding item to cart: UserId={UserId}, ProductId={ProductId}, Quantity={Quantity}",
+                    _logger.LogInformation("Adding item to cart: UserId={UserId}, ProductId={ProductId}, Quantity={Quantity}",
                         userId, request.ProductId, request.Quantity);
 
                     // 1. Get product with current pricing (using your existing service)
@@ -97,7 +95,7 @@ namespace Infrastructure.Persistence.Services
                     // 7. Convert to DTO
                     var cartItemDto = createdCartItem.ToDTO();
 
-                    _logger.LogInformation("✅ Cart item added successfully: CartItemId={CartItemId}, UserId={UserId}",
+                    _logger.LogInformation(" Cart item added successfully: CartItemId={CartItemId}, UserId={UserId}",
                         cartItemDto.Id, userId);
 
                     return Result<CartItemDTO>.Success(cartItemDto, "Item added to cart successfully");
@@ -105,77 +103,113 @@ namespace Infrastructure.Persistence.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to add item to cart: UserId={UserId}, ProductId={ProductId}",
+                _logger.LogError(ex, "Failed to add item to cart: UserId={UserId}, ProductId={ProductId}",
                     userId, request.ProductId);
                 return Result<CartItemDTO>.Failure($"Failed to add item to cart: {ex.Message}");
             }
         }
 
-        public async Task<CartSummaryDTO> GetCartSummaryAsync(int userId, CancellationToken cancellationToken = default)
+        /*        public async Task<CartSummaryDTO> GetCartSummaryAsync(int userId, CancellationToken cancellationToken = default)
+                {
+                    try
+                    {
+
+                        var cartItems = await _unitOfWork.CartItems.GetAllAsync(
+                            predicate: c => c.UserId == userId && !c.IsDeleted,
+                            includeProperties: "Product,Product.Images",
+                            orderBy: o => o.OrderByDescending(x => x.CreatedAt),
+                            cancellationToken: cancellationToken);
+
+                        //  Separate expired and active items properly
+                        var currentTime = DateTime.UtcNow;
+                        var activeItems = cartItems.Where(c => !c.IsDeleted && c.ExpiresAt > currentTime).ToList();
+                        var expiredItems = cartItems.Where(c => c.ExpiresAt <= currentTime).ToList();
+
+                        // Validation errors collection 
+                        var validationErrors = new List<string>();
+
+                        // Check for out of stock items
+                        var outOfStockItems = activeItems.Where(c => c.Product?.StockQuantity <= 0).ToList();
+                        if (outOfStockItems.Any())
+                        {
+                            validationErrors.Add($"{outOfStockItems.Count} item(s) are out of stock");
+                        }
+
+                        // Check for expired items
+                        if (expiredItems.Any())
+                        {
+                            validationErrors.Add($"{expiredItems.Count} item(s) have expired and need to be refreshed");
+                        }
+
+                        var summary = new CartSummaryDTO
+                        {
+                            UserId = userId,
+                            TotalItems = activeItems.Count,
+                            TotalQuantity = activeItems.Sum(c => c.Quantity),
+                            SubTotal = activeItems.Sum(c => (c.ReservedPrice ?? 0) * c.Quantity),
+                            TotalDiscount = activeItems.Sum(c => (c.EventDiscountAmount ?? 0) * c.Quantity),
+                            EstimatedTotal = activeItems.Sum(c => ((c.ReservedPrice ?? 0) - (c.EventDiscountAmount ?? 0)) * c.Quantity),
+
+                            //  All status properties now defined
+                            CanCheckout = activeItems.Any() && !expiredItems.Any() && !outOfStockItems.Any(),
+                            HasExpiredItems = expiredItems.Any(),
+                            HasOutOfStockItems = outOfStockItems.Any(),
+                            ExpiredItemsCount = expiredItems.Count,
+                            EarliestExpiration = activeItems.Any() ? activeItems.Min(c => c.ExpiresAt) : null,
+
+                            //  Validation errors
+                            ValidationErrors = validationErrors,
+
+                            // Items collection
+                            Items = activeItems.Select(c => c.ToDTO()).ToList()
+                        };
+
+                        return summary;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to get cart summary: UserId={UserId}", userId);
+                        return new CartSummaryDTO
+                        {
+                            UserId = userId,
+                            ValidationErrors = new List<string> { "Failed to load cart summary" }
+                        };
+                    }
+                }
+        */
+
+        public async Task<Result<IEnumerable<CartItemDTO>>> GetCartItemsAsync(int userId, CancellationToken cancellationToken = default)
         {
             try
             {
-                // ✅ Using your repository pattern with proper includes
+                // 1.  Get basic cart items (minimal database load)
                 var cartItems = await _unitOfWork.CartItems.GetAllAsync(
                     predicate: c => c.UserId == userId && !c.IsDeleted,
-                    includeProperties: "Product,Product.Images",
-                    orderBy: o => o.OrderByDescending(x => x.CreatedAt),
+                    includeProperties: "Product,Product.Images,AppliedEvent",
                     cancellationToken: cancellationToken);
 
-                // ✅ Separate expired and active items properly (following your banner event pattern)
-                var currentTime = DateTime.UtcNow;
-                var activeItems = cartItems.Where(c => !c.IsDeleted && c.ExpiresAt > currentTime).ToList();
-                var expiredItems = cartItems.Where(c => c.ExpiresAt <= currentTime).ToList();
-
-                // ✅ Validation errors collection (following your banner event validation)
-                var validationErrors = new List<string>();
-
-                // Check for out of stock items
-                var outOfStockItems = activeItems.Where(c => c.Product?.StockQuantity <= 0).ToList();
-                if (outOfStockItems.Any())
+                if (!cartItems.Any())
                 {
-                    validationErrors.Add($"{outOfStockItems.Count} item(s) are out of stock");
+                    return Result<IEnumerable<CartItemDTO>>.Success(new List<CartItemDTO>(), "Cart is empty");
                 }
 
-                // Check for expired items
-                if (expiredItems.Any())
+                // 2.  Get current pricing for all products in one call (optimized)
+                var productIds = cartItems.Select(c => c.ProductId).Distinct().ToList();
+                var currentPricingInfo = await _productPricingService.GetEffectivePricesAsync(productIds, userId, cancellationToken);
+
+                // 3.  Convert to DTOs with enhanced pricing (computed on-the-fly)
+                var cartItemDtos = cartItems.Select(cartItem =>
                 {
-                    validationErrors.Add($"{expiredItems.Count} item(s) have expired and need to be refreshed");
-                }
+                    var currentPricing = currentPricingInfo.FirstOrDefault(p => p.ProductId == cartItem.ProductId);
+                    return cartItem.ToEnhancedDTO(currentPricing);
+                }).ToList();
 
-                var summary = new CartSummaryDTO
-                {
-                    UserId = userId,
-                    TotalItems = activeItems.Count,
-                    TotalQuantity = activeItems.Sum(c => c.Quantity),
-                    SubTotal = activeItems.Sum(c => (c.ReservedPrice ?? 0) * c.Quantity),
-                    TotalDiscount = activeItems.Sum(c => (c.EventDiscountAmount ?? 0) * c.Quantity),
-                    EstimatedTotal = activeItems.Sum(c => ((c.ReservedPrice ?? 0) - (c.EventDiscountAmount ?? 0)) * c.Quantity),
-
-                    // ✅ Fixed: All status properties now defined
-                    CanCheckout = activeItems.Any() && !expiredItems.Any() && !outOfStockItems.Any(),
-                    HasExpiredItems = expiredItems.Any(),
-                    HasOutOfStockItems = outOfStockItems.Any(),
-                    ExpiredItemsCount = expiredItems.Count,
-                    EarliestExpiration = activeItems.Any() ? activeItems.Min(c => c.ExpiresAt) : null,
-
-                    // ✅ Validation errors
-                    ValidationErrors = validationErrors,
-
-                    // ✅ Items collection
-                    Items = activeItems.Select(c => c.ToDTO()).ToList()
-                };
-
-                return summary;
+                return Result<IEnumerable<CartItemDTO>>.Success(cartItemDtos, "Cart items retrieved successfully");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to get cart summary: UserId={UserId}", userId);
-                return new CartSummaryDTO
-                {
-                    UserId = userId,
-                    ValidationErrors = new List<string> { "Failed to load cart summary" }
-                };
+                _logger.LogError(ex, " Failed to get cart items: UserId={UserId}", userId);
+                return Result<IEnumerable<CartItemDTO>>.Failure($"Failed to get cart items: {ex.Message}");
             }
         }
 
@@ -185,7 +219,7 @@ namespace Infrastructure.Persistence.Services
             {
                 return await _unitOfWork.ExecuteInTransactionAsync(async () =>
                 {
-                    // ✅ Using your repository pattern
+                   
                     var cartItem = await _unitOfWork.CartItems.FirstOrDefaultAsync(
                         predicate: c => c.Id == cartItemId && c.UserId == userId && !c.IsDeleted);
 
@@ -217,7 +251,7 @@ namespace Infrastructure.Persistence.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to update cart item: CartItemId={CartItemId}", cartItemId);
+                _logger.LogError(ex, " Failed to update cart item: CartItemId={CartItemId}", cartItemId);
                 return Result<CartItemDTO>.Failure($"Failed to update cart item: {ex.Message}");
             }
         }
@@ -228,7 +262,7 @@ namespace Infrastructure.Persistence.Services
             {
                 return await _unitOfWork.ExecuteInTransactionAsync(async () =>
                 {
-                    // ✅ Using your repository pattern
+                    // Using your repository pattern
                     var cartItem = await _unitOfWork.CartItems.FirstOrDefaultAsync(
                         predicate: c => c.Id == cartItemId && c.UserId == userId && !c.IsDeleted);
 
@@ -243,7 +277,7 @@ namespace Infrastructure.Persistence.Services
                         await _stockService.ReleaseStockAsync(cartItem.ProductId, cartItem.Quantity);
                     }
 
-                    // ✅ Using your repository's RemoveAsync method
+                    // Using your repository's RemoveAsync method
                     await _unitOfWork.CartItems.RemoveAsync(cartItem);
                     await _unitOfWork.SaveChangesAsync();
 
@@ -264,12 +298,12 @@ namespace Infrastructure.Persistence.Services
             {
                 return await _unitOfWork.ExecuteInTransactionAsync(async () =>
                 {
-                    // ✅ Using your repository pattern
+                    // Using your repository pattern
                     var cartItems = await _unitOfWork.CartItems.GetAllAsync(
                         predicate: c => c.UserId == userId && !c.IsDeleted,
                         cancellationToken: cancellationToken);
 
-                    if (!cartItems.Any()) // ✅ Check if cart is already empty
+                    if (!cartItems.Any()) // Check if cart is already empty
                     {
                         return Result<string>.Success("Cart is already empty.");
                     }
@@ -283,11 +317,11 @@ namespace Infrastructure.Persistence.Services
                         }
                     }
 
-                    // ✅ Fixed: RemoveRangeAsync called once, outside the loop
+                    //  RemoveRangeAsync called once, outside the loop
                     await _unitOfWork.CartItems.RemoveRangeAsync(cartItems, cancellationToken);
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                    _logger.LogInformation("✅ Cart cleared successfully: UserId={UserId}, RemovedItems={Count}",
+                    _logger.LogInformation("Cart cleared successfully: UserId={UserId}, RemovedItems={Count}",
                         userId, cartItems.Count());
 
                     return Result<string>.Success($"Cart cleared successfully. Removed {cartItems.Count()} items.");
@@ -295,7 +329,7 @@ namespace Infrastructure.Persistence.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to clear cart: UserId={UserId}", userId);
+                _logger.LogError(ex, "Failed to clear cart: UserId={UserId}", userId);
                 return Result<string>.Failure($"Failed to clear cart: {ex.Message}");
             }
         }
@@ -304,21 +338,21 @@ namespace Infrastructure.Persistence.Services
         {
             try
             {
-                // ✅ Using your repository pattern
+               
                 var cartItems = await _unitOfWork.CartItems.GetAllAsync(
                     predicate: c => c.UserId == userId && !c.IsDeleted && c.ExpiresAt > DateTime.UtcNow,
                     cancellationToken: cancellationToken);
 
-                if (cartItems?.Any() == true) // ✅ Proper null and enumerable check
+                if (cartItems?.Any() == true) 
                 {
                     foreach (var item in cartItems)
                     {
                         var validation = await _productPricingService.ValidateCartPriceAsync(
-                            item.ProductId, item.ReservedPrice ?? 0, userId);
+                            item.ProductId, item.ReservedPrice , userId);
 
                         if (!validation)
                         {
-                            _logger.LogWarning("⚠️ Cart validation failed for item: ProductId={ProductId}, UserId={UserId}",
+                            _logger.LogWarning(" Cart validation failed for item: ProductId={ProductId}, UserId={UserId}",
                                 item.ProductId, userId);
                             return false;
                         }
@@ -329,7 +363,7 @@ namespace Infrastructure.Persistence.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to validate cart: UserId={UserId}", userId);
+                _logger.LogError(ex, " Failed to validate cart: UserId={UserId}", userId);
                 return false;
             }
         }

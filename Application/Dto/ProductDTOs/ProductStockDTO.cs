@@ -12,23 +12,23 @@ namespace Application.Dto.ProductDTOs
     {
         public int ProductId { get; set; }
 
-        // ===== STOCK INFORMATION =====
+        //  STOCK INFORMATION 
         public int TotalStock { get; set; }
         public int ReservedStock { get; set; }
         public int AvailableStock => Math.Max(0, TotalStock - ReservedStock);
 
-        // ===== STOCK STATUS =====
+        //  STOCK STATUS 
         public bool IsInStock => AvailableStock > 0;
         public bool IsOutOfStock => AvailableStock <= 0;
         public bool IsLowStock => AvailableStock > 0 && AvailableStock <= 10;
         public StockLevel StockLevel => GetStockLevel();
 
-        // ===== CART CAPABILITIES =====
+        //  CART CAPABILITIES 
         public bool CanReserve { get; set; } = true;
         public bool IsAvailableForSale { get; set; } = true;
         public int MaxOrderQuantity { get; set; } = int.MaxValue;
 
-        // ===== STOCK MESSAGES =====
+        //  STOCK MESSAGES 
         public string StockStatus => IsOutOfStock ? "Out of Stock"
                                    : IsLowStock ? "Only few left!"
                                    : "In Stock";
@@ -37,7 +37,7 @@ namespace Application.Dto.ProductDTOs
                                     : IsLowStock ? $"Only {AvailableStock} left in stock"
                                     : $"{AvailableStock} in stock";
 
-        // ===== VALIDATION METHODS =====
+        //  VALIDATION METHODS 
         public bool CanAddToCart(int quantity = 1) =>
             IsAvailableForSale && IsInStock && CanReserve &&
             quantity > 0 && quantity <= AvailableStock &&
@@ -74,7 +74,7 @@ namespace Application.Dto.ProductDTOs
             };
         }
 
-        // ===== HELPER METHODS =====
+        //  HELPER METHODS 
         private StockLevel GetStockLevel()
         {
             if (IsOutOfStock) return StockLevel.OutOfStock;

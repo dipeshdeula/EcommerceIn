@@ -30,7 +30,7 @@ namespace Application.Features.BannerSpecialEvent.Validators
 
         private void SetupValidationRules()
         {
-            // ✅ EVENT DTO VALIDATION (Fixed property access)
+            // EVENT DTO VALIDATION (Fixed property access)
             RuleFor(x => x.bannerSpecialDTO.EventDto.Name)
                 .NotEmpty().WithMessage("Event name is required")
                 .Length(2, 200).WithMessage("Event name must be between 2 and 200 characters")
@@ -43,7 +43,7 @@ namespace Application.Features.BannerSpecialEvent.Validators
             RuleFor(x => x.bannerSpecialDTO.EventDto.TagLine)
                 .MaximumLength(200).WithMessage("Tag line cannot exceed 200 characters");
 
-            // ✅ DISCOUNT VALIDATION
+            // DISCOUNT VALIDATION
             RuleFor(x => x.bannerSpecialDTO.EventDto.DiscountValue)
                 .GreaterThan(0).WithMessage("Discount value must be greater than 0")
                 .LessThanOrEqualTo(100).When(x => x.bannerSpecialDTO.EventDto.PromotionType == Domain.Enums.BannerEventSpecial.PromotionType.Percentage)
@@ -53,7 +53,7 @@ namespace Application.Features.BannerSpecialEvent.Validators
                 .GreaterThan(0).When(x => x.bannerSpecialDTO.EventDto.MaxDiscountAmount.HasValue)
                 .WithMessage("Maximum discount amount must be greater than 0");
 
-            // ✅ TIME VALIDATION WITH FLEXIBLE PARSING
+            //  TIME VALIDATION WITH FLEXIBLE PARSING
             RuleFor(x => x.bannerSpecialDTO.EventDto.StartDateNepal)
                 .NotEmpty().WithMessage("Start date is required")
                 .Must(BeValidDateTime).WithMessage(dto =>
@@ -71,11 +71,11 @@ namespace Application.Features.BannerSpecialEvent.Validators
                 .Must((dto, endDate) => BeAfterStartDate(dto.bannerSpecialDTO.EventDto.StartDateNepal, endDate))
                 .WithMessage("End date must be after start date");
 
-            // ✅ DURATION VALIDATION
+            //  DURATION VALIDATION
             RuleFor(x => x.bannerSpecialDTO.EventDto)
                 .Must(HaveValidDuration).WithMessage("Event duration must be between 30 minutes and 365 days");
 
-            // ✅ USAGE LIMITS VALIDATION
+            // USAGE LIMITS VALIDATION
             RuleFor(x => x.bannerSpecialDTO.EventDto.MaxUsageCount)
                 .GreaterThan(0).When(x => x.bannerSpecialDTO.EventDto.MaxUsageCount.HasValue)
                 .WithMessage("Maximum usage count must be greater than 0");
@@ -84,18 +84,18 @@ namespace Application.Features.BannerSpecialEvent.Validators
                 .GreaterThan(0).When(x => x.bannerSpecialDTO.EventDto.MaxUsagePerUser.HasValue)
                 .WithMessage("Maximum usage per user must be greater than 0");
 
-            // ✅ PRODUCT VALIDATION
+            // PRODUCT VALIDATION
             RuleFor(x => x.bannerSpecialDTO.ProductIds)
                 .MustAsync(AllProductsExist).When(x => x.bannerSpecialDTO.ProductIds?.Any() == true)
                 .WithMessage("One or more products don't exist or are deleted");
 
-            // ✅ CONFLICT VALIDATION (Non-blocking warning)
+            // CONFLICT VALIDATION (Non-blocking warning)
             RuleFor(x => x)
                 .MustAsync(NotHaveConflictingEvents)
                 .WithMessage("Warning: High-priority events exist during this time period. Event will still be created but may have lower precedence.");
         }
 
-        // ✅ VALIDATION METHODS
+        // VALIDATION METHODS
         private bool BeValidDateTime(string dateTimeString)
         {
             var result = TimeParsingHelper.ParseFlexibleDateTime(dateTimeString);
@@ -178,7 +178,7 @@ namespace Application.Features.BannerSpecialEvent.Validators
                 if (productIds == null || !productIds.Any())
                     return true;
 
-                // ✅ EFFICIENT APPROACH: Get existing products and extract IDs
+                //  EFFICIENT APPROACH: Get existing products and extract IDs
                 var existingProducts = await _productRepository.GetAllAsync(
                     predicate: p => productIds.Contains(p.Id) && !p.IsDeleted,
                     cancellationToken: cancellationToken);
@@ -216,13 +216,13 @@ namespace Application.Features.BannerSpecialEvent.Validators
                 var startDateUtc = _nepalTimeService.ConvertFromNepalToUtc(startResult.Data);
                 var endDateUtc = _nepalTimeService.ConvertFromNepalToUtc(endResult.Data);
 
-                // ✅ ENSURE UTC KIND FOR POSTGRESQL
+                // ENSURE UTC KIND FOR POSTGRESQL
                 startDateUtc = DateTime.SpecifyKind(startDateUtc, DateTimeKind.Utc);
                 endDateUtc = DateTime.SpecifyKind(endDateUtc, DateTimeKind.Utc);
 
                 var priority = dto.Priority ?? 1;
 
-                // ✅ CHECK FOR CONFLICTING HIGHER PRIORITY EVENTS
+                //  CHECK FOR CONFLICTING HIGHER PRIORITY EVENTS
                 var conflictingEvents = await _bannerEventRepository.GetAllAsync(
                     predicate: e => e.IsActive &&
                                 !e.IsDeleted &&
@@ -240,7 +240,7 @@ namespace Application.Features.BannerSpecialEvent.Validators
                         string.Join(", ", conflictingEvents.Select(e => e.Name)));
                 }
 
-                // ✅ RETURN TRUE (allow creation) but log the warning
+                // RETURN TRUE (allow creation) but log the warning
                 // The validation message will show as a warning, but creation proceeds
                 return !hasConflicts;
             }

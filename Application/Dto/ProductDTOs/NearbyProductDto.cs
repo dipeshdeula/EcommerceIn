@@ -32,7 +32,7 @@ namespace Application.Dto.ProductDTOs
         public decimal DiscountPercentage { get; set; }
         public string? ActiveEventName { get; set; }
 
-        // ✅ ADDED: Formatted properties
+        //  Formatted properties
         public string FormattedPrice => $"Rs.{EffectivePrice:F2}";
         public string FormattedDistance => $"{Distance:F1} km";
         public bool IsInStock => StockQuantity > 0;

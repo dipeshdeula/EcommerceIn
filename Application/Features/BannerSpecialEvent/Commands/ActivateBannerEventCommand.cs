@@ -45,7 +45,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
 
                     if (request.IsActive)
                     {
-                        // ✅ ACTIVATE EVENT
+                        //  ACTIVATE EVENT
                         bannerEvent.IsActive = true;
                         bannerEvent.Status = EventStatus.Active;
                         bannerEvent.UpdatedAt = DateTime.UtcNow;
@@ -53,17 +53,17 @@ namespace Application.Features.BannerSpecialEvent.Commands
                         _logger.LogInformation("🟢 Activating banner event: {EventId} - {EventName}",
                             bannerEvent.Id, bannerEvent.Name);
 
-                        // ✅ STEP 1: Update the event in database FIRST
+                        // STEP 1: Update the event in database FIRST
                         await _unitOfWork.BannerEventSpecials.UpdateAsync(bannerEvent, cancellationToken);
-                        await _unitOfWork.SaveChangesAsync(cancellationToken); // ✅ SAVE IMMEDIATELY
+                        await _unitOfWork.SaveChangesAsync(cancellationToken); 
 
-                        // ✅ STEP 2: Clear cache to ensure fresh pricing calculations
+                        // STEP 2: Clear cache to ensure fresh pricing calculations
                         await _pricingService.InvalidateAllPriceCacheAsync();
 
-                        // ✅ STEP 3: FORCE PRICE RECALCULATION for affected products
+                        // STEP 3: FORCE PRICE RECALCULATION for affected products
                         await ForceRecalculatePricesAsync(bannerEvent, cancellationToken);
 
-                        _logger.LogInformation("✅ Banner event activated successfully: {EventName}. Product prices updated.",
+                        _logger.LogInformation(" Banner event activated successfully: {EventName}. Product prices updated.",
                             bannerEvent.Name);
 
                         return Result<BannerEventSpecialDTO>.Success(
@@ -72,22 +72,22 @@ namespace Application.Features.BannerSpecialEvent.Commands
                     }
                     else
                     {
-                        // ✅ DEACTIVATE EVENT
+                        //  DEACTIVATE EVENT
                         bannerEvent.IsActive = false;
                         bannerEvent.Status = EventStatus.Paused;
                         bannerEvent.UpdatedAt = DateTime.UtcNow;
 
-                        _logger.LogInformation("🔴 Deactivating banner event: {EventId} - {EventName}",
+                        _logger.LogInformation(" Deactivating banner event: {EventId} - {EventName}",
                             bannerEvent.Id, bannerEvent.Name);
 
-                        // ✅ STEP 1: Update the event in database FIRST
+                        // STEP 1: Update the event in database FIRST
                         await _unitOfWork.BannerEventSpecials.UpdateAsync(bannerEvent, cancellationToken);
-                        await _unitOfWork.SaveChangesAsync(cancellationToken); // ✅ SAVE IMMEDIATELY
+                        await _unitOfWork.SaveChangesAsync(cancellationToken); 
 
-                        // ✅ STEP 2: Clear cache to revert to original prices
+                        // STEP 2: Clear cache to revert to original prices
                         await _pricingService.InvalidateAllPriceCacheAsync();
 
-                        _logger.LogInformation("✅ Banner event deactivated successfully: {EventName}. Product prices reverted.",
+                        _logger.LogInformation("Banner event deactivated successfully: {EventName}. Product prices reverted.",
                             bannerEvent.Name);
 
                         return Result<BannerEventSpecialDTO>.Success(
@@ -98,7 +98,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to {Action} banner event {EventId}",
+                _logger.LogError(ex, " Failed to {Action} banner event {EventId}",
                     request.IsActive ? "activate" : "deactivate", request.BannerEventId);
 
                 return Result<BannerEventSpecialDTO>.Failure(
@@ -106,12 +106,12 @@ namespace Application.Features.BannerSpecialEvent.Commands
             }
         }
 
-        // ✅ NEW: Force recalculate prices for affected products
+        //  Force recalculate prices for affected products
         private async Task ForceRecalculatePricesAsync(BannerEventSpecial bannerEvent, CancellationToken cancellationToken)
         {
             try
             {
-                _logger.LogInformation("🔄 Force recalculating prices for event {EventId}", bannerEvent.Id);
+                _logger.LogInformation(" Force recalculating prices for event {EventId}", bannerEvent.Id);
 
                 // Get affected products
                 List<int> affectedProductIds;
@@ -120,7 +120,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
                 {
                     // Specific products
                     affectedProductIds = bannerEvent.EventProducts.Select(ep => ep.ProductId).ToList();
-                    _logger.LogInformation("📦 Found {Count} specific products for event {EventId}",
+                    _logger.LogInformation("Found {Count} specific products for event {EventId}",
                         affectedProductIds.Count, bannerEvent.Id);
                 }
                 else
@@ -132,31 +132,31 @@ namespace Application.Features.BannerSpecialEvent.Commands
                         cancellationToken: cancellationToken);
 
                     affectedProductIds = sampleProducts.Select(p => p.Id).ToList();
-                    _logger.LogInformation("🌍 Global event - testing with {Count} sample products",
+                    _logger.LogInformation("Global event - testing with {Count} sample products",
                         affectedProductIds.Count);
                 }
 
-                // ✅ FORCE calculation by calling GetEffectivePriceAsync for each product
+                // FORCE calculation by calling GetEffectivePriceAsync for each product
                 foreach (var productId in affectedProductIds)
                 {
                     try
                     {
                         var priceInfo = await _pricingService.GetEffectivePriceAsync(productId, null, cancellationToken);
 
-                        _logger.LogDebug("💰 Product {ProductId}: {OriginalPrice} → {EffectivePrice} (Discount: {HasDiscount})",
+                        _logger.LogDebug("Product {ProductId}: {OriginalPrice} → {EffectivePrice} (Discount: {HasDiscount})",
                             productId, priceInfo.OriginalPrice, priceInfo.EffectivePrice, priceInfo.HasDiscount);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "⚠️ Failed to calculate price for product {ProductId}", productId);
+                        _logger.LogWarning(ex, "Failed to calculate price for product {ProductId}", productId);
                     }
                 }
 
-                _logger.LogInformation("✅ Completed price recalculation for event {EventId}", bannerEvent.Id);
+                _logger.LogInformation("Completed price recalculation for event {EventId}", bannerEvent.Id);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error during price recalculation for event {EventId}", bannerEvent.Id);
+                _logger.LogError(ex, "Error during price recalculation for event {EventId}", bannerEvent.Id);
             }
         }
     }

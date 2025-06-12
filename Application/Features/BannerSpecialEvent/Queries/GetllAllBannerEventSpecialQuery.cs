@@ -72,7 +72,7 @@ namespace Application.Features.BannerSpecialEvent.Queries
                     includeProperties: "Images,Rules,EventProducts,EventProducts.Product",
                     includeDeleted: request.IncludeDeleted);
 
-                // ✅ Convert to DTOs with related data
+                //  Convert to DTOs with related data
                 var bannerEventDTOs = bannerEvents.Select(bannerEvent =>
                 {
                     var dto = bannerEvent.ToDTO();
@@ -105,7 +105,7 @@ namespace Application.Features.BannerSpecialEvent.Queries
                             ProductName = ep.Product?.Name ?? "Unknown Product",
                             SpecificDiscount = ep.SpecificDiscount,
                             AddedAt = ep.AddedAt,
-                            // ✅ Additional product info if available
+                            //  Additional product info if available
                             ProductMarketPrice = ep.Product?.MarketPrice ?? 0,
                             ProductImageUrl = ep.Product?.Images?.FirstOrDefault()?.ImageUrl,
                             CategoryName = ep.Product?.Category?.Name
@@ -115,7 +115,7 @@ namespace Application.Features.BannerSpecialEvent.Queries
                         dto.ProductIds = bannerEvent.EventProducts.Select(ep => ep.ProductId).ToList();
                     }
 
-                    // ✅ FIXED: Now these are writable properties
+                    // Now these are writable properties
                     dto.TotalProductsCount = bannerEvent.EventProducts?.Count ?? 0;
                     dto.TotalRulesCount = bannerEvent.Rules?.Count ?? 0;
 

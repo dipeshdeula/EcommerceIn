@@ -21,7 +21,7 @@ namespace Application.Extension
                     return;
                 isDeletedProperty.SetValue(entity, true);
 
-                // ✅ SET UPDATED TIMESTAMP if available
+                //  SET UPDATED TIMESTAMP if available
                 var updatedAtProperty = typeof(T).GetProperty("UpdatedAt");
                 if (updatedAtProperty != null && updatedAtProperty.PropertyType == typeof(DateTime?))
                 {

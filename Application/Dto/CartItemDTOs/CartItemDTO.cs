@@ -4,29 +4,29 @@ namespace Application.Dto.CartItemDTOs
 {
     public class CartItemDTO
     {
-        // ===== CORE CART DATA =====
+        // CORE CART DATA 
         public int Id { get; set; }
         public int UserId { get; set; }
         public int ProductId { get; set; }
         public int Quantity { get; set; }
 
-        // ===== CART-SPECIFIC PRICING (Locked-in at time of adding) =====
+        // CART-SPECIFIC PRICING (Locked-in at time of adding) 
         public decimal ReservedPrice { get; set; }
         public decimal? OriginalPrice { get; set; }
         public decimal? EventDiscountAmount { get; set; }
         public int? AppliedEventId { get; set; }
 
-        // ===== STOCK RESERVATION (Business critical) =====
+        // STOCK RESERVATION 
         public bool IsStockReserved { get; set; }
         public string? ReservationToken { get; set; }
         public DateTime ExpiresAt { get; set; }
 
-        // ===== AUDIT TRAIL (Following your entity pattern) =====
+        // AUDIT TRAIL 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public bool IsDeleted { get; set; }
 
-        // ===== COMPUTED PROPERTIES (Business logic) =====
+        //  COMPUTED PROPERTIES (Business logic) 
         public bool IsExpired => ExpiresAt <= DateTime.UtcNow;
         public bool IsActive => !IsDeleted && !IsExpired && IsStockReserved;
         public decimal TotalItemPrice => ReservedPrice * Quantity;
@@ -34,7 +34,7 @@ namespace Application.Dto.CartItemDTOs
         public decimal OriginalTotalPrice => (OriginalPrice ?? ReservedPrice) * Quantity;
 
 
-        // ===== DISPLAY PROPERTIES (Following your formatting pattern) =====
+        // DISPLAY PROPERTIES
         public string FormattedOriginalPrice => $"Rs. {OriginalTotalPrice:F2}";
 
         public string FormattedReservedPrice => $"Rs. {ReservedPrice:F2}";
@@ -47,7 +47,7 @@ namespace Application.Dto.CartItemDTOs
 
 
 
-        // ===== STATUS TRACKING =====
+        //  STATUS TRACKING 
         public string Status => IsExpired ? "Expired" : IsActive ? "Reserved" : IsDeleted ? "Removed" : "Invalid";
         public string TimeRemaining
         {
@@ -61,7 +61,7 @@ namespace Application.Dto.CartItemDTOs
             }
         }
 
-        // ===== NAVIGATION (Load when needed - following your include pattern) =====
+        //  NAVIGATION
         public ProductDTO? Product { get; set; }
         public UserDTO? User { get; set; }
     }

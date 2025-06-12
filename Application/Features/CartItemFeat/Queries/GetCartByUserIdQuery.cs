@@ -56,7 +56,7 @@ namespace Application.Features.CartItemFeat.Queries
 
                 var activeCount = cartItems.Count(c => !c.IsExpired);
                 var expiredCount = cartItems.Count(c => c.IsExpired);
-                var totalValue = cartItems.Where(c => !c.IsExpired).Sum(c => (c.ReservedPrice ?? 0) * c.Quantity);
+                var totalValue = cartItems.Where(c => !c.IsExpired).Sum(c => (c.ReservedPrice) * c.Quantity);
 
                 return Result<IEnumerable<CartItemDTO>>.Success(
                     cartItemDtos,

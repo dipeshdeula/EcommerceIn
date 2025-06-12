@@ -32,7 +32,7 @@ namespace Application.Features.CartItemFeat.Commands
                 _logger.LogInformation("🛒 Processing add to cart: UserId={UserId}, ProductId={ProductId}, Quantity={Quantity}",
                     request.UserId, request.ProductId, request.Quantity);
 
-                // ✅ DIRECT SERVICE CALL (No RabbitMQ blocking)
+                // DIRECT SERVICE CALL (No RabbitMQ blocking)
                 var addToCartRequest = new AddToCartItemDTO
                 {
                     ProductId = request.ProductId,
@@ -43,10 +43,10 @@ namespace Application.Features.CartItemFeat.Commands
 
                 if (result.Succeeded)
                 {
-                    // ✅ BACKGROUND EVENTS (Fire-and-forget, non-blocking)
+                    // BACKGROUND EVENTS (Fire-and-forget, non-blocking)
                     _ = Task.Run(async () => await PublishBackgroundEvents(request, result.Data), cancellationToken);
 
-                    _logger.LogInformation("✅ Cart item added successfully: CartItemId={CartItemId}",
+                    _logger.LogInformation(" Cart item added successfully: CartItemId={CartItemId}",
                         result.Data.Id);
                 }
 
@@ -61,7 +61,7 @@ namespace Application.Features.CartItemFeat.Commands
         }
 
         /// <summary>
-        /// ✅ BACKGROUND EVENTS (Non-blocking analytics, notifications)
+        ///  BACKGROUND EVENTS (Non-blocking analytics, notifications)
         /// </summary>
         private async Task PublishBackgroundEvents(CreateCartItemCommand request, CartItemDTO cartItem)
         {
@@ -69,7 +69,7 @@ namespace Application.Features.CartItemFeat.Commands
             {
                 // TODO: Implement proper background events
                 // For now, just log analytics
-                _logger.LogInformation("📊 Cart analytics: UserId={UserId}, ProductId={ProductId}, Price={Price}",
+                _logger.LogInformation("Cart analytics: UserId={UserId}, ProductId={ProductId}, Price={Price}",
                     request.UserId, request.ProductId, cartItem.ReservedPrice);
 
                 await Task.CompletedTask;
@@ -77,7 +77,7 @@ namespace Application.Features.CartItemFeat.Commands
             catch (Exception ex)
             {
                 // Don't fail main operation if background events fail
-                _logger.LogWarning(ex, "⚠️ Failed to publish background events for cart item: {CartItemId}", cartItem.Id);
+                _logger.LogWarning(ex, " Failed to publish background events for cart item: {CartItemId}", cartItem.Id);
             }
         }
     }

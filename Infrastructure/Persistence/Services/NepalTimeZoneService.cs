@@ -54,10 +54,10 @@ namespace Infrastructure.Persistence.Services
             var utcNow = DateTime.UtcNow;
             var nepalTime = ConvertFromUtcToNepal(utcNow);
 
-            // ✅ Cache for 1 second with absolute expiration
+            // Cache for 1 second with absolute expiration
             _cache.Set(cacheKey, nepalTime, TimeSpan.FromSeconds(1));
 
-            _logger.LogTrace("🕐 Current time - UTC: {UtcTime} → Nepal: {NepalTime}",
+            _logger.LogTrace(" Current time - UTC: {UtcTime} → Nepal: {NepalTime}",
                 utcNow.ToString("yyyy-MM-dd HH:mm:ss"),
                 nepalTime.ToString("yyyy-MM-dd HH:mm:ss"));
 
@@ -73,7 +73,7 @@ namespace Infrastructure.Persistence.Services
             }
             else if (utcDateTime.Kind == DateTimeKind.Unspecified)
             {
-                _logger.LogWarning("⚠️ Received Unspecified DateTime, treating as UTC: {DateTime}", utcDateTime);
+                _logger.LogWarning(" Received Unspecified DateTime, treating as UTC: {DateTime}", utcDateTime);
                 utcDateTime = DateTime.SpecifyKind(utcDateTime, DateTimeKind.Utc);
             }
 
@@ -208,7 +208,7 @@ namespace Infrastructure.Persistence.Services
             {
                 DateTimeKind.Utc => dateTime,
                 DateTimeKind.Local => dateTime.ToUniversalTime(), //  CORRECT: Use system local timezone
-                DateTimeKind.Unspecified => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc), // ✅ ASSUME UTC for unspecified
+                DateTimeKind.Unspecified => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc), // ASSUME UTC for unspecified
                 _ => dateTime
             };
         }

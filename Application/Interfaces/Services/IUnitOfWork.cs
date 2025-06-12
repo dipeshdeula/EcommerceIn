@@ -42,7 +42,7 @@ namespace Application.Interfaces.Services
         Task BulkUpdateAsync<T>(IEnumerable<T> entities) where T : class;
 
         
-        // ✅ Advanced operations
+        //  Advanced operations
         Task<int> SaveChangesWithRetryAsync(int maxRetries = 3, CancellationToken cancellationToken = default);
         Task ExecuteInTransactionAsync(Func<Task> operation);
         Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> operation);
