@@ -460,8 +460,8 @@ namespace Application.Extension
                 ProductId = productStore.ProductId,
                 Name = productStore.Product?.Name ?? "Unknown Product",
                 ImageUrl = productStore.Product?.Images.FirstOrDefault()?.ImageUrl ?? string.Empty,
-                StoreCity = productStore.Store?.Address?.City?? string.Empty,
-                StoreName = productStore.Store?.Name?? "Unknown Store",
+                StoreCity = productStore.Store?.Address?.City ?? string.Empty,
+                StoreName = productStore.Store?.Name ?? "Unknown Store",
                 MarketPrice = productStore.Product?.MarketPrice ?? 0,
                 CostPrice = productStore.Product?.CostPrice ?? 0,
                 DiscountPrice = productStore.Product?.DiscountPrice,
@@ -477,7 +477,8 @@ namespace Application.Extension
                 HasActiveEvent = false,
                 DiscountAmount = 0,
                 DiscountPercentage = 0,
-                ActiveEventName = null
+                ActiveEventName = null,
+                ProductDTO = productStore.Product?.ToDTO()
             };
         }      
 

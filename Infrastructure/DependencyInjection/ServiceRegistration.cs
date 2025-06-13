@@ -287,6 +287,7 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<HardDeleteCartItemCommand,Result<CartItemDTO>>, HardDeleteCartItemCommandHandler>();
 
             services.AddScoped < IRequestHandler<GetAllProductsByCategoryId, Result<CategoryWithProductsDTO>>, GetAllProductsByCategoryIdHandler>();
+            services.AddScoped<IRequestHandler<GetAllProductsBySubSubCategoryIdQuery, Result<CategoryWithProductsDTO>>, GetAllProductsBySubSubCategoryIdQueryHandler>();
 
             services.AddScoped<IRequestHandler<VerifyGoogleTokenCommand,IResult>, VerifyGoogleTokenCommandHandler>();
 

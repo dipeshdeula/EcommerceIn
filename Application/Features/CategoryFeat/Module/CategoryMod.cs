@@ -54,7 +54,7 @@ namespace Application.Features.CategoryFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });          
+            });         
               
            
 
@@ -76,7 +76,10 @@ namespace Application.Features.CategoryFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).WithName("Category")
+            .Produces<IEnumerable<CategoryWithProductsDTO>>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .WithTags("Products");
 
 
             app.MapPut("/updateCategory", async (

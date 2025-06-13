@@ -16,5 +16,8 @@ namespace Infrastructure.Persistence.Services
         public string? UserName => _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Name)?.Value;
 
         public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
+
+        public string? GetUserIp => _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString();
+
     }
 }

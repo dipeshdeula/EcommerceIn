@@ -1,5 +1,7 @@
 ﻿using Application.Dto;
+using Application.Dto.CategoryDTOs;
 using Application.Dto.ProductDTOs;
+using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
 using Application.Features.ProductFeat.Commands;
 using Application.Features.ProductFeat.DeleteCommands;
@@ -65,7 +67,7 @@ namespace Application.Features.ProductFeat.Module
             .Produces(StatusCodes.Status400BadRequest)
             .WithTags("Products");
 
-            // ✅ NEW: Get products currently on sale
+            // NEW: Get products currently on sale
             app.MapGet("/onSale", async ([FromServices] ISender mediator,
                 int PageNumber = 1,
                 int PageSize = 20) =>
@@ -98,6 +100,19 @@ namespace Application.Features.ProductFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
+            app.MapGet("/getAllProductBySubSubCategoryId", async ([FromQuery] int SubSubCategoryId, ISender mediator, int PageNumber = 1, int PageSize = 10) =>
+            {
+                var result = await mediator.Send(new GetAllProductsBySubSubCategoryIdQuery(SubSubCategoryId, PageNumber, PageSize));
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            }).WithName("Brand")
+            .Produces<IEnumerable<CategoryWithProductsDTO>>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .WithTags("Products");
+
             app.MapPost("/UploadProductImages", async (ISender mediator, [FromForm] int productId, [FromForm] IFormFileCollection files) =>
             {
                 var command = new UploadProductImagesCommand(productId, files);
@@ -115,9 +130,20 @@ namespace Application.Features.ProductFeat.Module
             .Produces<IEnumerable<ProductImageDTO>>(StatusCodes.Status200OK)
             .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
 
-            app.MapGet("/nearby", async (ISender mediator, double lat, double lon, double radius, int skip = 0, int take = 10) =>
+            app.MapGet("/nearby", async (
+                ISender mediator,
+                double? lat = null,
+                double? lon = null,
+                double radius = 5.0,
+                int skip = 0,
+                int take = 10,
+                int? addressId = null,
+                bool useUserLocation = true
+
+                ) =>
             {
-                var query = new GetNearbyProductsQuery(lat, lon, radius, skip, take);
+                var query = new GetNearbyProductsQuery(
+                    lat, lon, radius, skip, take,addressId,useUserLocation);
                 var result = await mediator.Send(query);
                 if (!result.Succeeded)
                 {
@@ -126,6 +152,8 @@ namespace Application.Features.ProductFeat.Module
 
                 return Results.Ok(new { result.Message, result.Data });
             }).WithName("GetNearbyProducts")
+            .WithSummary("Get nearby products based on user location or manual coordinates")
+            .WithDescription("Retrieves products from stores within specified radius. Uses user's address by default or manual coordinates.")
             .Produces<IEnumerable<NearbyProductDto>>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
             .WithTags("Products");

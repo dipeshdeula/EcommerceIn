@@ -11,6 +11,7 @@ namespace Application.Interfaces.Services
         public string? UserId { get; }
         public string? UserEmail { get; }
         public string? UserName { get; }
+        public string? GetUserIp { get; }
         public bool IsAuthenticated { get; }
 
     }

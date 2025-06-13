@@ -67,7 +67,7 @@ namespace Application.Features.CategoryFeat.Queries
                 // Apply sorting
                 productDTOs = ApplySorting(productDTOs, request.SortBy);
 
-                // ✅ Calculate category-level statistics
+                // Calculate category-level statistics
                 var categoryWithProductsDto = new CategoryWithProductsDTO
                 {
                     Id = category.Id,
@@ -76,13 +76,13 @@ namespace Application.Features.CategoryFeat.Queries
                     Description = category.Description,
                     Products = productDTOs,
 
-                    // ✅ Pricing statistics
+                    //  Pricing statistics
                     TotalProducts = productDTOs.Count,
                     ProductsOnSale = productDTOs.Count(p => p.IsOnSale),
                     AveragePrice = productDTOs.Any() ? productDTOs.Average(p => p.Pricing.EffectivePrice) : 0,
                     MinPrice = productDTOs.Any() ? productDTOs.Min(p => p.Pricing.EffectivePrice) : 0,
                     MaxPrice = productDTOs.Any() ? productDTOs.Max(p => p.Pricing.EffectivePrice) : 0,
-                   // TotalSavings = productDTOs.Sum(p => p.Pricing.DiscountAmount)
+                    TotalSavings = productDTOs.Sum(p => p.Pricing.ProductDiscountAmount + p.Pricing.EventDiscountAmount)
                 };
                 
                 _logger.LogInformation("Retrieved category {CategoryId} with {ProductCount} products, {OnSaleCount} on sale, total savings: Rs.{TotalSavings}",

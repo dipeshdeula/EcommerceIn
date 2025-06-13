@@ -18,6 +18,8 @@ namespace Application.Interfaces.Repositories
         int take,
         string orderBy = "Id");
 
+        
+
         Task SoftDeleteCategoryAsync(int categoryId, CancellationToken cancellationToken);
         Task HardDeleteCategoryAsync(int categoryId, CancellationToken cancellationToken);
         Task<bool> UndeleteCategoryAsync(int categoryId, CancellationToken cancellationToken);

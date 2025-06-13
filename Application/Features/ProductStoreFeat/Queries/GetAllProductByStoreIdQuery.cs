@@ -29,11 +29,12 @@ namespace Application.Features.ProductStoreFeat.Queries
         {
             // Fetch products and their associated store
             var productStores = await _productStoreRepository.GetQueryable()
-                .Where(ps => ps.StoreId == request.StoreId && !ps.IsDeleted)
+                .Where(ps => ps.StoreId == request.StoreId && !ps.IsDeleted)     
                 .Include(ps => ps.Product)
                 .Include(ps=>ps.Product.Images)
                 .Include(ps => ps.Store) // Include Store details
-                .ToListAsync(cancellationToken);
+                .ThenInclude(store=>store.Address)                 
+                .ToListAsync(cancellationToken);       
 
             // Group products by store
             var groupedData = productStores

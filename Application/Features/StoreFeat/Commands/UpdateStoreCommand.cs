@@ -53,6 +53,7 @@ namespace Application.Features.StoreFeat.Commands
             }
 
             await _storeRepository.UpdateAsync(store);
+            await _storeRepository.SaveChangesAsync(cancellationToken);
 
             return Result<StoreDTO>.Success(store.ToDTO(), "store update successfully");
 

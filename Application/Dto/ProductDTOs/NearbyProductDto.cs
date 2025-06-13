@@ -37,6 +37,9 @@ namespace Application.Dto.ProductDTOs
         public string FormattedDistance => $"{Distance:F1} km";
         public bool IsInStock => StockQuantity > 0;
 
+        public ProductDTO? ProductDTO;
+
+
 
     }
 }

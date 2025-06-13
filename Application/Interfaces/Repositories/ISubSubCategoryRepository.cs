@@ -10,6 +10,11 @@ namespace Application.Interfaces.Repositories
     public interface ISubSubCategoryRepository : IRepository<SubSubCategory>
     {
         Task<SubSubCategory> FindByIdAsync(int id);
+        Task<IEnumerable<Product>> GetProductsBySubSubCategoryIdAsync(
+            int subSubCategoryId,           
+            int skip,
+            int take          
+            );
 
         Task SoftDeleteSubSubCategoryAsync(int subSubcategoryId, CancellationToken cancellationToken);
         Task HardDeleteSubSubCategoryAsync(int subSubcategoryId, CancellationToken cancellationToken);
