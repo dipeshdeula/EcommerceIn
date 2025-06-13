@@ -294,7 +294,7 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<CreatePlaceOrderCommand,Result<OrderDTO>>, CreatePlaceOrderCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllOrderQuery,Result<IEnumerable<OrderDTO>>>, GetAllOrderQueryHandler>();
             services.AddScoped<IRequestHandler<GetOrderByUserIdQuery, Result<IEnumerable<OrderDTO>>>, GetOrderByUserIdQueryHandler>();
-            services.AddScoped<IRequestHandler<UpdateOrderConfirmedCommand,Result<bool>>,UpdateOrderConfirmedCommandHandler>();
+            services.AddScoped<IRequestHandler<UpdateOrderConfirmedCommand,Result<OrderConfirmationResponseDTO>>,UpdateOrderConfirmedCommandHandler>();
 
             services.AddScoped<IRequestHandler<CreateBannerSpecialEventCommand, Result<BannerEventSpecialDTO>>, CreateBannerSpecialEventCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllBannerEventSpecialQuery, Result<PagedResult<BannerEventSpecialDTO>>>, GetAllBannerEventSpecialQueryHandler>();
@@ -360,6 +360,7 @@ namespace Infrastructure.DependencyInjection
             // CartItem services
             services.AddScoped<ICartService, CartService>();
             services.AddScoped<ICartStockService, CartStockService>();
+            services.AddScoped<IBusinessConfigService, BusinessConfigService>();
         }
     }
     public class AuthorizationServiceRegistration : IServicesRegistration
