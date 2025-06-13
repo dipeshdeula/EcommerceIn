@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(MainDbContext))]
-    [Migration("20250610022314_fix_cartItem")]
-    partial class fix_cartItem
+    [Migration("20250613121229_iniDB1")]
+    partial class iniDB1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -300,10 +300,13 @@ namespace Infrastructure.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("RegularDiscountAmount")
+                        .HasColumnType("numeric");
+
                     b.Property<string>("ReservationToken")
                         .HasColumnType("text");
 
-                    b.Property<decimal?>("ReservedPrice")
+                    b.Property<decimal>("ReservedPrice")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("UpdatedAt")

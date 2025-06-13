@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class initDB : Migration
+    public partial class iniDB1 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -27,13 +27,13 @@ namespace Infrastructure.Migrations
                     MaxDiscountAmount = table.Column<decimal>(type: "numeric(10,2)", nullable: true),
                     MinOrderValue = table.Column<decimal>(type: "numeric(10,2)", nullable: true),
                     Priority = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
-                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW() AT TIME ZONE 'UTC'"),
                     EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ActiveTimeSlot = table.Column<TimeSpan>(type: "interval", nullable: true),
                     MaxUsageCount = table.Column<int>(type: "integer", nullable: false, defaultValue: 2147483647),
                     CurrentUsageCount = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
-                    MaxUsagePerUser = table.Column<int>(type: "integer", nullable: false, defaultValue: 10000),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    MaxUsagePerUser = table.Column<int>(type: "integer", nullable: false, defaultValue: 10),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW() AT TIME ZONE 'UTC'"),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
@@ -473,13 +473,28 @@ namespace Infrastructure.Migrations
                     UserId = table.Column<int>(type: "integer", nullable: false),
                     ProductId = table.Column<int>(type: "integer", nullable: false),
                     Quantity = table.Column<int>(type: "integer", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    AppliedEventId = table.Column<int>(type: "integer", nullable: true),
+                    ReservedPrice = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    RegularDiscountAmount = table.Column<decimal>(type: "numeric", nullable: false),
+                    EventDiscountAmount = table.Column<decimal>(type: "numeric(18,2)", nullable: true),
+                    EventDiscountPercentage = table.Column<decimal>(type: "numeric(5,2)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW() AT TIME ZONE 'UTC' "),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastActivityAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsStockReserved = table.Column<bool>(type: "boolean", nullable: false),
+                    ReservationToken = table.Column<string>(type: "text", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_CartItems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CartItems_BannerEventSpecials_AppliedEventId",
+                        column: x => x.AppliedEventId,
+                        principalTable: "BannerEventSpecials",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_CartItems_Products_ProductId",
                         column: x => x.ProductId,
@@ -617,9 +632,10 @@ namespace Infrastructure.Migrations
                 columns: new[] { "IsActive", "IsDeleted" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_BannerEvents_ActivePeriod",
+                name: "IX_BannerEvents_ActiveTimeRange",
                 table: "BannerEventSpecials",
-                columns: new[] { "StartDate", "EndDate", "IsActive", "Status" });
+                columns: new[] { "Status", "IsActive", "StartDate", "EndDate" },
+                filter: "\"Status\" = 'Active' AND \"IsActive\" = true");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BannerEvents_Priority",
@@ -654,14 +670,24 @@ namespace Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CartItems_AppliedEventId",
+                table: "CartItems",
+                column: "AppliedEventId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CartItems_ExpiresAt",
+                table: "CartItems",
+                column: "ExpiresAt");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CartItems_ProductId",
                 table: "CartItems",
                 column: "ProductId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CartItems_UserId",
+                name: "IX_CartItems_UserId_IsDeleted",
                 table: "CartItems",
-                column: "UserId");
+                columns: new[] { "UserId", "IsDeleted" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_EventProduct_BannerEvent_Product",
