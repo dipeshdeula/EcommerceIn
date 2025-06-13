@@ -60,8 +60,8 @@ namespace Application.Features.Authentication.Module
                         return Results.BadRequest(new { result.Message, result.Errors });
                     }
                     return Results.Ok(new { result.Message, result.Data });
-                })
-            .RequireAuthorization("RequireAdmin");
+                });
+            /*.RequireAuthorization("RequireAdmin");*/
 
             app.MapGet("/getUsersById", async (int id, [FromServices] ISender mediator )=>
             {

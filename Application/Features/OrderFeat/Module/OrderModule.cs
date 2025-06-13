@@ -64,7 +64,8 @@ namespace Application.Features.OrderFeat.Module
                 }
 
                 return Results.Ok(new { result.Message, result.Data, notificationSummary = result.Data.NotificationResult });
-            }).RequireAuthorization("RequireAdmin")
+            })
+               /* .RequireAuthorization("RequireAdmin")*/
                 .WithName("ConfirmOrderStatus")
                 .WithSummary("Confirm or update order status")
                 .WithDescription("Updates order confirmation status and sends notifications to customer")
