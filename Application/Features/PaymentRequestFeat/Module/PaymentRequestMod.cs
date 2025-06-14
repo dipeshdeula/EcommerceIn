@@ -225,7 +225,7 @@ namespace Application.Features.PaymentRequestFeat.Module
             .Produces(StatusCodes.Status400BadRequest);
 
             // ✅ FIXED: eSewa success callback with proper verification
-            app.MapGet("/callback/esewa/success", async (
+           /* app.MapGet("/callback/esewa/success", async (
                 string? oid,
                 string? amt,
                 string? refId,
@@ -301,7 +301,7 @@ namespace Application.Features.PaymentRequestFeat.Module
                 return Results.Redirect($"http://localhost:5173/payment/failure?transactionId={oid}&provider=esewa&reason=payment_cancelled");
             })
             .WithName("EsewaFailureCallback")
-            .WithSummary("Handle eSewa payment failure callback");
+            .WithSummary("Handle eSewa payment failure callback");*/
 
             // ✅ Manual payment verification endpoint
             app.MapPost("/verify", async (

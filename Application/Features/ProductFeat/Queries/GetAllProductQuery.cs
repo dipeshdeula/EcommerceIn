@@ -63,7 +63,7 @@ namespace Application.Features.ProductFeat.Queries
                             predicate: eventPredicate,
                             orderBy: query => query.OrderByDescending(p => p.Id),
                             take: Math.Min(request.PageSize, eventProductIds.Count),
-                            includeProperties: "Images",
+                            includeProperties: "Products.Images",
                             cancellationToken: cancellationToken);
 
                         var eventProductDTOs = eventProducts.Select(p => p.ToDTO()).ToList();
