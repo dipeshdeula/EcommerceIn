@@ -30,6 +30,7 @@ namespace Infrastructure.Persistence.Services
         private IStoreRepository? _stores;
         private IStoreAddressRepository? _storeAddresses;
         private IPaymentMethodRepository? _paymentMethods;
+        private IPaymentRequestRepository _paymentRequests;
 
         public UnitOfWork(MainDbContext context, ILogger<UnitOfWork> logger)
         {
@@ -90,20 +91,22 @@ namespace Infrastructure.Persistence.Services
         public IPaymentMethodRepository PaymentMethods =>
             _paymentMethods ??= new PaymentMethodRepository(_context);
 
+        public IPaymentRequestRepository PaymentRequests => _paymentRequests ??= new PaymentRequestRepository(_context);
+
 
         // Transaction management
-     /*   public async Task<IDbContextTransaction> BeginTransactionAsync()
-        {
-            if (_transaction == null)
-            {
-                _transaction = await _context.Database.BeginTransactionAsync();
-                _logger.LogInformation("Transaction started");
+        /*   public async Task<IDbContextTransaction> BeginTransactionAsync()
+           {
+               if (_transaction == null)
+               {
+                   _transaction = await _context.Database.BeginTransactionAsync();
+                   _logger.LogInformation("Transaction started");
 
-            }
-            return _transaction;
-        }*/
+               }
+               return _transaction;
+           }*/
 
-         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             try
             {

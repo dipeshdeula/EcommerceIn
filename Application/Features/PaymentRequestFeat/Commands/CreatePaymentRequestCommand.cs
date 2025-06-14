@@ -74,6 +74,7 @@ namespace Application.Features.PaymentRequestFeat.Commands
             };
 
             await _paymentRequestRepository.AddAsync(pr, cancellationToken);
+            await _paymentMethodRepository.SaveChangesAsync(cancellationToken);
 
             if (pr.Id == 0)
             {

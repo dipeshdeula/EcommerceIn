@@ -16,15 +16,25 @@ namespace Application.Dto.PaymentDTOs
 
         public decimal PaymentAmount { get; set; }
 
-        public string Currency { get; set; } = "npr";
-        public string Description { get; set; }
+        public string Currency { get; set; } = "NPR";
+        public string Description { get; set; } = string.Empty;
+        public string PaymentStatus { get; set; } = string.Empty;
 
         public string? PaymentUrl { get; set; }
-
+        public string? PaymentFormHtml { get; set; }
         public string? KhaltiPidx { get; set; } // For khalti
         public string? EsewaTransactionId { get; set; } // For esewa
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? ExpiresAt { get; set; }
+        public string Instructions { get; set; } = string.Empty;
+        public bool RequiresRedirect { get; set; }
+        public Dictionary<string,string> Metadata { get; set; }
+        public string? UserName { get; set; }
+        public string? PaymentMethodName { get; set; }
+        public decimal? OrderTotal { get; set; }
+
     }
 }

@@ -1,8 +1,4 @@
-﻿using Domain.Enums.BannerEventSpecial;
-using System;
-using System.Collections.Generic;
-
-namespace Application.Dto.ProductDTOs
+﻿namespace Application.Dto.ProductDTOs
 {
     public class ProductDTO
     {

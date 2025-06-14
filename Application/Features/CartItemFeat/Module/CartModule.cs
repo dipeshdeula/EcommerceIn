@@ -62,10 +62,10 @@ namespace Application.Features.CartItemFeat.Module
                 var result = await mediator.Send(new GetCartByUserIdQuery(userId,PageNumber, PageSize));
                 if (result == null || !result.Succeeded)
                 {
-                    return Results.BadRequest(new { message = result?.Message ?? "An error occurred." });
+                    return Results.BadRequest(new { message = result?.Message ?? "An error occurred." , data = result?.Data});
                 }
 
-                return Results.Ok(result.Data);
+                return Results.Ok(new { message = result.Message,data= result.Data });
             });
 
             app.MapPut("/updateCartItem", async (

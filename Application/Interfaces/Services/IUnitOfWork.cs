@@ -29,6 +29,7 @@ namespace Application.Interfaces.Services
         IStoreRepository Stores { get; }
         IStoreAddressRepository StoreAddresses { get; }
         IPaymentMethodRepository PaymentMethods { get; }
+        IPaymentRequestRepository PaymentRequests { get; }
 
         // Transaction management
        // Task<IDbContextTransaction> BeginTransactionAsync();

@@ -54,6 +54,7 @@ using Application.Features.SubSubCategoryFeat.Commands;
 using Application.Features.SubSubCategoryFeat.DeleteCommands;
 using Application.Features.SubSubCategoryFeat.Queries;
 using Application.Interfaces.Repositories;
+using Application.Provider;
 using Application.Utilities;
 using FluentMigrator;
 using FluentValidation;
@@ -62,6 +63,8 @@ using Infrastructure.Persistence.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Polly;
+using Polly.Extensions.Http;
 using RabbitMQ.Client;
 using System.Collections.Generic;
 
@@ -164,6 +167,37 @@ namespace Infrastructure.DependencyInjection
                     options.LogTo(Console.WriteLine);
                 }
             });
+
+            // ✅ Configure HTTP clients for payment gateways
+            services.AddHttpClient("EsewaClient", client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(30);
+                client.DefaultRequestHeaders.Add("User-Agent", "GetInstantMart/1.0");
+            })
+            .AddPolicyHandler(GetRetryPolicy());
+
+            services.AddHttpClient("KhaltiClient", client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(30);
+                client.DefaultRequestHeaders.Add("User-Agent", "GetInstantMart/1.0");
+            })
+            .AddPolicyHandler(GetRetryPolicy());
+
+        }
+
+        // ✅ Retry policy for HTTP clients
+        private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+        {
+            return HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .OrResult(msg => !msg.IsSuccessStatusCode)
+                .WaitAndRetryAsync(
+                    retryCount: 3,
+                    sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                    onRetry: (outcome, timespan, retryCount, context) =>
+                    {
+                        Console.WriteLine($"⚠️ HTTP Retry {retryCount} after {timespan} seconds");
+                    });
         }
     }
     public class RepositoryRegistration : IRepositoriesRegistration
@@ -210,7 +244,7 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<LoginQuery, IResult>, LoginQueryHandler>();
             services.AddScoped<IRequestHandler<VerifyOtpCommand, Result<RegisterCommand>>, VerifyOtpCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllUsersQuery, Result<IEnumerable<UserDTO>>>, GetAllUsersQueryHandler>();
-            services.AddScoped<IRequestHandler<GetUsersQueryById, Result<User>>, GetUsersQueryByIdHandler>();
+            services.AddScoped<IRequestHandler<GetUsersQueryById, Result<UserDTO>>, GetUsersQueryByIdHandler>();
             services.AddScoped<IRequestHandler<UploadImageCommand, Result<User>>, UploadImageCommandHandler>();
             services.AddScoped<IRequestHandler<UsersUpdateCommand, Result<User>>, UsersUpdateCommandHandler>();
             services.AddScoped<IRequestHandler<SoftDeleteUserCommand, Result<User>>, SoftDeleteUserCommandHandler>();
@@ -361,8 +395,17 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<ICartService, CartService>();
             services.AddScoped<ICartStockService, CartStockService>();
             services.AddScoped<IBusinessConfigService, BusinessConfigService>();
+            services.AddScoped<IPaymentGatewayService, PaymentGatewayService>();
+            services.AddScoped<IPaymentSecurityService, PaymentSecurityService>();
+            // ✅ Register payment providers
+            services.AddScoped<EsewaProvider>();
+            services.AddScoped<KhaltiProvider>();
+            services.AddScoped<CODProvider>();
+            services.AddScoped<IEsewaService, EsewaService>();
         }
     }
+
+        
     public class AuthorizationServiceRegistration : IServicesRegistration
     {
         public void AddServices(IServiceCollection services)

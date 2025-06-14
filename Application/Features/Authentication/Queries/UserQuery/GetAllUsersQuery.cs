@@ -27,6 +27,7 @@ namespace Application.Features.Authentication.Queries.UserQuery
 
             var users = await _userRepository.GetAllAsync(
                 orderBy: query => query.OrderByDescending(user => user.CreatedAt),
+                includeProperties:"Addresses",
                 skip: (request.PageNumber - 1) * request.PageSize,
                 take: request.PageSize,
                 cancellationToken:cancellationToken

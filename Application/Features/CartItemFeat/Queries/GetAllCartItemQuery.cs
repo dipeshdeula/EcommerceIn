@@ -30,7 +30,7 @@ namespace Application.Features.CartItemFeat.Queries
                     orderBy: query => query.OrderByDescending(c => c.CreatedAt),
                     skip: (request.PageNumber - 1) * request.PageSize,
                     take: request.PageSize,
-                    includeProperties: "User,Product,Product.Images",
+                    includeProperties: "User,User.Addresses,Product,Product.Images",
                     cancellationToken: cancellationToken
                 );
 

@@ -52,6 +52,7 @@ namespace Application.Features.PaymentMethodFeat.Commands
             };
 
             var createPaymentMethod = await _paymentMethodRepository.AddAsync( paymentMethod );
+            await _paymentMethodRepository.SaveChangesAsync(cancellationToken);
             if (createPaymentMethod == null)
                 return Result<PaymentMethodDTO>.Failure("Failed to create payment method");
 
