@@ -24,8 +24,10 @@ namespace Application.Features.ProductFeat.Commands
 
 
 
-            RuleFor(x => x.DiscountPrice)
-                .GreaterThanOrEqualTo(0).WithMessage("Discount price cannot be negative.");
+            RuleFor(x => x.DiscountPercentage)
+                .GreaterThanOrEqualTo(0).WithMessage("Discount percentage must be greater than 0")
+                .LessThanOrEqualTo(100).WithMessage("Discount percentage must be less than or equal to 100");
+                
 
             RuleFor(x => x.StockQuantity)
                 .GreaterThanOrEqualTo(0).WithMessage("Stock quantity cannot be negative.");

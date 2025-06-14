@@ -32,7 +32,8 @@ namespace Application.Features.SubSubCategoryFeat.Queries
             var subSubCategories = await _subSubCategoryRepository.GetAllAsync(
                 orderBy: query => query.OrderByDescending(SubSubCategory => SubSubCategory.Id),
                 skip: (request.PageNumber - 1) * request.PageSize,
-                take: request.PageSize);
+                take: request.PageSize,
+                cancellationToken:cancellationToken);
 
             // Map Sub-Sub Categories to DTOs
             var subSubCategoryDTOs = subSubCategories.Select(ssc => ssc.ToDTO()).ToList();

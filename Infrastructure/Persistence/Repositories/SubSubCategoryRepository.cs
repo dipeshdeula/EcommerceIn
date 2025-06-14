@@ -23,6 +23,19 @@ namespace Infrastructure.Persistence.Repositories
                 .FirstOrDefaultAsync(ssc => ssc.Id == id);
         }
 
+        public async Task<IEnumerable<Product>> GetProductsBySubSubCategoryIdAsync(int subSubCategoryId, int skip, int take)
+        {
+            return await _context.Products
+                .AsNoTracking() // Read-only query
+                .Where(p => p.SubSubCategoryId == subSubCategoryId)
+                .Include(p => p.Images) // Include product images                
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+        }
+
+      
+
         public async Task HardDeleteSubSubCategoryAsync(int subSubcategoryId, CancellationToken cancellationToken)
         {
             var subSubCategory = await _context.SubSubCategories

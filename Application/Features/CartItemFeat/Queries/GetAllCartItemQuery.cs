@@ -1,5 +1,5 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.CartItemDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
 using MediatR;
@@ -23,18 +23,32 @@ namespace Application.Features.CartItemFeat.Queries
         }
         public async Task<Result<IEnumerable<CartItemDTO>>> Handle(GetAllCartItemQuery request, CancellationToken cancellationToken)
         {
-            var cartItem = await _cartItemRepository.GetAllAsync(
-                orderBy: query => query.OrderByDescending(cartItem => cartItem.Id),
-                skip: (request.PageNumber - 1) * request.PageSize,
-                take: request.PageSize,
-                includeProperties:"User,Product"
-               
+            try
+            {
+                var cartItems = await _cartItemRepository.GetAllAsync(
+                    predicate: c => !c.IsDeleted, 
+                    orderBy: query => query.OrderByDescending(c => c.CreatedAt),
+                    skip: (request.PageNumber - 1) * request.PageSize,
+                    take: request.PageSize,
+                    includeProperties: "User,User.Addresses,Product,Product.Images",
+                    cancellationToken: cancellationToken
                 );
-            // Map categories to DTOs
-            var cartItemDtos = cartItem.Select(cd => cd.ToDTO()).ToList();
 
-            // Return the result wrapped in a Task
-            return Result<IEnumerable<CartItemDTO>>.Success(cartItemDtos, "Cart Item fetched successfully");
+                var cartItemDtos = cartItems.Select(c => c.ToDTO()).ToList();
+
+                var activeCount = cartItems.Count(c => !c.IsExpired);
+                var expiredCount = cartItems.Count(c => c.IsExpired);
+                var totalUsers = cartItems.Select(c => c.UserId).Distinct().Count();
+
+                return Result<IEnumerable<CartItemDTO>>.Success(
+                    cartItemDtos,
+                    $"Cart items fetched successfully. Total: {cartItems.Count()}, Active: {activeCount}, Expired: {expiredCount}, Users: {totalUsers}"
+                );
+            }
+            catch (Exception ex)
+            {
+                return Result<IEnumerable<CartItemDTO>>.Failure($"Failed to fetch cart items: {ex.Message}");
+            }
         }
     }
 }

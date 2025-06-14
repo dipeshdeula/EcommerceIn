@@ -1,5 +1,5 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.PaymentDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
 using MediatR;
@@ -30,7 +30,8 @@ namespace Application.Features.PaymentRequestFeat.Queries
             var payment = await _paymentRequestRepository.GetAllAsync(
                 orderBy: query => query.OrderByDescending(payment => payment.Id),
                 skip: (request.PageNumber - 1) * request.PageSize,
-                take: request.PageSize
+                take: request.PageSize,
+                cancellationToken:cancellationToken
 
                 );
 

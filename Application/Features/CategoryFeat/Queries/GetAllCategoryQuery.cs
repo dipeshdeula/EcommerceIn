@@ -1,5 +1,5 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.CategoryDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
 using MediatR;
@@ -34,8 +34,10 @@ namespace Application.Features.CategoryFeat.Queries
             // Fetch categories with pagination
             var categories = await _categoryRepository.GetAllAsync(
                 orderBy: query => query.OrderByDescending(category => category.Id),
+                includeProperties:"SubCategories,SubCategories.SubSubCategories, SubCategories.SubSubCategories.Products",
                 skip: (request.PageNumber - 1) * request.PageSize,
-                take: request.PageSize
+                take: request.PageSize,
+                cancellationToken:cancellationToken
             );
 
             // Map categories to DTOs

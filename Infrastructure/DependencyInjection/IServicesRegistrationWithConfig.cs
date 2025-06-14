@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using System.Runtime.CompilerServices;
 
 namespace Infrastructure.DependencyInjection
 {
@@ -27,4 +28,6 @@ namespace Infrastructure.DependencyInjection
     {
         void AddServices(IServiceCollection services, IConfiguration configuration);
     }
+
+    
 }

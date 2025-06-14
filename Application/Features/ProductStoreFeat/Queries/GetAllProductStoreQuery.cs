@@ -1,5 +1,5 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.ProductDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
 using MediatR;
@@ -26,7 +26,8 @@ namespace Application.Features.ProductStoreFeat.Queries
             var productStore = await _productStoreRepository.GetAllAsync(
                 orderBy: query => query.OrderByDescending(ps => ps.Id),
                 skip: (request.PageNumber - 1) * request.PageSize,
-                take: request.PageSize
+                take: request.PageSize,
+                cancellationToken:cancellationToken
                 );
 
             var productStoreDTOs = productStore.Select(ps => ps.ToDTO()).ToList();

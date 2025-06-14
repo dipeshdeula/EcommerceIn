@@ -1,6 +1,6 @@
 ﻿using Application.Common;
 using Application.Dto;
-using Application.Dto.Payment;
+using Application.Dto.PaymentDTOs;
 using Application.Interfaces.Repositories;
 using Domain.Entities;
 using MediatR;
@@ -74,6 +74,7 @@ namespace Application.Features.PaymentRequestFeat.Commands
             };
 
             await _paymentRequestRepository.AddAsync(pr, cancellationToken);
+            await _paymentMethodRepository.SaveChangesAsync(cancellationToken);
 
             if (pr.Id == 0)
             {

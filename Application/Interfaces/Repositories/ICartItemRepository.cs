@@ -9,9 +9,9 @@ namespace Application.Interfaces.Repositories
 {
     public interface ICartItemRepository : IRepository<CartItem>
     {
-        Task LoadNavigationProperties(CartItem cartItem);
-        Task<IEnumerable<CartItem>> GetByUserIdAsync(int userId);
-        Task DeleteByUserIdAsync(int userId);
+        public Task LoadNavigationProperties(CartItem cartItem);
+        public Task<IEnumerable<CartItem>> GetByUserIdAsync(int userId);
+        public Task DeleteByUserIdAsync(int userId);
 
         
     }

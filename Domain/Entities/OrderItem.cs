@@ -12,8 +12,8 @@ namespace Domain.Entities
         public int OrderId { get; set; } // Foreign key to Order
         public int ProductId { get; set; } // Foreign key to Product
         public int Quantity { get; set; } // Quantity of the product in the order
-        public double UnitPrice { get; set; } // Price per unit at the time of order
-        public double TotalPrice { get; private set; } // Total price for this order item
+        public decimal UnitPrice { get; set; } // Price per unit at the time of order
+        public decimal TotalPrice { get; private set; } // Total price for this order item
         public bool IsDeleted { get; set; }
 
         public Order Order { get; set; } // Navigation property to Order entity

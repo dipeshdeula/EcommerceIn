@@ -1,41 +1,197 @@
 ﻿using Application.Extension;
 using Application.Interfaces.Repositories;
+using Domain.Entities.Common;
 using System.Linq.Expressions;
 
 namespace Infrastructure.Persistence.Repositories
 {
     public class Repository<TEntity> : IRepository<TEntity> where TEntity : class
     {
-        protected readonly DbContext _dbContext;
+        protected readonly MainDbContext _dbContext;
+        protected readonly DbSet<TEntity> _dbSet;
 
-        public Repository(DbContext dbContext)
+        public Repository(MainDbContext dbContext)
         {
             _dbContext = dbContext;
+            _dbSet = _dbContext.Set<TEntity>();
         }
 
         #region Query Methods
 
-        public virtual IQueryable<TEntity> Queryable
-        {
-            get
-            {
-                return GetQueryable();
-            }
-        }
+        public virtual IQueryable<TEntity> Queryable => _dbSet;
+
 
         public virtual IQueryable<TEntity> GetQueryable()
         {
-            return _dbContext.Set<TEntity>();
+            return _dbSet.AsQueryable();
         }
 
         public virtual IQueryable<TEntity> GetQueryable(bool includeDeleted)
         {
-            var query = _dbContext.Set<TEntity>().AsQueryable();
+            var query = _dbSet.AsQueryable();
             if (includeDeleted)
             {
                 query = query.IgnoreQueryFilters();
             }
             return query;
+        }
+        public virtual async Task<TEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        {
+            return await _dbSet.FindAsync(new object[] { id }, cancellationToken);
+        }
+
+        public virtual async Task<TEntity?> GetAsync(
+            Expression<Func<TEntity, bool>> predicate,
+            string? includeProperties = null,
+            bool includeDeleted = false, CancellationToken cancellationToken = default)
+        {
+            IQueryable<TEntity> query = GetQueryable(includeDeleted);
+
+            // Apply predicate
+            query = query.Where(predicate);
+
+            // Include related properties
+            if (!string.IsNullOrEmpty(includeProperties))
+            {
+                foreach (var includeProperty in includeProperties.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    query = query.Include(includeProperty.Trim());
+                }
+            }
+
+            return await query.FirstOrDefaultAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null, Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null, int? skip = null, int? take = null, bool includeDeleted = false, string includeProperties = null, CancellationToken cancellationToken = default)
+        {
+            IQueryable<TEntity> query = GetQueryable(includeDeleted);
+
+            // Include navigation properties
+            if (!string.IsNullOrEmpty(includeProperties))
+            {
+                foreach (var includeProperty in includeProperties.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    query = query.Include(includeProperty.Trim());
+                }
+            }
+
+            // Apply additional filtering
+            if (predicate != null)
+            {
+                query = query.Where(predicate);
+            }
+
+            // Apply ordering
+            if (orderBy != null)
+            {
+                query = orderBy(query);
+            }
+
+            // Apply pagination
+            if (skip.HasValue)
+            {
+                query = query.Skip(skip.Value);
+            }
+
+            if (take.HasValue)
+            {
+                query = query.Take(take.Value);
+            }
+
+            return await query.ToListAsync(cancellationToken);
+        }
+
+
+        public async Task<IEnumerable<TEntity>> GetWithIncludesAsync(
+        Expression<Func<TEntity, bool>> predicate = null,
+        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
+        params Expression<Func<TEntity, object>>[] includes)
+        {
+            IQueryable<TEntity> query = _dbSet;
+
+            // Apply includes first for better query optimization
+            if (includes != null && includes.Length > 0)
+            {
+                query = includes.Aggregate(query, (current, include) => current.Include(include));
+            }
+
+            // Apply filter after includes
+            if (predicate != null)
+            {
+                query = query.Where(predicate);
+            }
+
+            // Apply ordering last
+            if (orderBy != null)
+            {
+                query = orderBy(query);
+            }
+
+            return await query.ToListAsync();
+        }
+
+        //  Overload with string-based includes for flexibility
+        public async Task<IEnumerable<TEntity>> GetWithIncludesAsync(
+            Expression<Func<TEntity, bool>> predicate = null,
+            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
+            string includeProperties = null)
+        {
+            IQueryable<TEntity> query = _dbSet;
+
+            // Apply string-based includes
+            if (!string.IsNullOrEmpty(includeProperties))
+            {
+                foreach (var includeProperty in includeProperties.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    query = query.Include(includeProperty.Trim());
+                }
+            }
+
+            // Apply filter
+            if (predicate != null)
+            {
+                query = query.Where(predicate);
+            }
+
+            // Apply ordering
+            if (orderBy != null)
+            {
+                query = orderBy(query);
+            }
+
+            return await query.ToListAsync();
+        }
+        public async Task<IEnumerable<TEntity>> GetPagedAsync(
+            Expression<Func<TEntity, bool>> predicate = null,
+            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
+            int pageNumber = 1,
+            int pageSize = 10,
+            bool includeDeleted = false,
+            params Expression<Func<TEntity, object>>[] includes)
+        {
+            IQueryable<TEntity> query = GetQueryable(includeDeleted);
+
+            // Apply includes
+            if (includes != null)
+            {
+                query = includes.Aggregate(query, (current, include) => current.Include(include));
+            }
+
+            // Apply filter
+            if (predicate != null)
+            {
+                query = query.Where(predicate);
+            }
+
+            // Apply ordering
+            if (orderBy != null)
+            {
+                query = orderBy(query);
+            }
+
+            // Apply pagination
+            var skip = (pageNumber - 1) * pageSize;
+            return await query.Skip(skip).Take(pageSize).ToListAsync();
         }
 
         #endregion
@@ -44,22 +200,22 @@ namespace Infrastructure.Persistence.Repositories
 
         public TEntity FindById(object id)
         {
-            return _dbContext.Set<TEntity>().Find(id);
+            return _dbSet.Find(id);
         }
 
         public virtual async Task<TEntity> FindByIdAsync(object id)
         {
-            return await _dbContext.Set<TEntity>().FindAsync(id);
+            return await _dbSet.FindAsync(id);
         }
 
         public virtual TEntity FirstOrDefault(Expression<Func<TEntity, bool>> predicate)
         {
-            return _dbContext.Set<TEntity>().Where(predicate).FirstOrDefault();
+            return _dbSet.Where(predicate).FirstOrDefault();
         }
 
         public virtual async Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate)
         {
-            return await _dbContext.Set<TEntity>().Where(predicate).FirstOrDefaultAsync();
+            return await _dbSet.Where(predicate).FirstOrDefaultAsync();
         }
 
         public virtual async Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, Expression<Func<TEntity, string>> orderBy, string sortDirection = "")
@@ -67,9 +223,9 @@ namespace Infrastructure.Persistence.Repositories
             switch (sortDirection.ToLower())
             {
                 case "desc":
-                    return await _dbContext.Set<TEntity>().Where(predicate).OrderByDescending(orderBy).FirstOrDefaultAsync();
+                    return await _dbSet.Where(predicate).OrderByDescending(orderBy).FirstOrDefaultAsync();
                 default:
-                    return await _dbContext.Set<TEntity>().Where(predicate).OrderBy(orderBy).FirstOrDefaultAsync();
+                    return await _dbSet.Where(predicate).OrderBy(orderBy).FirstOrDefaultAsync();
             }
         }
 
@@ -78,9 +234,9 @@ namespace Infrastructure.Persistence.Repositories
             switch (sortDirection.ToLower())
             {
                 case "desc":
-                    return await _dbContext.Set<TEntity>().Where(predicate).OrderByDescending(orderBy).FirstOrDefaultAsync();
+                    return await _dbSet.Where(predicate).OrderByDescending(orderBy).FirstOrDefaultAsync();
                 default:
-                    return await _dbContext.Set<TEntity>().Where(predicate).OrderBy(orderBy).FirstOrDefaultAsync();
+                    return await _dbSet.Where(predicate).OrderBy(orderBy).FirstOrDefaultAsync();
             }
         }
 
@@ -89,9 +245,9 @@ namespace Infrastructure.Persistence.Repositories
             switch (sortDirection.ToLower())
             {
                 case "desc":
-                    return await _dbContext.Set<TEntity>().Where(predicate).OrderByDescending(orderBy).FirstOrDefaultAsync();
+                    return await _dbSet.Where(predicate).OrderByDescending(orderBy).FirstOrDefaultAsync();
                 default:
-                    return await _dbContext.Set<TEntity>().Where(predicate).OrderBy(orderBy).FirstOrDefaultAsync();
+                    return await _dbSet.Where(predicate).OrderBy(orderBy).FirstOrDefaultAsync();
             }
         }
 
@@ -99,7 +255,11 @@ namespace Infrastructure.Persistence.Repositories
 
         #region Get Methods
 
-        public virtual async Task<IEnumerable<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null, bool includeDeleted = false)
+        public virtual async Task<IEnumerable<TEntity>> GetAllAsync(
+            Expression<Func<TEntity, 
+            bool>> predicate = null, 
+            bool includeDeleted = false
+            )
         {
             var query = GetQueryable(includeDeleted);
 
@@ -118,42 +278,18 @@ namespace Infrastructure.Persistence.Repositories
             string includeProperties = null)
 
         {
-            /* var query = GetQueryable(includeDeleted);
+          
 
-             if (predicate != null)
-                 query = query.Where(predicate);
-
-             if (orderBy != null)
-                 query = orderBy(query);
-
-             if (skip.HasValue)
-                 query = query.Skip(skip.Value);
-
-             if (take.HasValue)
-                 query = query.Take(take.Value);
-
-             return await query.ToListAsync();*/
-
-            IQueryable<TEntity> query = _dbContext.Set<TEntity>();
+            IQueryable<TEntity> query = GetQueryable(includeDeleted);
 
             // Include navigation properties
             if (!string.IsNullOrEmpty(includeProperties))
             {
                 foreach (var includeProperty in includeProperties.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
                 {
-                    query = query.Include(includeProperty);
+                    query = query.Include(includeProperty.Trim());
                 }
-            }
-
-            // Filter out soft-deleted entities if includeDeleted is false
-            if (!includeDeleted)
-            {
-                var isDeletedProperty = typeof(TEntity).GetProperty("IsDeleted");
-                if (isDeletedProperty != null)
-                {
-                    query = query.Where(e => EF.Property<bool>(e, "IsDeleted") == false);
-                }
-            }
+            }          
 
             // Apply additional filtering
             if (predicate != null)
@@ -187,25 +323,35 @@ namespace Infrastructure.Persistence.Repositories
 
         public TEntity Add(TEntity entity)
         {
-            _dbContext.Set<TEntity>().Add(entity);
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+
+            _dbSet.Add(entity);
             return entity;
         }
 
         public async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default)
         {
-            await _dbContext.Set<TEntity>().AddAsync(entity, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken); // Ensure this line is present
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+            await _dbSet.AddAsync(entity, cancellationToken);
+            
+            //await _dbContext.SaveChangesAsync(cancellationToken); // Ensure this line is present
             return entity;
         }
 
         public void AddRange(IEnumerable<TEntity> entities)
         {
-            _dbContext.Set<TEntity>().AddRange(entities);
+            if (entities == null)
+                throw new ArgumentNullException(nameof(entities));
+            _dbSet.AddRange(entities);
         }
 
         public async Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
         {
-            await _dbContext.Set<TEntity>().AddRangeAsync(entities, cancellationToken);
+            if (entities == null)
+                throw new ArgumentNullException(nameof(entities));
+            await _dbSet.AddRangeAsync(entities, cancellationToken);
         }
 
         #endregion
@@ -214,32 +360,45 @@ namespace Infrastructure.Persistence.Repositories
 
         public TEntity Update(TEntity entity)
         {
-            _dbContext.Set<TEntity>().Update(entity);
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+            _dbSet.Update(entity);
             return entity;
         }
 
         public void UpdateRange(IEnumerable<TEntity> entities)
         {
-            foreach (var entity in entities)
+            // foreach (var entity in entities)
+            // {
+            //     _dbContext.Entry(entity).State = EntityState.Modified;
+            // }
+            if (entities == null)
+                throw new ArgumentNullException(nameof(entities));
+            _dbSet.UpdateRange(entities);
+        }
+
+        public Task<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
+        {
+            //_dbContext.Entry(entity).State = EntityState.Modified;
+            //await _dbContext.SaveChangesAsync(cancellationToken);
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+            _dbSet.Update(entity);
+            return Task.FromResult(entity);
+        }
+
+        public Task UpdateRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+        {
+            /*foreach (var entity in entities)
             {
                 _dbContext.Entry(entity).State = EntityState.Modified;
             }
-        }
+            await _dbContext.SaveChangesAsync(cancellationToken);*/
+            if (entities == null)
+                throw new ArgumentNullException(nameof(entities));
 
-        public async Task<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
-        {
-            _dbContext.Entry(entity).State = EntityState.Modified;
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            return entity;
-        }
-
-        public async Task UpdateRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
-        {
-            foreach (var entity in entities)
-            {
-                _dbContext.Entry(entity).State = EntityState.Modified;
-            }
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            _dbSet.UpdateRange(entities);
+            return Task.CompletedTask;
         }
 
         #endregion
@@ -248,24 +407,37 @@ namespace Infrastructure.Persistence.Repositories
 
         public void Remove(TEntity entity)
         {
-            _dbContext.Set<TEntity>().Remove(entity);
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+            _dbSet.Remove(entity);
         }
 
-        public async Task RemoveAsync(TEntity entity, CancellationToken cancellationToken = default)
+        public Task RemoveAsync(TEntity entity, CancellationToken cancellationToken = default)
         {
-            _dbContext.Set<TEntity>().Remove(entity);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+
+            _dbSet.Remove(entity);
+            return Task.CompletedTask;
+            // await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public void RemoveRange(IEnumerable<TEntity> entities)
         {
-            _dbContext.Set<TEntity>().RemoveRange(entities);
+            if (entities == null)
+                throw new ArgumentNullException(nameof(entities));
+            _dbSet.RemoveRange(entities);
         }
 
-        public async Task RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+        public Task RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
         {
-            _dbContext.Set<TEntity>().RemoveRange(entities);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            if (entities == null)
+            {
+                throw new ArgumentNullException(nameof(entities));
+            }
+            _dbSet.RemoveRange(entities);
+            // await _dbContext.SaveChangesAsync(cancellationToken);
+            return Task.CompletedTask;
         }
 
         #endregion
@@ -274,11 +446,21 @@ namespace Infrastructure.Persistence.Repositories
 
         public async Task SoftDeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
         {
+            // await _dbContext.SoftDeleteAsync(entity, cancellationToken);
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
             await _dbContext.SoftDeleteAsync(entity, cancellationToken);
+
+
+
         }
 
         public async Task SoftDeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
         {
+
+            if (entities == null)
+                throw new ArgumentNullException(nameof(entities));
+
             foreach (var entity in entities)
             {
                 await _dbContext.SoftDeleteAsync(entity, cancellationToken);
@@ -287,7 +469,25 @@ namespace Infrastructure.Persistence.Repositories
 
         public async Task<bool> UndeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
         {
+            if (entity == null)
+                return false;
+
             return await _dbContext.UndeleteAsync(entity, cancellationToken);
+
+
+
+        }
+        public async Task HardDeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
+        {
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+
+            await _dbContext.HardDeleteAsync(entity, cancellationToken);
+        }
+
+        public async Task HardDeleteByIdAsync(int id, CancellationToken cancellationToken = default)
+        {
+            await _dbContext.HardDeleteByIdAsync<TEntity>(id, cancellationToken);
         }
 
         #endregion
@@ -296,22 +496,22 @@ namespace Infrastructure.Persistence.Repositories
 
         public bool Any()
         {
-            return _dbContext.Set<TEntity>().Any();
+            return _dbSet.Any();
         }
 
         public bool Any(Expression<Func<TEntity, bool>> where)
         {
-            return _dbContext.Set<TEntity>().Any(where);
+            return _dbSet.Any(where);
         }
 
         public Task<bool> AnyAsync(CancellationToken cancellationToken = default)
         {
-            return _dbContext.Set<TEntity>().AnyAsync(cancellationToken);
+            return _dbSet.AnyAsync(cancellationToken);
         }
 
         public Task<bool> AnyAsync(Expression<Func<TEntity, bool>> where, CancellationToken cancellationToken = default)
         {
-            return _dbContext.Set<TEntity>().AnyAsync(where, cancellationToken);
+            return _dbSet.AnyAsync(where, cancellationToken);
         }
 
         #endregion
@@ -321,17 +521,17 @@ namespace Infrastructure.Persistence.Repositories
         public int Count(Expression<Func<TEntity, bool>> predicate = null)
         {
             if (predicate == null)
-                return _dbContext.Set<TEntity>().Count();
+                return _dbSet.Count();
             else
-                return _dbContext.Set<TEntity>().Count(predicate);
+                return _dbSet.Count(predicate);
         }
 
         public async Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
         {
             if (predicate == null)
-                return await _dbContext.Set<TEntity>().CountAsync(cancellationToken);
+                return await _dbSet.CountAsync(cancellationToken);
             else
-                return await _dbContext.Set<TEntity>().CountAsync(predicate, cancellationToken);
+                return await _dbSet.CountAsync(predicate, cancellationToken);
         }
 
         #endregion
@@ -348,6 +548,16 @@ namespace Infrastructure.Persistence.Repositories
             return await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
+
+        protected IQueryable<T> GetDbSet<T>() where T : class
+        {
+            return _dbContext.Set<T>();
+        }
+        // Access to specific DbSets
+        protected DbSet<BannerEventSpecial> BannerEventSpecials => _dbContext.BannerEventSpecials;
+        protected DbSet<EventProduct> EventProducts => _dbContext.EventProducts;
+        protected DbSet<EventUsage> EventUsages => _dbContext.EventUsages;
+        protected DbSet<Product> Products => _dbContext.Products;
 
 
         #endregion

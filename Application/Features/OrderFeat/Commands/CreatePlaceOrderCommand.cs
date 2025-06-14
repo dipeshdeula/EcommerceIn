@@ -1,5 +1,4 @@
 ﻿using Application.Common;
-using Application.Dto;
 using Application.Dto.OrderDTOs;
 using Application.Features.OrderFeat.Events;
 using Application.Interfaces.Repositories;
@@ -51,7 +50,7 @@ namespace Application.Features.OrderFeat.Commands
             }
 
             // Validate stock and calcualte total amount
-            double totalAmount = 0;
+            decimal totalAmount = 0;
             var orderItems = new List<OrderItem>();
 
             foreach (var cartItem in cartItems)
@@ -94,6 +93,7 @@ namespace Application.Features.OrderFeat.Commands
             };
 
             await _orderRepository.AddAsync(order, cancellationToken);
+            await _orderRepository.SaveChangesAsync(cancellationToken);
 
             var user = await _userRepository.FindByIdAsync(order.UserId);
             if (user == null)

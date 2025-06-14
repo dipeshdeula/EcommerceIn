@@ -11,14 +11,14 @@ namespace Application.Dto
         public string Name { get; set;}
         public string Slug { get; set; }
         public string Description { get; set; }
-        public double MarketPrice { get; set; }
-        public double CostPrice { get; set; }
-        public double DiscountPrice { get; set; }
+        public decimal MarketPrice { get; set; }
+        public decimal CostPrice { get; set; }
+        public decimal? DiscountPercentage { get; set; } // percentage discount (0-100)
         public int StockQuantity { get; set; }
         public string Sku { get; set; }
         public string Weight { get; set; }
         public int Reviews { get; set; }
-        public double Rating { get; set; }
+        public decimal Rating { get; set; }
         public string Dimensions { get; set; }
     }
 }

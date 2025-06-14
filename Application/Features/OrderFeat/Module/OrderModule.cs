@@ -1,4 +1,5 @@
-﻿using Application.Features.OrderFeat.Commands;
+﻿using Application.Dto.OrderDTOs;
+using Application.Features.OrderFeat.Commands;
 using Application.Features.OrderFeat.Queries;
 using Application.Features.OrderFeat.UpdateCommands;
 using Carter;
@@ -59,11 +60,18 @@ namespace Application.Features.OrderFeat.Module
 
                 if (!result.Succeeded)
                 {
-                    return Results.BadRequest(new { result.Message, result.Errors });
+                    return Results.BadRequest(new { result.Message, result.Errors, orderId = OrderId });
                 }
 
-                return Results.Ok(new { result.Message, result.Data });
-            }).RequireAuthorization("RequireAdmin");
+                return Results.Ok(new { result.Message, result.Data, notificationSummary = result.Data.NotificationResult });
+            })
+               /* .RequireAuthorization("RequireAdmin")*/
+                .WithName("ConfirmOrderStatus")
+                .WithSummary("Confirm or update order status")
+                .WithDescription("Updates order confirmation status and sends notifications to customer")
+                .Produces<OrderConfirmationResponseDTO>(StatusCodes.Status200OK)
+                .Produces(StatusCodes.Status400BadRequest)
+                .Produces(StatusCodes.Status401Unauthorized);
         }
     }
 }

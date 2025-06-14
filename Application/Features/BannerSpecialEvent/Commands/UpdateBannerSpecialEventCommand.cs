@@ -1,5 +1,6 @@
 ﻿using Application.Common;
 using Application.Dto;
+using Application.Dto.BannerEventSpecialDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
 using MediatR;
@@ -15,7 +16,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
         int BannerId,
         string? Name,
         string? Description,
-        double? Offers,
+        decimal? DiscountValue,
         DateTime? StartDate,
         DateTime? EndDate,
         bool? IsActive 
@@ -37,7 +38,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
 
             banner.Name = request.Name ?? banner.Name;
             banner.Description = request.Description ?? banner.Description;
-            banner.Offers = request.Offers ?? banner.Offers ;
+            banner.DiscountValue = request.DiscountValue ?? banner.DiscountValue ;
             banner.StartDate = request.StartDate ?? banner.StartDate;
             banner.EndDate = request.EndDate ?? banner.EndDate;
             banner.IsActive = request.IsActive ?? banner.IsActive;

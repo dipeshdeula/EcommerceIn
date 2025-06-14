@@ -1,9 +1,8 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.CartItemDTOs;
 using Application.Interfaces.Services;
 using MediatR;
-using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Features.CartItemFeat.Commands
 {
@@ -15,39 +14,70 @@ namespace Application.Features.CartItemFeat.Commands
 
     public class CreateCartItemCommandHandler : IRequestHandler<CreateCartItemCommand, Result<CartItemDTO>>
     {
-        private readonly IRabbitMqPublisher _rabbitMqPublisher;
-        private readonly string _queueName;
-        private readonly string _replyQueueName;
+        private readonly ICartService _cartService;
+        private readonly ILogger<CreateCartItemCommandHandler> _logger;
 
-        public CreateCartItemCommandHandler(IRabbitMqPublisher rabbitMqPublisher, IConfiguration configuration)
+        public CreateCartItemCommandHandler(
+            ICartService cartService,
+            ILogger<CreateCartItemCommandHandler> logger)
         {
-            _rabbitMqPublisher = rabbitMqPublisher;
-            _queueName = configuration["RabbitMQ:QueueName"] ?? "ReserveStockQueue";
-            _replyQueueName = configuration["RabbitMQ:ReplyQueueName"] ?? "ReplyQueue";
+            _cartService = cartService;
+            _logger = logger;
         }
 
         public async Task<Result<CartItemDTO>> Handle(CreateCartItemCommand request, CancellationToken cancellationToken)
         {
-            var correlationId = Guid.NewGuid().ToString();
-            var replyQueueName = "ReplyQueue";
-
-            // Publish the request to RabbitMQ
-            _rabbitMqPublisher.Publish(_queueName, request, correlationId, _replyQueueName);
-
-            // Wait for the response from the reply-to queue
             try
             {
-                var response = await _rabbitMqPublisher.WaitForResponseAsync(_replyQueueName, correlationId, cancellationToken);
-                return JsonConvert.DeserializeObject<Result<CartItemDTO>>(response.ToString());
+                _logger.LogInformation("🛒 Processing add to cart: UserId={UserId}, ProductId={ProductId}, Quantity={Quantity}",
+                    request.UserId, request.ProductId, request.Quantity);
+
+                // DIRECT SERVICE CALL (No RabbitMQ blocking)
+                var addToCartRequest = new AddToCartItemDTO
+                {
+                    ProductId = request.ProductId,
+                    Quantity = request.Quantity
+                };
+
+                var result = await _cartService.AddItemToCartAsync(request.UserId, addToCartRequest);
+
+                if (result.Succeeded)
+                {
+                    // BACKGROUND EVENTS (Fire-and-forget, non-blocking)
+                    _ = Task.Run(async () => await PublishBackgroundEvents(request, result.Data), cancellationToken);
+
+                    _logger.LogInformation(" Cart item added successfully: CartItemId={CartItemId}",
+                        result.Data.Id);
+                }
+
+                return result;
             }
-            catch (TaskCanceledException te)
+            catch (Exception ex)
             {
-                return Result<CartItemDTO>.Failure("Timeout waiting for the consumer to process the request.");
+                _logger.LogError(ex, "❌ Failed to add item to cart: UserId={UserId}, ProductId={ProductId}",
+                    request.UserId, request.ProductId);
+                return Result<CartItemDTO>.Failure($"Failed to add item to cart: {ex.Message}");
             }
-            catch(Exception e)
+        }
+
+        /// <summary>
+        ///  BACKGROUND EVENTS (Non-blocking analytics, notifications)
+        /// </summary>
+        private async Task PublishBackgroundEvents(CreateCartItemCommand request, CartItemDTO cartItem)
+        {
+            try
             {
-                Console.WriteLine("Error in creating cart item, Error Message: " + e.Message);
-                return Result<CartItemDTO>.Failure("An error occurred while processing the request.");
+                // TODO: Implement proper background events
+                // For now, just log analytics
+                _logger.LogInformation("Cart analytics: UserId={UserId}, ProductId={ProductId}, Price={Price}",
+                    request.UserId, request.ProductId, cartItem.ReservedPrice);
+
+                await Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                // Don't fail main operation if background events fail
+                _logger.LogWarning(ex, " Failed to publish background events for cart item: {CartItemId}", cartItem.Id);
             }
         }
     }

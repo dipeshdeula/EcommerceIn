@@ -14,7 +14,15 @@ namespace Infrastructure.Persistence.Configurations
             builder.ToTable("RefreshTokens");
             builder.HasKey(r => r.Id);
             builder.Property(r => r.Id).ValueGeneratedOnAdd();
-            builder.Property(r => r.CreatedDateTimeUtc).HasDefaultValue(DateTime.UtcNow);
+
+            builder.Property(r => r.CreatedDateTimeUtc)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp with time zone")
+                .IsRequired();
+
+            builder.Property(r => r.ExpiryDateTimeUtc)
+               .HasColumnType("timestamp with time zone")
+               .IsRequired();
 
             builder.HasOne(r => r.User)
                 .WithMany()

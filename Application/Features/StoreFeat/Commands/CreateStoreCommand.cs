@@ -59,6 +59,7 @@ namespace Application.Features.StoreFeat.Commands
             };
 
             var createStore = await _storeRepository.AddAsync(store, cancellationToken);
+            await _storeRepository.SaveChangesAsync(cancellationToken);
             if (createStore == null)
             {
                 return Result<StoreDTO>.Failure("Failed to create store");

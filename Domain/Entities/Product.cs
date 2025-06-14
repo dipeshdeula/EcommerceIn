@@ -1,57 +1,83 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Domain.Entities.Common;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.Entities
 {
     public class Product
     {
+        
         public int Id { get; set; }
-        public string Name { get; set; }
-        public string Slug { get; set; } // e.g. "home-appliances"
+        public string Name { get; set; } = string.Empty;
+        public string Slug { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public double MarketPrice { get; set; }
-        public double CostPrice { get; set; }
-
-        public double? DiscountPrice { get; set; } // Nullable if no discount
-        public int StockQuantity { get; set; } // Total stock
-        public int ReservedStock { get; set; } // Reserved stock for orders
-        public string Sku { get; set; }
-        public string Weight { get; set; }
+        public decimal MarketPrice { get; set; }
+        public decimal CostPrice { get; set; }
+        public decimal? DiscountPrice { get; set; }
+        public int StockQuantity { get; set; }
+        public int ReservedStock { get; set; }
+        public string Sku { get; set; } = string.Empty;
+        public string Weight { get; set; } = string.Empty;
         public int Reviews { get; set; }
-        public double Rating { get; set; }
-        public string Dimensions { get; set; }
+        public decimal Rating { get; set; }
+        public string Dimensions { get; set; } = string.Empty;
         public bool IsDeleted { get; set; } = false;
+        public uint Version { get; set; }
 
-
-        // Computed property for available stock (not mapped to the database)
-        public int AvailableStock => StockQuantity - ReservedStock;
-
-        //for sql server
-        /*
-                [Timestamp]
-                public byte[] RowVersion { get; set; }*/
-
-        // Replace RowVersion with PostgreSQL-compatible concurrency token
-        public uint Version { get; set; } // Changed to uint for xmin compatibility
-
-
-
-        // Foreign key to SubSubCategory
+        //  FOREIGN KEYS 
         public int SubSubCategoryId { get; set; }
-        public SubSubCategory SubSubCategory { get; set; } // Navigation property to SubSubCategory
-
-        // New: Foreign key to Category
         public int CategoryId { get; set; }
-        public Category Category { get; set; } // Navigation property to Category
 
-        // Navigation property for product images
+        //  NAVIGATION PROPERTIES 
+        public SubSubCategory? SubSubCategory { get; set; }
+        public Category? Category { get; set; }
         public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
-
-        // Navigation property for product stores
         public ICollection<ProductStore> ProductStores { get; set; } = new List<ProductStore>();
+        public ICollection<EventProduct> EventProducts { get; set; } = new List<EventProduct>();
+
+        //  ESSENTIAL DOMAIN COMPUTED PROPERTIES 
+        [NotMapped]
+        public int AvailableStock => Math.Max(0, StockQuantity - ReservedStock);
+
+        [NotMapped]
+        public bool IsInStock => AvailableStock > 0;
+
+        [NotMapped]
+        public bool HasProductDiscount => DiscountPrice.HasValue && DiscountPrice < MarketPrice;
+
+        [NotMapped]
+        public decimal BasePrice => DiscountPrice ?? MarketPrice;
+
+        //  DOMAIN BUSINESS METHODS 
+        public bool CanReserve(int quantity) =>
+            quantity > 0 && !IsDeleted && AvailableStock >= quantity;
+
+        public bool TryReserveStock(int quantity)
+        {
+            if (!CanReserve(quantity)) return false;
+            ReservedStock += quantity;
+            return true;
+        }
+
+        public bool TryReleaseStock(int quantity)
+        {
+            if (quantity <= 0 || ReservedStock < quantity) return false;
+            ReservedStock = Math.Max(0, ReservedStock - quantity);
+            return true;
+        }
+
+        public void AddStock(int quantity)
+        {
+            if (quantity > 0) StockQuantity += quantity;
+        }
+
+        public void ApplyProductDiscount(decimal discountPercentage)
+        {
+            if (discountPercentage > 0 && discountPercentage <= 100)
+            {
+                var discountAmount = (MarketPrice * discountPercentage) / 100;
+                DiscountPrice = Math.Max(0, MarketPrice - discountAmount);
+            }
+        }
     }
+
 }

@@ -1,7 +1,10 @@
 ﻿using Application.Dto;
-using Application.Features.ProductFeat.DeleteCommands;
+using Application.Dto.CategoryDTOs;
+using Application.Dto.ProductDTOs;
+using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
 using Application.Features.ProductFeat.Commands;
+using Application.Features.ProductFeat.DeleteCommands;
 using Application.Features.ProductFeat.Queries;
 using Carter;
 using MediatR;
@@ -9,17 +12,13 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Features.ProductFeat.Module
 {
     public class ProductModule : CarterModule
     {
-        public ProductModule() : base("") {
+        public ProductModule() : base("")
+        {
             WithTags("Product");
             IncludeInOpenApi();
         }
@@ -38,17 +37,58 @@ namespace Application.Features.ProductFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapGet("/getAllProducts", async ([FromServices] ISender mediator, int PageNumber = 1, int PageSize = 10) =>
+            // ✅ ENHANCED: GetAllProducts with event prioritization
+            app.MapGet("/getAllProducts", async ([FromServices] ISender mediator,
+                int PageNumber = 1,
+                int PageSize = 10,
+                int? UserId = null,
+                bool OnSaleOnly = false,
+                bool PrioritizeEventProducts = true, // ✅ NEW parameter
+                string? SearchTerm = null) =>
             {
-                var result = await mediator.Send(new GetAllProductQuery(PageNumber, PageSize));
+                var result = await mediator.Send(new GetAllProductQuery(
+                    PageNumber,
+                    PageSize,
+                    UserId,
+                    OnSaleOnly,
+                    PrioritizeEventProducts,
+                    SearchTerm));
+
                 if (!result.Succeeded)
                 {
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
 
-            });
+            }).WithName("GetAllProductsWithDynamicPricing")
+            .WithSummary("Get all products with real-time event-based pricing")
+            .WithDescription("Retrieves products with dynamic pricing. Event products are shown first by default.")
+            .Produces<IEnumerable<ProductDTO>>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .WithTags("Products");
 
+            // NEW: Get products currently on sale
+            app.MapGet("/onSale", async ([FromServices] ISender mediator,
+                int PageNumber = 1,
+                int PageSize = 20) =>
+            {
+                var result = await mediator.Send(new GetAllProductQuery(
+                    PageNumber,
+                    PageSize,
+                    OnSaleOnly: true,
+                    PrioritizeEventProducts: true));
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+
+            }).WithName("GetProductsOnSale")
+            .WithSummary("Get all products currently on sale")
+            .WithDescription("Retrieves only products with active discounts/events")
+            .Produces<IEnumerable<ProductDTO>>(StatusCodes.Status200OK)
+            .WithTags("Products");
 
             app.MapGet("/getProductById", async ([FromQuery] int productId, ISender mediator, int PageNumber = 1, int PageSize = 10) =>
             {
@@ -59,6 +99,19 @@ namespace Application.Features.ProductFeat.Module
                 }
                 return Results.Ok(new { result.Message, result.Data });
             });
+
+            app.MapGet("/getAllProductBySubSubCategoryId", async ([FromQuery] int SubSubCategoryId, ISender mediator, int PageNumber = 1, int PageSize = 10) =>
+            {
+                var result = await mediator.Send(new GetAllProductsBySubSubCategoryIdQuery(SubSubCategoryId, PageNumber, PageSize));
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            }).WithName("Brand")
+            .Produces<IEnumerable<CategoryWithProductsDTO>>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .WithTags("Products");
 
             app.MapPost("/UploadProductImages", async (ISender mediator, [FromForm] int productId, [FromForm] IFormFileCollection files) =>
             {
@@ -77,9 +130,20 @@ namespace Application.Features.ProductFeat.Module
             .Produces<IEnumerable<ProductImageDTO>>(StatusCodes.Status200OK)
             .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
 
-            app.MapGet("/nearby", async (ISender mediator,double lat, double lon, double radius,int skip = 0,int take = 10) =>
+            app.MapGet("/nearby", async (
+                ISender mediator,
+                double? lat = null,
+                double? lon = null,
+                double radius = 5.0,
+                int skip = 0,
+                int take = 10,
+                int? addressId = null,
+                bool useUserLocation = true
+
+                ) =>
             {
-                var query = new GetNearbyProductsQuery(lat, lon, radius,skip,take);
+                var query = new GetNearbyProductsQuery(
+                    lat, lon, radius, skip, take,addressId,useUserLocation);
                 var result = await mediator.Send(query);
                 if (!result.Succeeded)
                 {
@@ -88,6 +152,8 @@ namespace Application.Features.ProductFeat.Module
 
                 return Results.Ok(new { result.Message, result.Data });
             }).WithName("GetNearbyProducts")
+            .WithSummary("Get nearby products based on user location or manual coordinates")
+            .WithDescription("Retrieves products from stores within specified radius. Uses user's address by default or manual coordinates.")
             .Produces<IEnumerable<NearbyProductDto>>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
             .WithTags("Products");

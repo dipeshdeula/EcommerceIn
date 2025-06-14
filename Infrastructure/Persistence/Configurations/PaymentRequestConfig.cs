@@ -20,11 +20,11 @@ namespace Infrastructure.Persistence.Configurations
 
             builder.Property(pr => pr.CreatedAt)
                 .HasColumnType("timestamp with time zone")
-                .HasDefaultValueSql("NOW()");
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             builder.Property(pr => pr.UpdatedAt)
                    .HasColumnType("timestamp with time zone")
-                   .HasDefaultValueSql("NOW()");
+                   .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             builder.HasOne(pr=>pr.User)
                 .WithMany()

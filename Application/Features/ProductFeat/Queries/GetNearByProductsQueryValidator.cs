@@ -20,10 +20,10 @@ namespace Application.Features.ProductFeat.Queries
             RuleFor(x => x.RadiusKm)
                 .GreaterThan(0).WithMessage("Radius must be greater than 0 km.");
 
-            RuleFor(x => x.skip)
+            RuleFor(x => x.Skip)
                 .GreaterThanOrEqualTo(0).WithMessage("Skip must be 0 or greater.");
 
-            RuleFor(x => x.take)
+            RuleFor(x => x.Take)
                 .GreaterThan(0).WithMessage("Take must be greater than 0.");
         }
     }

@@ -33,7 +33,9 @@ namespace Application.Features.AddressFeat.Queries
             var addresses = await _addressRepository.GetAllAsync(
                 orderBy: query => query.OrderByDescending(address => address.Id),
                 skip: (request.PageNumber - 1) * request.PageSize,
-                take: request.PageSize);
+                take: request.PageSize,
+                cancellationToken:cancellationToken
+                );
 
             var addressDTOs = addresses.Select(ad => ad.ToDTO()).ToList();
 

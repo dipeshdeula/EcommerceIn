@@ -46,6 +46,7 @@ namespace Application.Features.StoreAddressFeat.Commands
             };
 
             await _storeAddressRepository.AddAsync(storeAddress);
+            await _storeAddressRepository.SaveChangesAsync(cancellationToken);
 
             return Result<StoreAddressDTO>.Success(storeAddress.ToDTO(),"Store address created successfylly");
 
