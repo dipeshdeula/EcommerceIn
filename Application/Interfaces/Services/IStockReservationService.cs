@@ -1,11 +1,6 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.CartItemDTOs;
 using Application.Features.CartItemFeat.Commands;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Interfaces.Services;
 

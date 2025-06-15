@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Domain.Entities
+﻿namespace Domain.Entities
 {
     public class Order
     {
@@ -21,7 +14,8 @@ namespace Domain.Entities
         public bool IsDeleted { get; set; } = false;    
         public User User { get; set; }
         public ICollection<OrderItem> Items { get; set; }
-        public ICollection<Notification> Notifications { get; set; }
+        public ICollection<Notification> Notifications { get; set; } = 
+        new List<Notification>();
 
     }
 }

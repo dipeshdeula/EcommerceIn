@@ -1,8 +1,10 @@
 ﻿using Application.Common;
 using Application.Dto.OrderDTOs;
 using Application.Dto.Shared;
+using Application.Features.OrderFeat.Events;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Domain.Entities;
 using Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -24,14 +26,15 @@ namespace Application.Features.OrderFeat.UpdateCommands
         private readonly IUserRepository _userRepository;
         private readonly IRabbitMqPublisher _rabbitMqPublisher;
         private readonly ILogger<UpdateOrderConfirmedCommandHandler> _logger;
-
+        private readonly IMediator _mediator;
         public UpdateOrderConfirmedCommandHandler(
             IOrderRepository orderRepository,
             IUserRepository userRepository,
             IHttpContextAccessor httpContextAccessor,
             IEmailService emailService,
             IRabbitMqPublisher rabbitMqPublisher,
-            ILogger<UpdateOrderConfirmedCommandHandler> logger)
+            ILogger<UpdateOrderConfirmedCommandHandler> logger,
+            IMediator mediator)
         {
             _orderRepository = orderRepository;
             _userRepository = userRepository;
@@ -39,6 +42,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
             _emailService = emailService;
             _rabbitMqPublisher = rabbitMqPublisher;
             _logger = logger;
+            _mediator = mediator;
         }
 
         public async Task<Result<OrderConfirmationResponseDTO>> Handle(UpdateOrderConfirmedCommand request, CancellationToken cancellationToken)
@@ -197,20 +201,16 @@ namespace Application.Features.OrderFeat.UpdateCommands
             }
 
             try
-            {
-                // ✅ 2. PUBLISH TO RABBITMQ
-                var orderConfirmedEvent = new OrderConfirmedEventDTO
+            {             
+                await _mediator.Publish(new OrderConfirmedEvent
                 {
-                    OrderId = order.Id,
-                    UserId = user.Id,
-                    UserEmail = user.Email,
-                    UserName = user.Name,
+                    Order = order,
+                    User = user,
                     EtaMinutes = etaMinutes
-                };
-
-                _rabbitMqPublisher.Publish("OrderConfirmedQueue", orderConfirmedEvent, Guid.NewGuid().ToString(), null);
-                result.RabbitMqSent = true;
-                result.RabbitMqError = null;
+                });
+                //_rabbitMqPublisher.Publish("OrderConfirmedQueue", orderConfirmedEvent, Guid.NewGuid().ToString(), null);
+                //result.RabbitMqSent = true;
+                //result.RabbitMqError = null;
 
                 _logger.LogInformation(" RabbitMQ notification sent: OrderId={OrderId}", order.Id);
             }

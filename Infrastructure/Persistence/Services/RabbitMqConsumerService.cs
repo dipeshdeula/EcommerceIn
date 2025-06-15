@@ -4,6 +4,7 @@ using Application.Dto.OrderDTOs;
 using Application.Extension;
 using Application.Features.CartItemFeat.Commands;
 using Application.Features.CartItemFeat.Queries;
+using Application.Features.OrderFeat.Events;
 using Application.Interfaces.Repositories;
 using Infrastructure.Hubs;
 using Infrastructure.Persistence.Configurations;
@@ -31,7 +32,7 @@ public class RabbitMqConsumerService : BackgroundService
     private readonly IHubContext<AdminNotificationHub> _adminContext;
     private readonly IHubContext<UserNotificationHub> _userNotificationHub;
     private readonly IEmailService _emailService;
-    private readonly ITokenService _serviceTokenProvider;
+    private readonly IServiceTokenService _serviceTokenProvider;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _baseUrl;
 
@@ -44,8 +45,8 @@ public class RabbitMqConsumerService : BackgroundService
         IHubContext<UserNotificationHub> userHubContext,
         IEmailService emailService
 ,
-        ITokenService serviceTokenProvider
-,
+        IServiceTokenService serviceTokenProvider
+,   
         IHttpClientFactory httpClientFactory,
         IOptions<ApiConfig> apiConfig)
     {
@@ -84,77 +85,90 @@ public class RabbitMqConsumerService : BackgroundService
             }
         });
 
-          // Listen to OrderPlacedQueue for admin notifications
-        _consumer.StartConsuming(_queueNameOrderPlace, async (message, properties) =>
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(message))
-                {
-                    _logger.LogWarning("{Function}: Received empty message.", functionName);
-                    return;
-                }
-                //var orderPlacedEvent = JsonConvert.DeserializeObject<OrderPlacedEventDTO>(message);
+        //  // Listen to OrderPlacedQueue for admin notifications
+        //_consumer.StartConsuming(_queueNameOrderPlace, async (message, properties) =>
+        //{
+        //    try
+        //    {
+        //        if (string.IsNullOrWhiteSpace(message))
+        //        {
+        //            _logger.LogWarning("{Function}: Received empty message.", functionName);
+        //            return;
+        //        }
+        //        //var orderPlacedEvent = JsonConvert.DeserializeObject<OrderPlacedEventDTO>(message);
 
-                var jsonMessage = JObject.Parse(message);
+        //        var jsonMessage = JObject.Parse(message);
 
-                var token = _serviceTokenProvider.GetServiceToken();
-                using var httpClient = _httpClientFactory.CreateClient();
-                var request = new HttpRequestMessage(HttpMethod.Post,
-                    $"{_baseUrl}send-to-admin")
-                {
-                    Content = new StringContent(message, Encoding.UTF8, "application/json")
-                };
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        //        var token = _serviceTokenProvider.GetServiceToken();
+        //        using var httpClient = _httpClientFactory.CreateClient();
+        //        var request = new HttpRequestMessage(HttpMethod.Post,
+        //            $"{_baseUrl}send-to-admin")
+        //        {
+        //            Content = new StringContent(message, Encoding.UTF8, "application/json")
+        //        };
+        //        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-                var response = await httpClient.SendAsync(request, stoppingToken);
+        //        var response = await httpClient.SendAsync(request, stoppingToken);
 
-                // Notify all admins via SignalR
+        //        // Notify all admins via SignalR
                 
-                var destination = request.RequestUri.ToString();
+        //        var destination = request.RequestUri.ToString();
 
-                if (response.IsSuccessStatusCode)
-                {
-                    _logger.LogInformation("Successfully forwarded notification to {Destination}.", destination);
-                }
-                else
-                {
-                    _logger.LogError("Failed to forward notification. Destination: {Destination}, Status Code: {StatusCode}", destination, response.StatusCode);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to notify admin for order placed event.");
-            }
-        });
+        //        if (response.IsSuccessStatusCode)
+        //        {
+        //            _logger.LogInformation("Successfully forwarded notification to {Destination}.", destination);
+        //        }
+        //        else
+        //        {
+        //            _logger.LogError("Failed to forward notification. Destination: {Destination}, Status Code: {StatusCode}", destination, response.StatusCode);
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Failed to notify admin for order placed event.");
+        //    }
+        //});
 
         // Add in ExecuteAsync or similar
-        _consumer.StartConsuming("OrderConfirmedQueue", async (message, properties) =>
-        {
-            try
-            {
-                var orderConfirmedEvent = JsonConvert.DeserializeObject<OrderConfirmedEventDTO>(message);
+        //_consumer.StartConsuming("OrderConfirmedQueue", async (message, properties) =>
+        //{
+        //    try
+        //    {
+        //        var orderConfirmedEvent = JsonConvert.DeserializeObject<OrderConfirmedEvent>(message);
+        //        _logger.LogInformation("Received OrderConfirmedEvent: {@OrderConfirmedEvent}", orderConfirmedEvent);
 
-                // Real-time notification via SignalR
-                await _userNotificationHub.Clients.User(orderConfirmedEvent.UserId.ToString())
-                    .SendAsync("OrderConfirmed", new
-                    {
-                        OrderId = orderConfirmedEvent.OrderId,
-                        Message = $"Your order #{orderConfirmedEvent.OrderId} has been confirmed and will be delivered in approximately {orderConfirmedEvent.EtaMinutes} minutes."
-                    });
+        //        var token = _serviceTokenProvider.GetServiceToken();
+        //        _logger.LogInformation("Token: {Token}", token);
 
-                // Email notification
-                await _emailService.SendEmailAsync(
-                    orderConfirmedEvent.UserEmail,
-                    "Order Confirmed",
-                    $"Hello {orderConfirmedEvent.UserName},<br>Your order #{orderConfirmedEvent.OrderId} has been confirmed and will be delivered in approximately {orderConfirmedEvent.EtaMinutes} minutes.<br>Thank you for shopping with us!"
-                );
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to notify user for order confirmed event.");
-            }
-        });
+        //        using var httpClient = _httpClientFactory.CreateClient();
+        //        var request = new HttpRequestMessage(HttpMethod.Post,
+        //            $"{_baseUrl}send-to-user")
+        //        {
+        //            Content = new StringContent(message, Encoding.UTF8, "application/json")
+        //        };
+        //        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        //        var response = await httpClient.SendAsync(request, stoppingToken);
+
+        //        // Notify all admins via SignalR
+
+        //        var destination = request.RequestUri.ToString();
+        //        _logger.LogInformation("Forwarding notification to {Destination}", destination);
+
+        //        if (response.IsSuccessStatusCode)
+        //        {
+        //            _logger.LogInformation("Successfully forwarded notification to {Destination}.", destination);
+        //        }
+        //        else
+        //        {
+        //            _logger.LogError("Failed to forward notification. Destination: {Destination}, Status Code: {StatusCode}", destination, response.StatusCode);
+        //        }
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Failed to notify user for order confirmed event.");
+        //    }
+        //});
 
         return Task.CompletedTask;
     }

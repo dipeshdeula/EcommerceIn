@@ -9,6 +9,6 @@ namespace Application.Interfaces.Services;
 
 public interface INotificationService
 {
-    Task SendToUserAsync(string username, Notification notification);
+    Task SendToUserAsync(string Email, Notification notification);
     Task SendToAllAsync();
 }

@@ -6,12 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Features.OrderFeat.Events
+namespace Application.Features.OrderFeat.Events;
+
+public class OrderPlacedEvent : INotification
 {
-    public class OrderPlacedEvent : INotification
-    {
-        public Order Order { get; set; }
-        public User User { get; set; }
-        public string[] ProductNames { get; set; }
-    }
+    public Order Order { get; set; }
+    public User User { get; set; }
+    public string[] ProductNames { get; set; }
 }

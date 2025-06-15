@@ -2,6 +2,8 @@
 using Application.Dto.CategoryDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
+using Application.Utilities;
+using Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
@@ -33,12 +35,11 @@ namespace Application.Features.CategoryFeat.Queries
 
             // Fetch categories with pagination
             var categories = await _categoryRepository.GetAllAsync(
-                orderBy: query => query.OrderByDescending(category => category.Id),
-                includeProperties:"SubCategories,SubCategories.SubSubCategories, SubCategories.SubSubCategories.Products",
+                includeProperties: "SubCategories,SubCategories.SubSubCategories, SubCategories.SubSubCategories.Products",
                 skip: (request.PageNumber - 1) * request.PageSize,
                 take: request.PageSize,
-                cancellationToken:cancellationToken
-            );
+                cancellationToken: cancellationToken
+            ).QuickSortDesc(categories => categories.Id);
 
             // Map categories to DTOs
             var categoryDTOs = categories.Select(cd => cd.ToDTO()).ToList();

@@ -1,5 +1,4 @@
-﻿
-using Domain.Enums;
+﻿using Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
@@ -10,7 +9,7 @@ public class Notification
     public int Id { get; set; }
 
     [NotMapped]
-    public string Username { get; set; }
+    public string Email { get; set; }
     public int UserId { get; set; }
     public int OrderId { get; set; }
     public string Title { get; set; }
@@ -24,7 +23,7 @@ public class Notification
     public bool IsDeleted { get; set; } = false;
 
     [JsonIgnore]
-    public Order Order { get; set; }
+    public Order? Order { get; set; }
     [JsonIgnore]
     public User User { get; set; }
 

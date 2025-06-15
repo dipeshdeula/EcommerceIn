@@ -62,6 +62,7 @@ namespace Infrastructure.Persistence.Contexts
             builder.ApplyConfiguration(new EventProductConfig());
             builder.ApplyConfiguration(new EventRuleConfig());
             builder.ApplyConfiguration(new EventUsageConfig());
+            builder.ApplyConfiguration(new NotificationConfig());
 
         }
     }

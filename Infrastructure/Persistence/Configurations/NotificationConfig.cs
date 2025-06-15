@@ -13,7 +13,7 @@ namespace Infrastructure.Persistence.Configurations
                 .HasDefaultValue(false);
             builder.HasOne(n => n.Order)
                 .WithMany(o => o.Notifications)
-                .HasForeignKey(o => o.OrderId)
+                .HasForeignKey(n => n.OrderId)
                 .IsRequired(false)
                  .OnDelete(DeleteBehavior.Cascade);
 

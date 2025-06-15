@@ -12,49 +12,50 @@ using System.Threading.Tasks;
 
 namespace Application.Features.OrderFeat.Events;
 
-public class OrderPlacedEventHandler : INotificationHandler<OrderPlacedEvent>
+
+public class OrderConfirmedEventHandler : INotificationHandler<OrderConfirmedEvent>
 {
     private readonly INotificationService _notificationService;
     private readonly INotificationRepository _notificationRepository;
-    private readonly ILogger<OrderPlacedEventHandler> _logger;
+    private readonly ILogger<OrderConfirmedEventHandler> _logger;
 
-    public OrderPlacedEventHandler(
+    public OrderConfirmedEventHandler(
         INotificationService notificationService,
         INotificationRepository notificationRepository,
-        ILogger<OrderPlacedEventHandler> logger)
+        ILogger<OrderConfirmedEventHandler> logger)
     {
         _notificationService = notificationService;
         _notificationRepository = notificationRepository;
         _logger = logger;
     }
 
-    public async Task Handle(OrderPlacedEvent orderEvent, CancellationToken cancellationToken)
+    public async Task Handle(OrderConfirmedEvent orderConfirmedEvent, CancellationToken cancellationToken)
     {
         try
         {
 
             var notification = new Notification
             {
-                OrderId = orderEvent.Order.Id,
-                UserId = orderEvent.User.Id,
+                OrderId = orderConfirmedEvent.Order.Id,
+                UserId = orderConfirmedEvent.User.Id,
 
-                Title = "Order Placed",
-                Message = $"Order #{orderEvent.Order.Id} has been placed and by user #{orderEvent.User.Id}.",
-                Type = NotificationType.OrderPlaced,
+                Title = "Order Confirmed",
+                Message = $"Your order #{orderConfirmedEvent.Order.Id} has been confirmed and will be delivered in approximately {orderConfirmedEvent.EtaMinutes} minutes.",
+                Type = NotificationType.OrderConfirmed,
                 Status = NotificationStatus.Pending
             };
 
             await _notificationRepository.AddAsync(notification);
             await _notificationRepository.SaveChangesAsync(cancellationToken);
 
-            var email = orderEvent.User.Email;
+            var email = orderConfirmedEvent.User.Email;
             await _notificationService.SendToUserAsync(email, notification);
 
             _logger.LogInformation("Notification {NotificationId} created successfully", notification.Id);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to handle OrderPlacedEvent");
+            _logger.LogError(ex, "Failed to handle OrderConfirmedEvent");
         }
     }
 }

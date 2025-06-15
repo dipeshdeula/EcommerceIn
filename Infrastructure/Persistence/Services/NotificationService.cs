@@ -14,8 +14,8 @@ public class NotificationService : INotificationService
     private const int ATTEMPTS = 3;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _config;
-    private readonly IRabbitMqPublisher _rabbitMqPublisher;
-    public NotificationService(IHttpClientFactory httpClientFactory, IConfiguration config, IRabbitMqPublisher rabbitMqPublisher)
+    private readonly INotificationRabbitMqPublisher _rabbitMqPublisher;
+    public NotificationService(IHttpClientFactory httpClientFactory, IConfiguration config, INotificationRabbitMqPublisher rabbitMqPublisher)
     {
         _httpClientFactory = httpClientFactory;
         _config = config;
@@ -26,30 +26,30 @@ public class NotificationService : INotificationService
         throw new NotImplementedException();
     }
 
-    public async Task SendToUserAsync(string username, Notification notification)
+    public async Task SendToUserAsync(string email, Notification notification)
     {
         using var client = _httpClientFactory.CreateClient();
         bool isSent = false;
 
         try
         {
-
+            String queueName = notification.Type.ToString().Equals("OrderPlaced") ? "OrderPlacedQueue" : "OrderConfirmedQueue";
             var notif = new
             {
                 Id = notification.Id,
                 UserId = notification.UserId,
-                Username = username,
+                Email = email,
                 OrderId = notification.OrderId,
                 Title = notification.Title,
                 Message = notification.Message,
                 Type = notification.Type.ToString(),
                 OrderDate = notification.CreatedAt,
             };
-            _rabbitMqPublisher.Publish("OrderPlacedQueue", notif, Guid.NewGuid().ToString(), null);
+            _rabbitMqPublisher.PublishMessage(notif);
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Error sending notification to user {username}: {e.Message}");
+            Console.WriteLine($"Error sending notification to user {email}: {e.Message}");
             throw;
         }
 

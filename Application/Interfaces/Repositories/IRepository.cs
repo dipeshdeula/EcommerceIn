@@ -39,6 +39,15 @@ namespace Application.Interfaces.Repositories
             bool includeDeleted = false,
             string includeProperties = null
             );
+        //Task<IEnumerable<TEntity>> GetAllAsync(
+        //    Expression<Func<TEntity, bool>> predicate = null,
+        //    Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
+        //    int? skip = null,
+        //    int? take = null,
+        //    bool includeDeleted = false,
+        //    string includeProperties = null,
+        //    CancellationToken cancellationToken = default
+        //    );
         Task<IEnumerable<TEntity>> GetAllAsync(
             Expression<Func<TEntity, bool>> predicate = null,
             Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
