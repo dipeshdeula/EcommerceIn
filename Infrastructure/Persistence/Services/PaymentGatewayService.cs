@@ -46,6 +46,12 @@ namespace Infrastructure.Persistence.Services
                     return Result<PaymentInitiationResponse>.Failure($"Payment method {paymentRequest.PaymentMethodId} not supported");
                 }
 
+                // ✅ Validate payment amount
+                if (paymentRequest.PaymentAmount <= 0)
+                {
+                    return Result<PaymentInitiationResponse>.Failure("Payment amount must be greater than zero");
+                }
+
                 // ✅ Initiate payment with provider
                 var result = await provider.InitiateAsync(paymentRequest, cancellationToken);
 

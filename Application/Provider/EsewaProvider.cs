@@ -55,7 +55,8 @@ namespace Application.Provider
                 };
 
                 var signature = GenerateSignature(esewaRequest);
-                var formHtml = BuildPaymentForm(esewaRequest, signature);
+                //var formHtml = BuildPaymentForm(esewaRequest, signature);
+                var paymentUrl = BuildEsewaPaymentUrl(esewaRequest, signature);
 
                 _logger.LogInformation("✅ eSewa payment initiated: TransactionId={TransactionId}, Amount={Amount}",
                     transactionUuid, paymentRequest.PaymentAmount);
@@ -63,8 +64,8 @@ namespace Application.Provider
                 return Result<PaymentInitiationResponse>.Success(new PaymentInitiationResponse
                 {
                     Provider = ProviderName,
-                    PaymentUrl = null,
-                    PaymentFormHtml = formHtml,
+                    PaymentUrl = paymentUrl,
+                    PaymentFormHtml = null,
                     ProviderTransactionId = transactionUuid,
                     ExpiresAt = DateTime.UtcNow.AddMinutes(15),
                     Status = "Initiated",
@@ -74,7 +75,8 @@ namespace Application.Provider
                     {
                         ["signature"] = signature,
                         ["merchantCode"] = _config.MerchantId,
-                        ["environment"] = "test"
+                        ["environment"] = "test",
+                        ["transactionId"] = transactionUuid
                     }
                 }, "eSewa payment initiated successfully");
             }
@@ -260,6 +262,33 @@ namespace Application.Provider
     </script>
 </body>
 </html>";
+        }
+
+        private string BuildEsewaPaymentUrl(EsewaPaymentRequest request, string signature)
+        {
+            var parameters = new Dictionary<string, string>
+            {
+                ["tAmt"] = request.TotalAmount.ToString("F2"),
+                ["amt"] = request.Amount.ToString("F2"),
+                ["txAmt"] = request.TaxAmount.ToString("F2"),
+                ["psc"] = request.ServiceCharge.ToString("F2"),
+                ["pdc"] = request.DeliveryCharge.ToString("F2"),
+                ["scd"] = request.ProductCode,
+                ["pid"] = request.TransactionUuid,
+                ["su"] = request.SuccessUrl,
+                ["fu"] = request.FailureUrl,
+                ["signed_field_names"] = "total_amount,transaction_uuid,product_code",
+                ["signature"] = signature
+            };
+
+            var queryString = string.Join("&", parameters.Select(kvp =>
+                $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}"));
+
+            var paymentUrl = $"{_config.BaseUrl}/epay/main?{queryString}";
+
+            _logger.LogDebug("🔗 Generated eSewa payment URL: {PaymentUrl}", paymentUrl);
+
+            return paymentUrl;
         }
     }
 

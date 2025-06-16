@@ -64,7 +64,7 @@ namespace Application.Features.ProductFeat.Queries
                             predicate: eventPredicate,
                             //orderBy: query => query.OrderByDescending(p => p.Id),
                             take: Math.Min(request.PageSize, eventProductIds.Count),
-                            includeProperties: "Images",
+                            includeProperties: "Product.Images",
                             cancellationToken: cancellationToken)
                             .QuickSortDesc(p => p.Id);
 
