@@ -6,6 +6,8 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Application.Utilities;
+using System.Linq.Expressions;
 
 namespace Application.Features.CategoryFeat.Queries
 {
@@ -66,6 +68,7 @@ namespace Application.Features.CategoryFeat.Queries
 
                 // Apply sorting
                 productDTOs = ApplySorting(productDTOs, request.SortBy);
+                
 
                 // Calculate category-level statistics
                 var categoryWithProductsDto = new CategoryWithProductsDTO
@@ -99,15 +102,30 @@ namespace Application.Features.CategoryFeat.Queries
             }
         }
 
+        //private List<ProductDTO> ApplySorting(List<ProductDTO> products, string? sortBy)
+        //{
+        //    return sortBy?.ToLower() switch
+        //    {
+        //        "price" => products.OrderBy(p => p.Pricing.EffectivePrice).ToList(),
+        //        "name" => products.OrderBy(p => p.Name).ToList(),
+        //        "rating" => products.OrderByDescending(p => p.Rating).ToList(),
+        //        "discount" => products.OrderByDescending(p => p.Pricing.TotalDiscountPercentage).ToList(),
+        //        _ => products.OrderByDescending(p => p.Id).ToList()
+        //    };
+        //}
+
         private List<ProductDTO> ApplySorting(List<ProductDTO> products, string? sortBy)
         {
             return sortBy?.ToLower() switch
             {
-                "price" => products.OrderBy(p => p.Pricing.EffectivePrice).ToList(),
-                "name" => products.OrderBy(p => p.Name).ToList(),
-                "rating" => products.OrderByDescending(p => p.Rating).ToList(),
-                "discount" => products.OrderByDescending(p => p.Pricing.TotalDiscountPercentage).ToList(),
-                _ => products.OrderByDescending(p => p.Id).ToList()
+                "price" => products.QuickSort(p=>p.Pricing.EffectivePrice).ToList<ProductDTO>(),
+
+                "name" => products.QuickSort(p => p.Name).ToList<ProductDTO>(),
+                "rating" => products.QuickSortDesc(p => p.Rating).ToList<ProductDTO>(),
+
+                "discount" => products.QuickSortDesc(p => p.Pricing.TotalDiscountPercentage).ToList<ProductDTO>(),
+
+                _ => products.QuickSortDesc(p => p.Id).ToList<ProductDTO>()
             };
         }
     }

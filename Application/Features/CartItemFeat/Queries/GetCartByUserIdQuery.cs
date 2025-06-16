@@ -3,6 +3,7 @@ using Application.Interfaces.Repositories;
 using MediatR;
 using Application.Extension;
 using Application.Dto.CartItemDTOs;
+using Application.Utilities;
 
 
 namespace Application.Features.CartItemFeat.Queries
@@ -38,11 +39,11 @@ namespace Application.Features.CartItemFeat.Queries
                 var cartItems = await _cartItemRepository.GetAllAsync(
                     predicate: c => c.UserId == request.UserId && !c.IsDeleted,
                     includeProperties: "Product,Product.Images,User",
-                    orderBy: query => query.OrderByDescending(c => c.CreatedAt),
+                    //orderBy: query => query.OrderByDescending(c => c.CreatedAt),
                     skip: (request.PageNumber - 1) * request.PageSize,
                     take: request.PageSize,
                     cancellationToken: cancellationToken
-                );
+                ).QuickSortDesc(c => c.CreatedAt);
 
                 if (!cartItems.Any())
                 {

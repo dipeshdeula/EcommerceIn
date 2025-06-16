@@ -68,9 +68,9 @@ namespace Application.Features.CategoryFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapGet("/getAllProdcutByCategoryById", async ([FromQuery] int categoryId, ISender mediator, int PageNumber = 1, int PageSize = 10) =>
+            app.MapGet("/getAllProdcutByCategoryById", async ([FromQuery] int categoryId, ISender mediator, int PageNumber = 1, int PageSize = 10, string? sortBy = null) =>
             {
-                var result = await mediator.Send(new GetAllProductsByCategoryId(categoryId, PageNumber, PageSize));
+                var result = await mediator.Send(new GetAllProductsByCategoryId(categoryId, PageNumber, PageSize,SortBy:sortBy));
                 if (!result.Succeeded)
                 {
                     return Results.BadRequest(new { result.Message, result.Errors });
