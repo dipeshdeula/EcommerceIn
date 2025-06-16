@@ -1,12 +1,11 @@
-﻿using Application.Interfaces.Services;
+﻿using Application.Dto.PaymentDTOs;
+using Application.Interfaces.Services;
 using Carter;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -15,18 +14,17 @@ namespace Application.Features.PaymentRequestFeat.Modules
 {
     public class PaymentCallbackModule : CarterModule
     {
-        public PaymentCallbackModule() : base("/payment/callbacktest")
+        public PaymentCallbackModule() : base("/payment/callback")
         {
-            WithTags("Payment call back");
+            WithTags("Payment Callbacks");
             IncludeInOpenApi();
         }
+
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
-            var group = app.MapGroup("/payment/callback")
-                .WithTags("Payment Callbacks");
-           
+            var group = app.MapGroup("");
 
-            // ✅ eSewa Success Callback
+
             group.MapGet("/esewa/success", async (
                 string? data,
                 IServiceProvider serviceProvider,
@@ -34,7 +32,7 @@ namespace Application.Features.PaymentRequestFeat.Modules
             {
                 try
                 {
-                    logger.LogInformation("✅ eSewa success callback received");
+                    logger.LogInformation("✅ eSewa success callback received: HasData={HasData}", !string.IsNullOrEmpty(data));
 
                     if (string.IsNullOrEmpty(data))
                     {
@@ -45,6 +43,9 @@ namespace Application.Features.PaymentRequestFeat.Modules
                     // ✅ Decode Base64 data
                     var decodedBytes = Convert.FromBase64String(data);
                     var decodedJson = Encoding.UTF8.GetString(decodedBytes);
+
+                    logger.LogInformation("📥 Decoded eSewa data: {DecodedData}", decodedJson);
+
                     var responseData = JsonSerializer.Deserialize<EsewaCallbackResponse>(decodedJson, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
@@ -56,55 +57,49 @@ namespace Application.Features.PaymentRequestFeat.Modules
                         return Results.Redirect("http://localhost:5173/payment/failure?error=invalid_response");
                     }
 
-                    logger.LogInformation("📥 eSewa Success: Status={Status}, Amount={Amount}, TransactionUuid={TransactionUuid}",
+                    logger.LogInformation("📥 eSewa Callback: Status={Status}, Amount={Amount}, TransactionUuid={TransactionUuid}",
                         responseData.Status, responseData.TotalAmount, responseData.TransactionUuid);
 
                     using var scope = serviceProvider.CreateScope();
-                    var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
                     var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-
-                    // ✅ Verify signature
-                    var secretKey = configuration["PaymentGateways:Esewa:SecretKey"];
-                    if (!VerifyEsewaSignature(responseData, secretKey))
-                    {
-                        logger.LogError("❌ eSewa signature verification failed");
-                        return Results.Redirect("http://localhost:5173/payment/failure?error=signature_failed");
-                    }
 
                     // ✅ Extract payment request ID from transaction UUID
                     var transactionParts = responseData.TransactionUuid.Split('_');
                     if (transactionParts.Length >= 2 && int.TryParse(transactionParts[1], out var paymentRequestId))
                     {
-                        // ✅ Update payment status in database
-                        var paymentRequest = await unitOfWork.PaymentRequests.GetByIdAsync(paymentRequestId);
+                        var paymentRequest = await unitOfWork.PaymentRequests.GetByIdAsync(paymentRequestId, cancellationToken: default);
                         if (paymentRequest != null)
                         {
-                            paymentRequest.PaymentStatus = responseData.Status?.ToUpper() == "COMPLETE" ? "Succeeded" : "Failed";
+                            // ✅ Update payment status based on eSewa response
+                            var isSuccess = responseData.Status?.ToUpper() == "COMPLETE";
+                            var oldStatus = paymentRequest.PaymentStatus;
+
+                            paymentRequest.PaymentStatus = isSuccess ? "Succeeded" : "Failed";
                             paymentRequest.UpdatedAt = DateTime.UtcNow;
 
-                            await unitOfWork.PaymentRequests.UpdateAsync(paymentRequest);
+                            await unitOfWork.PaymentRequests.UpdateAsync(paymentRequest, default);
 
                             // ✅ Update order status if payment successful
-                            if (paymentRequest.PaymentStatus == "Succeeded")
+                            if (isSuccess)
                             {
-                                var order = await unitOfWork.Orders.GetByIdAsync(paymentRequest.OrderId);
+                                var order = await unitOfWork.Orders.GetByIdAsync(paymentRequest.OrderId, default);
                                 if (order != null)
                                 {
                                     order.Status = "Paid";
                                     order.UpdatedAt = DateTime.UtcNow;
-                                    await unitOfWork.Orders.UpdateAsync(order);
+                                    await unitOfWork.Orders.UpdateAsync(order, default);
                                 }
                             }
 
-                            await unitOfWork.SaveChangesAsync();
+                            await unitOfWork.SaveChangesAsync(default);
 
-                            logger.LogInformation("✅ Payment updated successfully: PaymentRequestId={PaymentRequestId}, Status={Status}",
-                                paymentRequestId, paymentRequest.PaymentStatus);
+                            logger.LogInformation("✅ Payment status updated: PaymentRequestId={PaymentRequestId}, OldStatus={OldStatus}, NewStatus={NewStatus}, OrderId={OrderId}",
+                                paymentRequestId, oldStatus, paymentRequest.PaymentStatus, paymentRequest.OrderId);
 
-                            // ✅ Redirect to frontend success page
-                            var redirectUrl = paymentRequest.PaymentStatus == "Succeeded"
-                                ? $"http://localhost:5173/payment/success?paymentId={paymentRequestId}&transactionId={responseData.TransactionUuid}&amount={responseData.TotalAmount}"
-                                : $"http://localhost:5173/payment/failure?paymentId={paymentRequestId}&reason=payment_failed";
+                            // ✅ Redirect to frontend with success
+                            var redirectUrl = isSuccess
+                                ? $"http://localhost:5173/payment/success?paymentId={paymentRequestId}&transactionId={responseData.TransactionUuid}&amount={responseData.TotalAmount}&status=verified"
+                                : $"http://localhost:5173/payment/failure?paymentId={paymentRequestId}&reason=payment_failed&transactionCode={responseData.TransactionCode}";
 
                             return Results.Redirect(redirectUrl);
                         }
@@ -117,20 +112,20 @@ namespace Application.Features.PaymentRequestFeat.Modules
                     else
                     {
                         logger.LogError("❌ Invalid transaction UUID format: {TransactionUuid}", responseData.TransactionUuid);
-                        return Results.Redirect("http://localhost:5173/payment/failure?error=invalid_transaction");
+                        return Results.Redirect("http://localhost:5173/payment/failure?error=invalid_transaction_format");
                     }
                 }
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "❌ Error processing eSewa success callback");
-                    return Results.Redirect("http://localhost:5173/payment/failure?error=processing_error");
+                    return Results.Redirect("http://localhost:5173/payment/failure?error=callback_processing_error");
                 }
             })
             .WithName("EsewaSuccessCallback")
             .WithSummary("Handle eSewa payment success callback")
             .Produces(302);
 
-            // ✅ eSewa Failure Callback
+
             group.MapGet("/esewa/failure", async (
                 string? data,
                 ILogger<PaymentCallbackModule> logger) =>
@@ -138,6 +133,8 @@ namespace Application.Features.PaymentRequestFeat.Modules
                 logger.LogWarning("❌ eSewa failure callback received");
 
                 string? transactionId = null;
+                string? transactionCode = null;
+
                 if (!string.IsNullOrEmpty(data))
                 {
                     try
@@ -146,6 +143,10 @@ namespace Application.Features.PaymentRequestFeat.Modules
                         var decodedJson = Encoding.UTF8.GetString(decodedBytes);
                         var responseData = JsonSerializer.Deserialize<EsewaCallbackResponse>(decodedJson);
                         transactionId = responseData?.TransactionUuid;
+                        transactionCode = responseData?.TransactionCode;
+
+                        logger.LogInformation("📥 eSewa Failure Data: TransactionId={TransactionId}, TransactionCode={TransactionCode}",
+                            transactionId, transactionCode);
                     }
                     catch (Exception ex)
                     {
@@ -153,54 +154,135 @@ namespace Application.Features.PaymentRequestFeat.Modules
                     }
                 }
 
-                return Results.Redirect($"http://localhost:5173/payment/failure?transactionId={transactionId}&provider=esewa&reason=payment_cancelled");
+                var failureUrl = $"http://localhost:5173/payment/failure?transactionId={transactionId}&transactionCode={transactionCode}&provider=esewa&reason=payment_cancelled";
+                return Results.Redirect(failureUrl);
             })
             .WithName("EsewaFailureCallback")
             .WithSummary("Handle eSewa payment failure callback")
             .Produces(302);
-        }
 
-        private static bool VerifyEsewaSignature(EsewaCallbackResponse response, string secretKey)
-        {
-            try
+            // khalti success callback
+            group.MapGet("/khalti/success", async (
+                string? pidx,
+                string? status,
+                decimal? amount,
+                string? purchase_order_id,
+                string? transaction_id,
+                IServiceProvider serviceProvider,
+                ILogger<PaymentCallbackModule> logger) =>
             {
-                var signatureMessage = $"transaction_code={response.TransactionCode},status={response.Status},total_amount={response.TotalAmount},transaction_uuid={response.TransactionUuid},product_code={response.ProductCode},signed_field_names={response.SignedFieldNames}";
+                try
+                {
+                    logger.LogInformation("✅ Khalti success callback received: Pidx={Pidx}, Status={Status}", pidx, status);
 
-                using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secretKey));
-                var computedSignatureBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(signatureMessage));
-                var computedSignature = Convert.ToBase64String(computedSignatureBytes);
+                    if (string.IsNullOrEmpty(pidx))
+                    {
+                        logger.LogError("❌ No pidx received in Khalti success callback");
+                        return Results.Redirect("http://localhost:5173/payment/failure?error=no_pidx");
+                    }
 
-                return string.Equals(computedSignature, response.Signature, StringComparison.Ordinal);
-            }
-            catch (Exception)
+                    using var scope = serviceProvider.CreateScope();
+                    var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+                    var paymentGatewayService = scope.ServiceProvider.GetRequiredService<IPaymentGatewayService>();
+
+                    // ✅ Find payment request by Khalti Pidx
+                    var paymentRequest = await unitOfWork.PaymentRequests.GetAsync(
+                        predicate: pr => pr.KhaltiPidx == pidx,
+                        cancellationToken: default);
+
+                    if (paymentRequest == null)
+                    {
+                        logger.LogError("❌ Payment request not found for Pidx: {Pidx}", pidx);
+                        return Results.Redirect("http://localhost:5173/payment/failure?error=payment_not_found");
+                    }
+
+                    // ✅ Verify payment with Khalti
+                    var verificationRequest = new PaymentVerificationRequest
+                    {
+                        PaymentRequestId = paymentRequest.Id,
+                        KhaltiPidx = pidx,
+                        Status = status?.ToUpper() == "COMPLETED" ? "SUCCESS" : "FAILED",
+                        CollectedAmount = amount,
+                        AdditionalData = new Dictionary<string, string>
+                        {
+                            ["transactionId"] = transaction_id ?? "",
+                            ["purchaseOrderId"] = purchase_order_id ?? "",
+                            ["callbackType"] = "success"
+                        }
+                    };
+
+                    logger.LogInformation("🔍 Verifying Khalti payment: PaymentRequestId={PaymentRequestId}", paymentRequest.Id);
+
+                    var verificationResult = await paymentGatewayService.VerifyPaymentAsync(verificationRequest, default);
+
+                    if (verificationResult.Succeeded && verificationResult.Data.IsSuccessful)
+                    {
+                        logger.LogInformation("✅ Khalti payment verification successful: PaymentRequestId={PaymentRequestId}", paymentRequest.Id);
+
+                        var successUrl = $"http://localhost:5173/payment/success?paymentId={paymentRequest.Id}&transactionId={pidx}&amount={amount}&status=verified&provider=khalti";
+                        return Results.Redirect(successUrl);
+                    }
+                    else
+                    {
+                        logger.LogError("❌ Khalti payment verification failed: {Error}", verificationResult.Message);
+
+                        var failureUrl = $"http://localhost:5173/payment/failure?paymentId={paymentRequest.Id}&reason=verification_failed&provider=khalti&error={Uri.EscapeDataString(verificationResult.Message ?? "")}";
+                        return Results.Redirect(failureUrl);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "❌ Error processing Khalti success callback");
+                    return Results.Redirect("http://localhost:5173/payment/failure?error=callback_processing_error&provider=khalti");
+                }
+            })
+            .WithName("KhaltiSuccessCallback")
+            .WithTags("khaltiCallback")
+            .WithSummary("Handle Khalti payment success callback")
+            .Produces(302);
+
+            // ✅ Khalti Failure Callback
+            group.MapGet("/khalti/failure", async (
+                string? pidx,
+                string? status,
+                string? message,
+                ILogger<PaymentCallbackModule> logger) =>
             {
-                return false;
-            }
+                logger.LogWarning("❌ Khalti failure callback received: Pidx={Pidx}, Status={Status}, Message={Message}",
+                    pidx, status, message);
+
+                var failureUrl = $"http://localhost:5173/payment/failure?pidx={pidx}&provider=khalti&reason=payment_cancelled_or_failed&message={Uri.EscapeDataString(message ?? "")}";
+                return Results.Redirect(failureUrl);
+            })
+            .WithName("KhaltiFailureCallback")
+            .WithTags("KhaltiCallBack")
+            .WithSummary("Handle Khalti payment failure callback")
+            .Produces(302);
         }
     }
+}
 
-    // ✅ eSewa Response DTOs
-    public class EsewaCallbackResponse
-    {
-        [JsonPropertyName("transaction_code")]
-        public string TransactionCode { get; set; } = string.Empty;
 
-        [JsonPropertyName("status")]
-        public string Status { get; set; } = string.Empty;
+public class EsewaCallbackResponse
+{
+    [JsonPropertyName("transaction_code")]
+    public string TransactionCode { get; set; } = string.Empty;
 
-        [JsonPropertyName("total_amount")]
-        public string TotalAmount { get; set; } = string.Empty;
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = string.Empty;
 
-        [JsonPropertyName("transaction_uuid")]
-        public string TransactionUuid { get; set; } = string.Empty;
+    [JsonPropertyName("total_amount")]
+    public string TotalAmount { get; set; } = string.Empty;
 
-        [JsonPropertyName("product_code")]
-        public string ProductCode { get; set; } = string.Empty;
+    [JsonPropertyName("transaction_uuid")]
+    public string TransactionUuid { get; set; } = string.Empty;
 
-        [JsonPropertyName("signed_field_names")]
-        public string SignedFieldNames { get; set; } = string.Empty;
+    [JsonPropertyName("product_code")]
+    public string ProductCode { get; set; } = string.Empty;
 
-        [JsonPropertyName("signature")]
-        public string Signature { get; set; } = string.Empty;
-    }
+    [JsonPropertyName("signed_field_names")]
+    public string SignedFieldNames { get; set; } = string.Empty;
+
+    [JsonPropertyName("signature")]
+    public string Signature { get; set; } = string.Empty;
 }

@@ -302,7 +302,7 @@ namespace Application.Features.PaymentRequestFeat.Commands
         {
             try
             {
-                // ✅ Validate entities
+                // Validate entities
                 var user = await _unitOfWork.Users.GetByIdAsync(request.addpaymentRequest.UserId, cancellationToken);
                 var order = await _unitOfWork.Orders.GetByIdAsync(request.addpaymentRequest.OrderId, cancellationToken);
                 var paymentMethod = await _unitOfWork.PaymentMethods.GetByIdAsync(request.addpaymentRequest.PaymentMethodId, cancellationToken);
@@ -322,19 +322,19 @@ namespace Application.Features.PaymentRequestFeat.Commands
                     return Result<PaymentRequestDTO>.Failure($"Payment method with ID {request.addpaymentRequest.PaymentMethodId} not found");
                 }
 
-                // ✅ Validate ownership
+                // Validate ownership
                 if (user.Id != order.UserId)
                 {
                     return Result<PaymentRequestDTO>.Failure($"User ID mismatch: user.Id={user.Id}, order.UserId={order.UserId}");
                 }
 
-                // ✅ Validate order status
+                // Validate order status
                 if (order.Status == "Cancelled")
                 {
                     return Result<PaymentRequestDTO>.Failure("Cannot create payment for cancelled order");
                 }
 
-                // ✅ Check for existing pending payment
+                // Check for existing pending payment
                 var existingPayment = await _unitOfWork.PaymentRequests.GetAsync(
                     predicate: pr => pr.OrderId == order.Id &&
                                    (pr.PaymentStatus == "Pending" || pr.PaymentStatus == "Initiated"),
@@ -345,7 +345,7 @@ namespace Application.Features.PaymentRequestFeat.Commands
                     return Result<PaymentRequestDTO>.Failure("A pending payment already exists for this order");
                 }
 
-                // ✅ Create payment request
+                // Create payment request
                 var paymentRequest = new PaymentRequest
                 {
                     CreatedAt = DateTime.UtcNow,
@@ -366,12 +366,12 @@ namespace Application.Features.PaymentRequestFeat.Commands
                     return Result<PaymentRequestDTO>.Failure("Failed to create payment request");
                 }
 
-                // ✅ Initiate payment with unified gateway service
+                //  Initiate payment with unified gateway service
                 var initiationResult = await _paymentGatewayService.InitiatePaymentAsync(paymentRequest, cancellationToken);
 
                 if (!initiationResult.Succeeded)
                 {
-                    // ✅ Update payment status to failed
+                    // Update payment status to failed
                     paymentRequest.PaymentStatus = "Failed";
                     paymentRequest.UpdatedAt = DateTime.UtcNow;
                     await _unitOfWork.PaymentRequests.UpdateAsync(paymentRequest, cancellationToken);
@@ -380,7 +380,7 @@ namespace Application.Features.PaymentRequestFeat.Commands
                     return Result<PaymentRequestDTO>.Failure($"Payment initiation failed: {initiationResult.Message}");
                 }
 
-                // ✅ Build response DTO
+                // Build response DTO
                 var responseDto = new PaymentRequestDTO
                 {
                     Id = paymentRequest.Id,
@@ -394,16 +394,15 @@ namespace Application.Features.PaymentRequestFeat.Commands
                     CreatedAt = paymentRequest.CreatedAt,
                     UpdatedAt = paymentRequest.UpdatedAt,
 
-                    // ✅ Provider-specific fields
+                    //  Provider-specific fields
                     PaymentUrl = initiationResult.Data.PaymentUrl,
                     EsewaTransactionId = paymentRequest.EsewaTransactionId,
                     KhaltiPidx = paymentRequest.KhaltiPidx,
 
-                    // ✅ Additional metadata
+                    // Additional metadata
                     ExpiresAt = initiationResult.Data.ExpiresAt,
                     Instructions = initiationResult.Data.Instructions,
                     RequiresRedirect = initiationResult.Data.RequiresRedirect,
-                    PaymentFormHtml = initiationResult.Data.PaymentFormHtml,
                     Metadata = initiationResult.Data.Metadata
                 };
 

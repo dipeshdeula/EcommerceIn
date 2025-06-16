@@ -63,6 +63,7 @@ namespace Infrastructure.Persistence.Services
 
                 // ✅ Update payment request with provider data
                 paymentRequest.PaymentStatus = result.Data.Status;
+                paymentRequest.PaymentUrl = result.Data.PaymentUrl;
                 paymentRequest.UpdatedAt = DateTime.UtcNow;
 
                 // ✅ Store provider-specific transaction ID

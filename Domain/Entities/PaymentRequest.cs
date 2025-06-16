@@ -14,12 +14,13 @@ namespace Domain.Entities
 
         public int PaymentMethodId { get; set; } // esewa,khalti,cash on delivery
 
-        public string PaymentStatus { get; set; } // e.g ,. "Pending","Succeeded","Failed"
+        public string? PaymentUrl { get; set; }
+        public string PaymentStatus { get; set; } = "Pending";// e.g ,. "Pending","Succeeded","Failed"
 
         public decimal PaymentAmount { get; set; }
 
-        public string Currency { get; set; } = "npr";
-        public string Description { get; set; }
+        public string Currency { get; set; } = "NPR";
+        public string? Description { get; set; }
 
         public string? KhaltiPidx { get; set; } // For khalti
         public string? EsewaTransactionId { get; set; } // For esewa
@@ -28,8 +29,8 @@ namespace Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        public User User { get; set; }
-        public Order Order { get; set; }
-        public PaymentMethod PaymentMethod { get; set; } // Navigation property to PaymentMethod
+        public User? User { get; set; }
+        public Order? Order { get; set; }
+        public PaymentMethod? PaymentMethod { get; set; } // Navigation property to PaymentMethod
     }
 }

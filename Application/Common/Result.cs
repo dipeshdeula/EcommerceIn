@@ -1,29 +1,4 @@
-﻿/*using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Application.Common
-{
-    public class Result<T>
-    {
-        public bool Succeeded { get; set; }
-        public string Message { get; set; } = string.Empty;
-        public IEnumerable<string> Errors { get; set; } = new List<string>();
-        public T Data { get; set; }
-
-        public static Result<T> Success(T data, string message = "") => new() { Succeeded = true, Message = message, Data = data };
-        public static Result<T> Failure(string message, IEnumerable<string> errors = null) =>
-            new() { Succeeded = false, Message = message, Errors = errors ?? new List<string>() };
-    }
-}*/
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace Application.Common
+﻿namespace Application.Common
 {
     public class Result<T>
     {
@@ -32,11 +7,40 @@ namespace Application.Common
         public IDictionary<string, string[]> Errors { get; set; } = new Dictionary<string, string[]>();
         public T Data { get; set; }
 
+        // pagination metadata (optional)
+        public int? TotalCount { get; set; }
+        public int? PageNumber { get; set; }
+        public int? PageSize { get; set; }
+        public int? TotalPages { get; set; }
+        public bool? HasNextPage { get; set; }
+        public bool? HasPreviousPage { get; set; }
+
         /// <summary>
         /// Creates a success result with data and optional message
         /// </summary>
         public static Result<T> Success(T data, string message = "") =>
             new() { Succeeded = true, Message = message, Data = data };
+
+        /// <summary>
+        /// Creates a paginated success result
+        /// </summary>
+        public static Result<T> Success(T data, string message, int totalCount, int pageNumber, int pageSize)
+        {
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+            return new Result<T>
+            {
+                Succeeded = true,
+                Message = message,
+                Data = data,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                HasNextPage = pageNumber < totalPages,
+                HasPreviousPage = pageNumber > 1
+            };
+        }
+
 
         /// <summary>
         /// Creates a failure result with a message and property-specific errors

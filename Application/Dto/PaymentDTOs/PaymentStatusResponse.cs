@@ -15,6 +15,7 @@ namespace Application.Dto.PaymentDTOs
         public DateTime? ProcessedAt { get; set; }
         public string Message { get; set; } = string.Empty;
         public Dictionary<string, object> ProviderData { get; set; } = new();
+        public Dictionary<string,object> AdditionalData { get; set; } = new();
     
         public string? FailureReason { get; set; }
     }

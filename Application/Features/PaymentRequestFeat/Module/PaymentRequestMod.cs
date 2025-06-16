@@ -177,7 +177,6 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Logging;
 
 namespace Application.Features.PaymentRequestFeat.Module
 {
@@ -191,7 +190,6 @@ namespace Application.Features.PaymentRequestFeat.Module
 
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
-            // ✅ Create payment intent
             app.MapPost("/create-payment-intent", async (
                 AddPamentRequestDTO addPaymentRequest,
                 ISender mediator) =>
@@ -214,8 +212,8 @@ namespace Application.Features.PaymentRequestFeat.Module
                 {
                     result.Message,
                     result.Data,
-                    success = true,
-                    timestamp = DateTime.UtcNow
+                    //success = true,
+                    //timestamp = DateTime.UtcNow
                 });
             })
             .WithName("CreatePaymentIntent")
@@ -224,86 +222,7 @@ namespace Application.Features.PaymentRequestFeat.Module
             .Produces<PaymentInitiationResponse>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest);
 
-            // ✅ FIXED: eSewa success callback with proper verification
-           /* app.MapGet("/callback/esewa/success", async (
-                string? oid,
-                string? amt,
-                string? refId,
-                ISender mediator,
-                ILogger<PaymentRequestModule> logger) =>
-            {
-                logger.LogInformation("✅ eSewa success callback: oid={oid}, amt={amt}, refId={refId}", oid, amt, refId);
 
-                if (string.IsNullOrEmpty(oid))
-                {
-                    logger.LogWarning("❌ Missing transaction ID (oid) in success callback");
-                    return Results.Redirect("http://localhost:5173/payment/failure?error=missing_transaction_id");
-                }
-
-                try
-                {
-                    // Extract PaymentRequest ID from transaction ID (TXN_4_638854726371600160)
-                    var transactionParts = oid.Split('_');
-                    if (transactionParts.Length >= 2 && int.TryParse(transactionParts[1], out var paymentRequestId))
-                    {
-                        // ✅ Verify payment with eSewa before confirming
-                        var verificationRequest = new PaymentVerificationRequest
-                        {
-                            PaymentRequestId = paymentRequestId,
-                            Status = "SUCCESS",
-                            EsewaTransactionId = oid,
-                            AdditionalData = new Dictionary<string, string>
-                            {
-                                ["refId"] = refId ?? "",
-                                ["amount"] = amt ?? "",
-                                ["callbackType"] = "success"
-                            }
-                        };
-
-                        // Use the enhanced verification command
-                        var command = new VerifyPaymentCommand(paymentRequestId, oid, null, "SUCCESS");
-                        var result = await mediator.Send(command);
-
-                        if (result.Succeeded)
-                        {
-                            logger.LogInformation("✅ Payment verification successful for PaymentRequestId={PaymentRequestId}", paymentRequestId);
-                            return Results.Redirect($"http://localhost:5173/payment/success?paymentId={paymentRequestId}&transactionId={oid}&refId={refId}");
-                        }
-                        else
-                        {
-                            logger.LogError("❌ Payment verification failed: {Error}", result.Message);
-                            return Results.Redirect($"http://localhost:5173/payment/failure?error=verification_failed&reason={Uri.EscapeDataString(result.Message ?? "")}");
-                        }
-                    }
-                    else
-                    {
-                        logger.LogError("❌ Invalid transaction ID format: {TransactionId}", oid);
-                        return Results.Redirect("http://localhost:5173/payment/failure?error=invalid_transaction_format");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "❌ Error processing eSewa success callback");
-                    return Results.Redirect("http://localhost:5173/payment/failure?error=processing_error");
-                }
-            })
-            .WithName("EsewaSuccessCallback")
-            .WithSummary("Handle eSewa payment success callback");
-
-            // ✅ eSewa failure callback
-            app.MapGet("/callback/esewa/failure", async (
-                string? oid,
-                string? amt,
-                ILogger<PaymentRequestModule> logger) =>
-            {
-                logger.LogWarning("❌ eSewa failure callback: oid={oid}, amt={amt}", oid, amt);
-
-                return Results.Redirect($"http://localhost:5173/payment/failure?transactionId={oid}&provider=esewa&reason=payment_cancelled");
-            })
-            .WithName("EsewaFailureCallback")
-            .WithSummary("Handle eSewa payment failure callback");*/
-
-            // ✅ Manual payment verification endpoint
             app.MapPost("/verify", async (
                 int PaymentRequestId,
                 string? EsewaTransactionId,
@@ -324,7 +243,8 @@ namespace Application.Features.PaymentRequestFeat.Module
 
                 if (!result.Succeeded)
                 {
-                    return Results.BadRequest(new { result.Message, result.Errors });
+                    return Results.BadRequest(new { 
+                        result.Message, result.Errors, success = false,timeStamp = DateTime.UtcNow });
                 }
 
                 return Results.Ok(new { result.Message, result.Data });
@@ -335,13 +255,24 @@ namespace Application.Features.PaymentRequestFeat.Module
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest);
 
-            // ✅ Get payment requests
+            // Get all payment requests
+
             app.MapGet("/requests", async (
                 ISender mediator,
                 int pageNumber = 1,
-                int pageSize = 10) =>
+                int pageSize = 10,
+                string? status = null,
+                int? PaymentMethodId = null,
+                DateTime? FromDate = null,
+                DateTime? ToDate = null,
+                string? SearchTerm = null,
+                string? OrderBy = "CreatedAt"
+
+
+                ) =>
             {
-                var query = new GetAllPaymentQuery(pageNumber, pageSize);
+                var query = new GetAllPaymentQuery(
+                    pageNumber, pageSize, status, PaymentMethodId, FromDate, ToDate, SearchTerm, OrderBy);
                 var result = await mediator.Send(query);
 
                 if (!result.Succeeded)
@@ -349,7 +280,8 @@ namespace Application.Features.PaymentRequestFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
 
-                return Results.Ok(new { result.Message, result.Data });
+                return Results.Ok(new { 
+                    result.Message, result.Data, result.TotalCount,result.TotalPages,result.PageSize,result.HasNextPage,result.HasPreviousPage });
             })
             .WithName("GetAllPaymentRequests")
             .WithSummary("Get all payment requests")
@@ -357,14 +289,17 @@ namespace Application.Features.PaymentRequestFeat.Module
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest);
 
-            // ✅ Get payments by user
+            // get payment by userId
             app.MapGet("/user/{userId}", async (
                 int userId,
                 ISender mediator,
                 int pageNumber = 1,
-                int pageSize = 10) =>
+                int pageSize = 10,
+                string? Status = null,
+                string? OrderBy = "CreatedAt"
+                ) =>
             {
-                var query = new GetPaymentByUserIdQuery(userId, pageNumber, pageSize);
+                var query = new GetPaymentByUserIdQuery(userId, pageNumber, pageSize, Status,OrderBy);
                 var result = await mediator.Send(query);
 
                 if (!result.Succeeded)

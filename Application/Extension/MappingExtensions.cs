@@ -806,8 +806,6 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
 
             };
         }
-
-
         public static PaymentMethodDTO ToDTO(this PaymentMethod paymentMethod)
         {
             return new PaymentMethodDTO {
@@ -830,12 +828,56 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
                 OrderId = paymentRequest.OrderId,
                 PaymentMethodId = paymentRequest.PaymentMethodId,
                 PaymentAmount = paymentRequest.PaymentAmount,
-                Currency = paymentRequest.Currency,
+                Currency = paymentRequest.Currency ?? "NPR",
                 Description = paymentRequest.Description,
+                PaymentStatus = paymentRequest.PaymentStatus,
+                PaymentUrl = paymentRequest.PaymentUrl,
                 KhaltiPidx = paymentRequest.KhaltiPidx,
                 EsewaTransactionId = paymentRequest.EsewaTransactionId,
                 CreatedAt = paymentRequest.CreatedAt,
                 UpdatedAt = paymentRequest.UpdatedAt,
+
+                UserName = paymentRequest.User?.Name,
+                PaymentMethodName = paymentRequest.PaymentMethod?.Name,
+                OrderTotal = paymentRequest.Order?.TotalAmount,
+
+                // Computed properties
+                ExpiresAt = paymentRequest.CreatedAt.AddMinutes(15), // Default 15 min expiry
+                RequiresRedirect = paymentRequest.PaymentMethodId == 1 || paymentRequest.PaymentMethodId == 2, // eSewa or Khalti
+                Instructions = GetPaymentInstructions(paymentRequest.PaymentMethodId, paymentRequest.PaymentStatus),
+
+                Metadata = new Dictionary<string, string>
+                {
+                    ["provider"] = GetProviderName(paymentRequest.PaymentMethodId),
+                    ["transactionId"] = paymentRequest.EsewaTransactionId ?? paymentRequest.KhaltiPidx ?? "",
+                    ["hasPaymentUrl"] = (!string.IsNullOrEmpty(paymentRequest.PaymentUrl)).ToString()
+                }
+
+            };
+        }
+        // Helper method for payment insructions
+        private static string GetPaymentInstructions(int paymentMethodId, string status)
+        {
+            return paymentMethodId switch
+            {
+                1 => status == "Pending" ? "Click the payment link to proceed with eSewa payment" :
+                     status == "Initiated" ? "Complete your payment on eSewa" :
+                     $"Payment {status.ToLower()}",
+                2 => status == "Pending" ? "Click the payment link to proceed with Khalti payment" :
+                     status == "Initiated" ? "Complete your payment on Khalti" :
+                     $"Payment {status.ToLower()}",
+                _ => $"Payment {status.ToLower()}"
+            };
+        }
+
+        private static string GetProviderName(int paymentMethodId)
+        {
+            return paymentMethodId switch
+            {
+                1 => "eSewa",
+                2 => "Khalti",
+                3 => "Cash on Delivery",
+                _ => "Unknown"
             };
         }
 

@@ -1,9 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Persistence.Configurations
 {
@@ -12,11 +7,26 @@ namespace Infrastructure.Persistence.Configurations
         public void Configure(EntityTypeBuilder<PaymentRequest> builder)
         {
             builder.ToTable("PaymentRequests");
-            builder.HasKey(pr=>pr.Id);
+            builder.HasKey(pr => pr.Id);
 
             builder.Property(pr => pr.PaymentAmount).HasColumnType("decimal(18,2)").IsRequired();
 
-            builder.Property(pr => pr.Currency).HasMaxLength(10).IsRequired();
+            builder.Property(pr => pr.Currency)
+                .HasMaxLength(10)
+                .HasDefaultValue("NPR")
+                .IsRequired();
+            builder.Property(pr => pr.PaymentStatus)
+                .HasMaxLength(50)
+                .HasDefaultValue("Pending");
+
+            builder.Property(pr => pr.PaymentUrl)
+                .HasMaxLength(2000);
+            builder.Property(pr => pr.Description)
+                .HasMaxLength(500);
+            builder.Property(pr => pr.EsewaTransactionId)
+                .HasMaxLength(200);
+            builder.Property(pr => pr.KhaltiPidx)
+                .HasMaxLength(200);
 
             builder.Property(pr => pr.CreatedAt)
                 .HasColumnType("timestamp with time zone")
@@ -26,15 +36,15 @@ namespace Infrastructure.Persistence.Configurations
                    .HasColumnType("timestamp with time zone")
                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-            builder.HasOne(pr=>pr.User)
+            builder.HasOne(pr => pr.User)
                 .WithMany()
-                .HasForeignKey(pr=>pr.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasForeignKey(pr => pr.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne(pr=>pr.Order)
+            builder.HasOne(pr => pr.Order)
                 .WithMany()
-                .HasForeignKey(pr=>pr.OrderId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasForeignKey(pr => pr.OrderId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(pr => pr.PaymentMethod)
                    .WithMany(pm => pm.PaymentRequests)

@@ -21,7 +21,6 @@ namespace Application.Dto.PaymentDTOs
         public string PaymentStatus { get; set; } = string.Empty;
 
         public string? PaymentUrl { get; set; }
-        public string? PaymentFormHtml { get; set; }
         public string? KhaltiPidx { get; set; } // For khalti
         public string? EsewaTransactionId { get; set; } // For esewa
 

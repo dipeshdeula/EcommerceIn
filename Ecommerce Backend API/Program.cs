@@ -1,4 +1,4 @@
-using Application.Extension;
+﻿using Application.Extension;
 using Carter;
 using Infrastructure.DependencyInjection;
 using Infrastructure.Hubs;
@@ -183,10 +183,32 @@ app.UseSwaggerUI(c =>
 app.UseStaticFiles();
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAll");
+//app.UseCors("AllowAll");
+app.UseCors("Development"); // Use most permissive for development
+
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// ✅ Add specific CORS for payment callbacks
+app.Use(async (context, next) =>
+{
+    // ✅ Special handling for payment callback routes
+    if (context.Request.Path.StartsWithSegments("/payment/callback"))
+    {
+        context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+        context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        context.Response.Headers.Add("Access-Control-Allow-Headers", "*");
+
+        if (context.Request.Method == "OPTIONS")
+        {
+            context.Response.StatusCode = 200;
+            return;
+        }
+    }
+
+    await next();
+});
 
 app.MapCarter();
 app.MapHub<AdminNotificationHub>("/adminNotifications");
