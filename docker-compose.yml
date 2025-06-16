@@ -51,8 +51,9 @@ services:
   # Backend API
   backend:
     #image: ghcr.io/dipeshdeula/ecommercein:latest
-    context: .
-    dockerfile: Dockerfile
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: ecommerce_backend
     restart: always
     environment:
