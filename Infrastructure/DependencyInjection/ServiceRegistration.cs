@@ -233,6 +233,7 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<ICurrentUserService,CurrentUserService>();
 
             services.AddScoped<ICartItemRepository, CartItemRepository>();
+            services.AddScoped<INotificationRepository, NotificationRepository>();
 
             // Register Authorization 
             services.AddScoped<IAuthorizationHandler, PermissionRequirementCommandHandler>();
@@ -362,11 +363,22 @@ namespace Infrastructure.DependencyInjection
         public void AddServices(IServiceCollection services)
         {
             // TokenService and EmailService are stateless, so they can be transient
+            services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddSingleton<IRabbitMqConsumer, RabbitMQConsumer>();
             services.AddSingleton<IRabbitMqPublisher, RabbitMQPublisher>();
             services.AddScoped<RabbitMqConsumerService>();
+
+            //for notif
+            services.AddSingleton<IServiceTokenService, ServiceTokenService>();
+            services.AddSingleton<INotificationRabbitMqPublisher,OrderPlacedPublisher>();
+            services.AddSingleton<INotificationRabbitMqPublisher,OrderConfirmedPublisher>();
+
+            // Register RabbitMqConsumer
+            services.AddSingleton<OrderPlacedConsumer>();
+            services.AddSingleton<OrderConfirmedConsumer>();
+            services.AddHostedService<NotificationBackgroundConsumer>();
 
             services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
             services.AddValidatorsFromAssemblyContaining<AddressCommandValidator>();

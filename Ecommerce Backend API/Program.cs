@@ -2,6 +2,7 @@
 using Carter;
 using Infrastructure.DependencyInjection;
 using Infrastructure.Hubs;
+using Infrastructure.Persistence.Configurations;
 using Infrastructure.Persistence.Contexts;
 using Infrastructure.Persistence.Services;
 using Microsoft.EntityFrameworkCore;
@@ -55,6 +56,7 @@ builder.Services.AddAuthenticationExtension(builder.Configuration);
 builder.Services.AddCarterExtension();
 builder.Services.AddCorsExtension();
 builder.Services.AddSignalR();
+builder.Services.AddHttpClient();
 
 // Configure JSON serializer to handle reference loops and increase maximum depth
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -62,6 +64,10 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
     options.JsonSerializerOptions.MaxDepth = 128; // Increase the maximum depth
 });
+
+//for signalr
+builder.Services.Configure<ApiConfig>(builder.Configuration.GetSection("ApiSettings"));
+
 
 // Validate Khalti and eSewa configurations
 var khaltiKey = builder.Configuration["PaymentGateways:Khalti:SecretKey"];

@@ -13,8 +13,11 @@ namespace Application.Interfaces.Services
     {
         string GenerateAccessToken(User user);
         string GenerateRefreshToken(User user);
-
         ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
         Task<TokenResponseDto> RefreshTokenAsync(TokenRequestDto tokenRequest);
+    }
+    public interface IServiceTokenService
+    {
+        string GetServiceToken();
     }
 }

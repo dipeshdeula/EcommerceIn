@@ -3,6 +3,7 @@ using Application.Dto.ProductDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Application.Utilities;
 using Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -61,10 +62,11 @@ namespace Application.Features.ProductFeat.Queries
                         // Get event products first
                         var eventProducts = await _productRepository.GetAllAsync(
                             predicate: eventPredicate,
-                            orderBy: query => query.OrderByDescending(p => p.Id),
+                            //orderBy: query => query.OrderByDescending(p => p.Id),
                             take: Math.Min(request.PageSize, eventProductIds.Count),
-                            includeProperties: "Products.Images",
-                            cancellationToken: cancellationToken);
+                            includeProperties: "Product.Images",
+                            cancellationToken: cancellationToken)
+                            .QuickSortDesc(p => p.Id);
 
                         var eventProductDTOs = eventProducts.Select(p => p.ToDTO()).ToList();
                         await eventProductDTOs.ApplyPricingAsync(_pricingService, request.UserId, cancellationToken);

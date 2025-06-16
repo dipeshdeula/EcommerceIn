@@ -2,6 +2,7 @@
 using Application.Dto;
 using Application.Extension;
 using Application.Interfaces.Repositories;
+using Application.Utilities;
 using Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -30,10 +31,11 @@ namespace Application.Features.SubSubCategoryFeat.Queries
 
             // Fetch sub-categories with pagination
             var subSubCategories = await _subSubCategoryRepository.GetAllAsync(
-                orderBy: query => query.OrderByDescending(SubSubCategory => SubSubCategory.Id),
+                //orderBy: query => query.OrderByDescending(SubSubCategory => SubSubCategory.Id),
                 skip: (request.PageNumber - 1) * request.PageSize,
                 take: request.PageSize,
-                cancellationToken:cancellationToken);
+                cancellationToken:cancellationToken)
+                .QuickSortDesc(ssc => ssc.Id);
 
             // Map Sub-Sub Categories to DTOs
             var subSubCategoryDTOs = subSubCategories.Select(ssc => ssc.ToDTO()).ToList();

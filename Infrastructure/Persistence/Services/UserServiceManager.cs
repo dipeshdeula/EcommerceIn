@@ -1,8 +1,8 @@
 ﻿using Application.Common.Behaviours;
 using Application.Exceptions;
+using Application.Features.CartItemFeat.Commands;
 using Infrastructure.DependencyInjection;
 using MediatR;
-using System.Reflection;
 
 public class UserServiceManager : IServicesRegistration
 {
@@ -14,7 +14,7 @@ public class UserServiceManager : IServicesRegistration
         services.AddScoped<Carter.IValidatorLocator, Carter.DefaultValidatorLocator>();
 
         //  MediatR
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CreateCartItemCommand).Assembly));
 
         //  Validation pipeline
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
@@ -26,5 +26,7 @@ public class UserServiceManager : IServicesRegistration
         });
 
         services.AddScoped<ApiExceptionFilter>();
+        services.AddScoped<IStockReservationService, StockReservationService>();
+
     }
 }
