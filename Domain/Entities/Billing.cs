@@ -12,11 +12,14 @@ namespace Domain.Entities
         public int UserId { get; set; }
         public int PaymentId { get; set; }
         public int OrderId { get; set; }
-
+        public int CompanyInfoId { get; set; }
         public DateTime BillingDate { get; set; } = DateTime.UtcNow;
 
         public User? User { get; set; }
         public PaymentRequest? PaymentRequest { get; set; }
         public Order? Order { get; set; }
+        public CompanyInfo? CompanyInfo { get; set; }
+        public ICollection<BillingItem> Items { get; set; } = new List<BillingItem>();
+
     }
 }

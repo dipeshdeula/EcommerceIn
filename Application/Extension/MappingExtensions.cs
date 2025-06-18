@@ -1,6 +1,7 @@
 ﻿using Application.Common.Helper;
 using Application.Dto;
 using Application.Dto.BannerEventSpecialDTOs;
+using Application.Dto.BilItemDTOs;
 using Application.Dto.CartItemDTOs;
 using Application.Dto.CategoryDTOs;
 using Application.Dto.CompanyDTOs;
@@ -460,7 +461,9 @@ namespace Application.Extension
                 TotalAmount = order.TotalAmount,
                 ShippingAddress = order.ShippingAddress,
                 ShippingCity = order.ShippingCity,
-                Items = order.Items.Select(oi => oi.ToDTO()).ToList()
+                Items = order.Items != null
+                ? order.Items.Select(i => i.ToDTO()).ToList()
+                : new List<OrderItemDTO>()
             };
         }
 
@@ -905,6 +908,44 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
                 _ => "Unknown"
             };
         }
+        public static BillingDTO ToDTO(this Billing billing)
+        {
+            return new BillingDTO
+            {
+                Id = billing.Id,
+                UserId = billing.UserId,
+                PaymentId = billing.PaymentId,
+                OrderId = billing.OrderId,
+                CompanyInfoId = billing.CompanyInfoId,
+                BillingDate = billing.BillingDate,
+                User = billing.User?.ToDTO(),
+                PaymentRequest = billing.PaymentRequest?.ToDTO(),
+                Order = billing.Order?.ToDTO(),
+                CompanyInfo = billing.CompanyInfo?.ToDTO(),
+                Items = billing.Items != null
+                ? billing.Items.Select(i => i.ToDTO()).ToList()
+                : new List<BillingItemDTO>()
+            };
+        }
 
+        public static BillingItemDTO ToDTO(this BillingItem item)
+        {
+            return new BillingItemDTO
+            {
+                Id = item.Id,
+                BillingId = item.BillingId,
+                ProductId = item.ProductId,
+                ProductName = item.ProductName,
+                ProductSku = item.ProductSku,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
+                TotalPrice = item.TotalPrice,
+                DiscountAmount = item.DiscountAmount,
+                TaxAmount = item.TaxAmount,
+                Notes = item.Notes
+
+            };
+           
+        }
     }
 }

@@ -2,6 +2,7 @@
 using Application.Common.Models;
 using Application.Dto;
 using Application.Dto.BannerEventSpecialDTOs;
+using Application.Dto.BilItemDTOs;
 using Application.Dto.CartItemDTOs;
 using Application.Dto.CategoryDTOs;
 using Application.Dto.CompanyDTOs;
@@ -22,6 +23,8 @@ using Application.Features.Authentication.Validation;
 using Application.Features.BannerSpecialEvent.Commands;
 using Application.Features.BannerSpecialEvent.DeleteCommands;
 using Application.Features.BannerSpecialEvent.Queries;
+using Application.Features.BillingItemFeat.Commands;
+using Application.Features.BillingItemFeat.Queries;
 using Application.Features.CartItemFeat.Commands;
 using Application.Features.CartItemFeat.Queries;
 using Application.Features.CategoryFeat.Commands;
@@ -239,6 +242,9 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<ICompanyInfoRepository, CompanyInfoRepository>();
 
+            services.AddScoped<IBillingRepository, BillingRepository>();
+            services.AddScoped<IBillingItemRepository,BillingItemRepository>();
+
             // Register Authorization 
             services.AddScoped<IAuthorizationHandler, PermissionRequirementCommandHandler>();
 
@@ -362,6 +368,10 @@ namespace Infrastructure.DependencyInjection
 
             services.AddScoped<IRequestHandler<CreateCompanyInfoCommand,Result<CompanyInfoDTO>>, CreateCompanyInfoCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllCompanyInfoQuery, Result<IEnumerable<CompanyInfoDTO>>>, GetAllCompanyInfoQueryHandler>();
+            services.AddScoped<IRequestHandler<UploadCompanyLogoCommand, Result<CompanyInfoDTO>>, UploadCompanyLogoCommandHandler>();
+
+            services.AddScoped<IRequestHandler<CreateBillingItemCommand,Result<List<BillingItemDTO>>>, CreateBillingItemCommandHandler>();
+            services.AddScoped<IRequestHandler<GetAllBillingItemQuery,Result<IEnumerable<BillingItemDTO>>>, GetAllBillingItemQueryHandler>();
         }
     }
 

@@ -28,6 +28,7 @@ namespace Infrastructure.Persistence.Contexts
         public DbSet<PaymentMethod> PaymentMethods { get; set; }
         public DbSet<PaymentRequest> PaymentRequests { get; set; }
         public DbSet<Billing> Billings { get; set; }
+        public DbSet<BillingItem> BillingItems { get; set; }
         public DbSet<BannerEventSpecial> BannerEventSpecials { get; set; }
         public DbSet<EventProduct> EventProducts { get; set; }
         public DbSet<EventUsage> EventUsages { get; set; }
@@ -65,6 +66,7 @@ namespace Infrastructure.Persistence.Contexts
             builder.ApplyConfiguration(new EventUsageConfig());
             builder.ApplyConfiguration(new NotificationConfig());
             builder.ApplyConfiguration(new CompanyInfoConfig());
+            builder.ApplyConfiguration(new BillingConfig());
 
         }
     }

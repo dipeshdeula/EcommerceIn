@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class notification : Migration
+    public partial class initDB : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -59,6 +59,33 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Categories", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CompanyInfos",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Email = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Contact = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
+                    RegistrationNumber = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    RegisteredPanNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    RegisteredVatNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Street = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    City = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Province = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    PostalCode = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    LogoUrl = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    WebsiteUrl = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    UpdateAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CompanyInfos", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -364,7 +391,6 @@ namespace Infrastructure.Migrations
                     LastAttemptAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     NextRetryAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
@@ -394,12 +420,13 @@ namespace Infrastructure.Migrations
                     UserId = table.Column<int>(type: "integer", nullable: false),
                     OrderId = table.Column<int>(type: "integer", nullable: false),
                     PaymentMethodId = table.Column<int>(type: "integer", nullable: false),
-                    PaymentStatus = table.Column<string>(type: "text", nullable: false),
+                    PaymentUrl = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    PaymentStatus = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false, defaultValue: "Pending"),
                     PaymentAmount = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    Currency = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: false),
-                    KhaltiPidx = table.Column<string>(type: "text", nullable: true),
-                    EsewaTransactionId = table.Column<string>(type: "text", nullable: true),
+                    Currency = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false, defaultValue: "NPR"),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    KhaltiPidx = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    EsewaTransactionId = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
@@ -411,7 +438,7 @@ namespace Infrastructure.Migrations
                         column: x => x.OrderId,
                         principalTable: "Orders",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_PaymentRequests_PaymentMethods_PaymentMethodId",
                         column: x => x.PaymentMethodId,
@@ -423,7 +450,7 @@ namespace Infrastructure.Migrations
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -444,7 +471,7 @@ namespace Infrastructure.Migrations
                     Weight = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     Reviews = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
                     Rating = table.Column<decimal>(type: "numeric(3,2)", nullable: false, defaultValue: 0m),
-                    Dimensions = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Dimensions = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
                     SubSubCategoryId = table.Column<int>(type: "integer", nullable: false),
@@ -476,11 +503,18 @@ namespace Infrastructure.Migrations
                     UserId = table.Column<int>(type: "integer", nullable: false),
                     PaymentId = table.Column<int>(type: "integer", nullable: false),
                     OrderId = table.Column<int>(type: "integer", nullable: false),
+                    CompanyInfoId = table.Column<int>(type: "integer", nullable: false),
                     BillingDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Billings", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Billings_CompanyInfos_CompanyInfoId",
+                        column: x => x.CompanyInfoId,
+                        principalTable: "CompanyInfos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Billings_Orders_OrderId",
                         column: x => x.OrderId,
@@ -658,6 +692,34 @@ namespace Infrastructure.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "BillingItems",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    BillingId = table.Column<int>(type: "integer", nullable: false),
+                    ProductId = table.Column<int>(type: "integer", nullable: false),
+                    ProductName = table.Column<string>(type: "text", nullable: false),
+                    ProductSku = table.Column<string>(type: "text", nullable: false),
+                    Quantity = table.Column<int>(type: "integer", nullable: false),
+                    UnitPrice = table.Column<decimal>(type: "numeric", nullable: false),
+                    TotalPrice = table.Column<decimal>(type: "numeric", nullable: false),
+                    DiscountAmount = table.Column<decimal>(type: "numeric", nullable: true),
+                    TaxAmount = table.Column<decimal>(type: "numeric", nullable: true),
+                    Notes = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BillingItems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BillingItems_Billings_BillingId",
+                        column: x => x.BillingId,
+                        principalTable: "Billings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Addresses_UserId",
                 table: "Addresses",
@@ -690,6 +752,16 @@ namespace Infrastructure.Migrations
                 columns: new[] { "BannerId", "IsMain" },
                 unique: true,
                 filter: "\"IsMain\" = TRUE");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BillingItems_BillingId",
+                table: "BillingItems",
+                column: "BillingId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Billings_CompanyInfoId",
+                table: "Billings",
+                column: "CompanyInfoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Billings_OrderId",
@@ -905,7 +977,7 @@ namespace Infrastructure.Migrations
                 name: "BannerImages");
 
             migrationBuilder.DropTable(
-                name: "Billings");
+                name: "BillingItems");
 
             migrationBuilder.DropTable(
                 name: "CartItems");
@@ -938,7 +1010,7 @@ namespace Infrastructure.Migrations
                 name: "StoreAddresses");
 
             migrationBuilder.DropTable(
-                name: "PaymentRequests");
+                name: "Billings");
 
             migrationBuilder.DropTable(
                 name: "BannerEventSpecials");
@@ -950,19 +1022,25 @@ namespace Infrastructure.Migrations
                 name: "Stores");
 
             migrationBuilder.DropTable(
+                name: "CompanyInfos");
+
+            migrationBuilder.DropTable(
+                name: "PaymentRequests");
+
+            migrationBuilder.DropTable(
+                name: "SubSubCategories");
+
+            migrationBuilder.DropTable(
                 name: "Orders");
 
             migrationBuilder.DropTable(
                 name: "PaymentMethods");
 
             migrationBuilder.DropTable(
-                name: "SubSubCategories");
+                name: "SubCategories");
 
             migrationBuilder.DropTable(
                 name: "Users");
-
-            migrationBuilder.DropTable(
-                name: "SubCategories");
 
             migrationBuilder.DropTable(
                 name: "Categories");

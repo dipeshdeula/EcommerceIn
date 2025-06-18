@@ -25,11 +25,12 @@ public class Notification
     [JsonIgnore]
     public Order? Order { get; set; }
     [JsonIgnore]
-    public User User { get; set; }
+    public User? User { get; set; }
 
 
-    [Timestamp]
-    public byte[] RowVersion { get; set; }
+    [ConcurrencyCheck]
+    [Column("xmin")]
+    public uint RowVersion { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

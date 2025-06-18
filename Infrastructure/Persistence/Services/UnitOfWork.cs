@@ -31,8 +31,11 @@ namespace Infrastructure.Persistence.Services
         private IStoreAddressRepository? _storeAddresses;
         private IPaymentMethodRepository? _paymentMethods;
         private IPaymentRequestRepository _paymentRequests;
+        private ICompanyInfoRepository _companyInfo;
+        private IBillingRepository _billing;
+        private IBillingItemRepository? _billingItems;
 
-        public UnitOfWork(MainDbContext context, ILogger<UnitOfWork> logger)
+        public UnitOfWork(MainDbContext context, ILogger<UnitOfWork> logger) 
         {
             _context = context;
             _logger = logger;
@@ -92,6 +95,9 @@ namespace Infrastructure.Persistence.Services
             _paymentMethods ??= new PaymentMethodRepository(_context);
 
         public IPaymentRequestRepository PaymentRequests => _paymentRequests ??= new PaymentRequestRepository(_context);
+        public ICompanyInfoRepository CompanyInfos => _companyInfo ??= new CompanyInfoRepository(_context);
+        public IBillingItemRepository BillingItems => _billingItems ??= new BillingItemRepository(_context);
+        public IBillingRepository Billings => _billing ??= new BillingRepository(_context);
 
 
         // Transaction management

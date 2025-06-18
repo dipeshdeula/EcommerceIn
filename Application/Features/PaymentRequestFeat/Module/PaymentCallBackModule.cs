@@ -217,7 +217,7 @@ namespace Application.Features.PaymentRequestFeat.Modules
 
                     if (verificationResult.Succeeded && verificationResult.Data.IsSuccessful)
                     {
-                        logger.LogInformation("✅ Khalti payment verification successful: PaymentRequestId={PaymentRequestId}", paymentRequest.Id);
+                        logger.LogInformation(" Khalti payment verification successful: PaymentRequestId={PaymentRequestId}", paymentRequest.Id);
 
                         var successUrl = $"http://localhost:5173/payment/success?paymentId={paymentRequest.Id}&transactionId={pidx}&amount={amount}&status=verified&provider=khalti";
                         return Results.Redirect(successUrl);
@@ -237,11 +237,10 @@ namespace Application.Features.PaymentRequestFeat.Modules
                 }
             })
             .WithName("KhaltiSuccessCallback")
-            .WithTags("khaltiCallback")
             .WithSummary("Handle Khalti payment success callback")
             .Produces(302);
 
-            // ✅ Khalti Failure Callback
+            // Khalti Failure Callback
             group.MapGet("/khalti/failure", async (
                 string? pidx,
                 string? status,
@@ -255,7 +254,6 @@ namespace Application.Features.PaymentRequestFeat.Modules
                 return Results.Redirect(failureUrl);
             })
             .WithName("KhaltiFailureCallback")
-            .WithTags("KhaltiCallBack")
             .WithSummary("Handle Khalti payment failure callback")
             .Produces(302);
         }

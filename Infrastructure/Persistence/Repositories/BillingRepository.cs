@@ -7,14 +7,12 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Persistence.Repositories
 {
-    public class CompanyInfoRepository : Repository<CompanyInfo>, ICompanyInfoRepository
+    public class BillingRepository : Repository<Billing>, IBillingRepository
     {
         private readonly MainDbContext _context;
-        public CompanyInfoRepository(MainDbContext context) : base(context)
+        public BillingRepository(MainDbContext context) : base(context)
         {
             _context = context;
-        
-            
         }
     }
 }

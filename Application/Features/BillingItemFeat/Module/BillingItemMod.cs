@@ -1,32 +1,35 @@
-﻿using Application.Dto.CompanyDTOs;
-using Application.Dto.ProductDTOs;
-using Application.Features.CompanyInfoFeat.Commands;
-using Application.Features.CompanyInfoFeat.Queries;
+﻿using Application.Features.AddressFeat.Queries;
+using Application.Features.BillingItemFeat.Commands;
+using Application.Features.BillingItemFeat.Queries;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Application.Features.CompanyInfoFeat.Module
+namespace Application.Features.BillingItemFeat.Module
 {
-    public class CompanyInfoMod : CarterModule
+    public class BillingItemMod : CarterModule
     {
-        public CompanyInfoMod() : base("")
+        public BillingItemMod() : base("")
         {
-            WithTags("CompanyInfo");
+            WithTags("Billing");
             IncludeInOpenApi();
-            
         }
 
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
-            app = app.MapGroup("");
+            app = app.MapGroup("Billing");
 
-            app.MapPost("/createCompanyInfo", async (AddCompanyInfoDTO addCompanyInfo, ISender mediator) =>
+
+            app.MapPost("/createBill", async (int UserId, int OrderId, ISender mediator) =>
             {
-                var command = new CreateCompanyInfoCommand(addCompanyInfo);
+                var command = new CreateBillingItemCommand(UserId, OrderId);
                 var result = await mediator.Send(command);
 
                 if (!result.Succeeded)
@@ -35,53 +38,46 @@ namespace Application.Features.CompanyInfoFeat.Module
                 }
 
                 return Results.Ok(new { result.Message, result.Data });
-
             });
 
-            app.MapGet("/getAllCompanyInfo", async (ISender mediator,int PageNumber = 1,int PageSize = 10) =>
+            app.MapGet("/getAllBills", async (ISender mediator, int PageNumber = 1, int PageSize = 10) =>
             {
-                var command = new GetAllCompanyInfoQuery(PageNumber, PageSize);
+                var command = new GetAllBillingQuery(PageNumber, PageSize);
                 var result = await mediator.Send(command);
 
                 if (!result.Succeeded)
                 {
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
-
                 return Results.Ok(new { result.Message, result.Data });
-
             });
 
-            app.MapGet("/getCompanyInfoById", async (ISender mediator, int Id) =>
+            app.MapGet("/getAllBillItems", async(ISender mediator,int PageNumber = 1, int PageSize = 10) =>
             {
-                var command = new GetCompanyInfoByIdQuery(Id);
+                var command = new GetAllBillingItemQuery(PageNumber, PageSize);
                 var result = await mediator.Send(command);
 
                 if (!result.Succeeded)
                 {
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
-
                 return Results.Ok(new { result.Message, result.Data });
-
             });
 
-            app.MapPost("/uploadCompanyLogo", async (ISender mediator, int Id,IFormFile file) =>
+            app.MapGet("/getBillByUserId", async (ISender mediator, int UserId) =>
             {
-                var command = new UploadCompanyLogoCommand(Id,file);
+                var command = new GetBillByUserIdQuery(UserId);
                 var result = await mediator.Send(command);
 
                 if (!result.Succeeded)
                 {
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
-
                 return Results.Ok(new { result.Message, result.Data });
+            });
 
-            }).DisableAntiforgery()
-            .Accepts<UploadCompanyLogoCommand>("multipart/form-data")
-            .Produces<IEnumerable<ProductImageDTO>>(StatusCodes.Status200OK)
-            .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
+
+
         }
     }
 }

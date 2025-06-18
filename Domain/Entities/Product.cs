@@ -19,7 +19,7 @@ namespace Domain.Entities
         public string Weight { get; set; } = string.Empty;
         public int Reviews { get; set; }
         public decimal Rating { get; set; }
-        public string Dimensions { get; set; } = string.Empty;
+        public string? Dimensions { get; set; }
         public bool IsDeleted { get; set; } = false;
         public uint Version { get; set; }
 

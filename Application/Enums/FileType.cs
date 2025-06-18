@@ -15,6 +15,7 @@ namespace Application.Enums
         ProductImages,
         StoreImages,
         BannerImages,
-        PaymentMethodImages
+        PaymentMethodImages,
+        CompanyLog
     }
 }
