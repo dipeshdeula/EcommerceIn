@@ -15,8 +15,8 @@ namespace Domain.Entities
 
         public DateTime BillingDate { get; set; } = DateTime.UtcNow;
 
-        public User User { get; set; }
-        public PaymentRequest PaymentRequest { get; set; }
-        public Order Order { get; set; }
+        public User? User { get; set; }
+        public PaymentRequest? PaymentRequest { get; set; }
+        public Order? Order { get; set; }
     }
 }

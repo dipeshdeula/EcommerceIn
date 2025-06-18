@@ -3,6 +3,7 @@ using Application.Dto;
 using Application.Dto.BannerEventSpecialDTOs;
 using Application.Dto.CartItemDTOs;
 using Application.Dto.CategoryDTOs;
+using Application.Dto.CompanyDTOs;
 using Application.Dto.OrderDTOs;
 using Application.Dto.PaymentDTOs;
 using Application.Dto.PaymentMethodDTOs;
@@ -45,6 +46,30 @@ namespace Application.Extension
                 Latitude = address.Latitude,
                 Longitude = address.Longitude,
                 IsDefault = address.IsDefault
+            };
+        }
+
+        public static CompanyInfoDTO ToDTO(this CompanyInfo companyInfo)
+        {
+            return new CompanyInfoDTO
+            {
+                Id = companyInfo.Id,
+                Name = companyInfo.Name,
+                Email = companyInfo.Email,
+                Contact = companyInfo.Contact,
+                RegistrationNumber = companyInfo.RegistrationNumber,
+                RegisteredPanNumber = companyInfo.RegisteredPanNumber,
+                RegisteredVatNumber = companyInfo.RegisteredVatNumber,
+                Street = companyInfo.Street,
+                City = companyInfo.City,
+                Province = companyInfo.Province,
+                PostalCode = companyInfo.PostalCode,
+                CreatedAt = companyInfo.CreatedAt,
+                UpdateAt = companyInfo.UpdateAt,
+                WebsiteUrl = companyInfo.WebsiteUrl,
+                LogoUrl = companyInfo.LogoUrl,
+                IsDeleted = companyInfo.IsDeleted,
+                
             };
         }
 

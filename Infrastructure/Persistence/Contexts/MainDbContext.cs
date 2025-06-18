@@ -34,6 +34,7 @@ namespace Infrastructure.Persistence.Contexts
         public DbSet<EventRule> EventRules { get; set; }
         public DbSet<BannerImage> BannerImages { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<CompanyInfo> CompanyInfos { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -63,6 +64,7 @@ namespace Infrastructure.Persistence.Contexts
             builder.ApplyConfiguration(new EventRuleConfig());
             builder.ApplyConfiguration(new EventUsageConfig());
             builder.ApplyConfiguration(new NotificationConfig());
+            builder.ApplyConfiguration(new CompanyInfoConfig());
 
         }
     }

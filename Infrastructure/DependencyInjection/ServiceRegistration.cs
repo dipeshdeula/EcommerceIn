@@ -4,6 +4,7 @@ using Application.Dto;
 using Application.Dto.BannerEventSpecialDTOs;
 using Application.Dto.CartItemDTOs;
 using Application.Dto.CategoryDTOs;
+using Application.Dto.CompanyDTOs;
 using Application.Dto.OrderDTOs;
 using Application.Dto.PaymentDTOs;
 using Application.Dto.PaymentMethodDTOs;
@@ -27,6 +28,8 @@ using Application.Features.CategoryFeat.Commands;
 using Application.Features.CategoryFeat.DeleteCommands;
 using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
+using Application.Features.CompanyInfoFeat.Commands;
+using Application.Features.CompanyInfoFeat.Queries;
 using Application.Features.CustomAuthorization.Commands;
 using Application.Features.ImageFeat.Queries;
 using Application.Features.OrderFeat.Commands;
@@ -234,6 +237,7 @@ namespace Infrastructure.DependencyInjection
 
             services.AddScoped<ICartItemRepository, CartItemRepository>();
             services.AddScoped<INotificationRepository, NotificationRepository>();
+            services.AddScoped<ICompanyInfoRepository, CompanyInfoRepository>();
 
             // Register Authorization 
             services.AddScoped<IAuthorizationHandler, PermissionRequirementCommandHandler>();
@@ -355,6 +359,9 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<GetAllPaymentQuery, Result<IEnumerable<PaymentRequestDTO>>>, GetAllPaymentQueryHandler>();
             services.AddScoped<IRequestHandler<GetPaymentByUserIdQuery, Result<IEnumerable<PaymentRequestDTO>>>,GetPaymentByUserIdQueryHandler>();
             services.AddScoped<IRequestHandler<VerifyPaymentCommand, Result<bool>>, VerifyPaymentCommandHandler>();
+
+            services.AddScoped<IRequestHandler<CreateCompanyInfoCommand,Result<CompanyInfoDTO>>, CreateCompanyInfoCommandHandler>();
+            services.AddScoped<IRequestHandler<GetAllCompanyInfoQuery, Result<IEnumerable<CompanyInfoDTO>>>, GetAllCompanyInfoQueryHandler>();
         }
     }
 
