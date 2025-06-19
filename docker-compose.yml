@@ -75,6 +75,8 @@ services:
       - RabbitMQ__Password=admin123
       - RabbitMQ__VirtualHost=/
       - RabbitMQ__QueueName=ReserveStockQueue
+      - RabbitMQ__OrderPlacedQueue=OrderPlacedQueue
+      - RabbitMQ__OrderConfirmedQueue=OrderConfirmedQueue
       - RabbitMQ__Ssl=false
       # SMTP Settings (ADDED: Missing SMTP configuration)
       - Smtp__Host=smtp.gmail.com
@@ -104,6 +106,21 @@ services:
     volumes:
       - ./uploads:/app/uploads
       - ./wwwroot:/app/wwwroot  # ADDED: Map wwwroot directory
+
+   # pgAdmin Web GUI
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: ecommerce_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5014:80"
+    depends_on:
+      - postgres
+    networks:
+      - ecommerce-network
 
 
   # Nginx Reverse Proxy

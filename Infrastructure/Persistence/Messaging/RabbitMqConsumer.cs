@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Persistence.Messaging
 {
-    public class RabbitMQConsumer : IRabbitMqConsumer, IDisposable
+     public class RabbitMQConsumer : IRabbitMqConsumer, IDisposable
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger<RabbitMQConsumer> _logger;
