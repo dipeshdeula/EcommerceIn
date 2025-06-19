@@ -25,23 +25,32 @@ namespace Application.Features.Authentication.UploadImage.Commands
 
         public async Task<Result<User>> Handle(UploadImageCommand request, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.FindByIdAsync(request.UserId);
-            if (user is null)
+            try
             {
-                return Result<User>.Failure("User not found");
+                var user = await _userRepository.FindByIdAsync(request.UserId);
+                if (user is null)
+                {
+                    return Result<User>.Failure("User not found");
+                }
+
+                string fileUrl = null;
+                if (request.File != null)
+                {
+                    fileUrl = await _fileService.SaveFileAsync(request.File, FileType.UserImages);
+                }
+
+                user.ImageUrl = fileUrl;
+                await _userRepository.UpdateAsync(user, cancellationToken);
+                await _userRepository.SaveChangesAsync(cancellationToken);
+
+                return Result<User>.Success(user, "User image updated successfully");
+            }
+            catch (Exception ex)
+            {
+                return Result<User>.Failure("Failed to update image");
             }
 
-            string fileUrl = null;
-            if (request.File != null)
-            {
-                fileUrl = await _fileService.SaveFileAsync(request.File, FileType.UserImages);
-            }
-
-            user.ImageUrl = fileUrl;
-            await _userRepository.UpdateAsync(user, cancellationToken);
-            await _userRepository.SaveChangesAsync(cancellationToken);
-
-            return Result<User>.Success(user, "User image updated successfully");
+            
         }
     }
 }

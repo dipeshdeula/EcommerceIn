@@ -1,5 +1,5 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.AddressDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
 using MediatR;
@@ -7,14 +7,7 @@ using MediatR;
 namespace Application.Features.AddressFeat.Commands
 {
     public record UpdateAddressCommand(
-        int Id,
-        string? Label,
-        string? Street,
-        string? City,
-        string? Province,
-        string? PostalCode,
-        double? Latitude,
-        double? Longitude
+        UpdateAddressDTO updateAddressDto
 
         ) : IRequest<Result<AddressDTO>>;
     public class UpdateAddressCommandHandler : IRequestHandler<UpdateAddressCommand, Result<AddressDTO>>
@@ -27,21 +20,21 @@ namespace Application.Features.AddressFeat.Commands
         }
         public async Task<Result<AddressDTO>> Handle(UpdateAddressCommand request, CancellationToken cancellationToken)
         {
-            var address = await _addressRepository.FindByIdAsync(request.Id);
+            var address = await _addressRepository.FindByIdAsync(request.updateAddressDto.Id);
             if (address == null)
-                return Result<AddressDTO>.Failure($"Address with id : {request.Id} is not found");
+                return Result<AddressDTO>.Failure($"Address with id : {request.updateAddressDto.Id} is not found");
 
-            address.Label = request.Label ?? address.Label;
-            address.Street = request.Street ?? address.Street;
-            address.City = request.City ?? address.City;
-            address.Province = request.Province ?? address.Province;
-            address.PostalCode = request.PostalCode ?? address.PostalCode;
-            address.Latitude = request.Latitude ?? address.Latitude;
-            address.Longitude = request.Longitude ?? address.Longitude;
+            address.Label = request.updateAddressDto.Label ?? address.Label;
+            address.Street = request.updateAddressDto.Street ?? address.Street;
+            address.City = request.updateAddressDto.City ?? address.City;
+            address.Province = request.updateAddressDto.Province ?? address.Province;
+            address.PostalCode = request.updateAddressDto.PostalCode ?? address.PostalCode;
+            address.Latitude = request.updateAddressDto.Latitude ?? address.Latitude;
+            address.Longitude = request.updateAddressDto.Longitude ?? address.Longitude;
 
             await _addressRepository.UpdateAsync(address, cancellationToken);
 
-            return Result<AddressDTO>.Success(address.ToDTO(), $"Address with id : {request.Id} is updated successfully");
+            return Result<AddressDTO>.Success(address.ToDTO(), $"Address with id : {request.updateAddressDto.Id} is updated successfully");
 
 
 

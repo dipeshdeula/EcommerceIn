@@ -1,6 +1,7 @@
 ﻿using Application.Common;
 using Application.Common.Models;
 using Application.Dto;
+using Application.Dto.AddressDTOs;
 using Application.Dto.BannerEventSpecialDTOs;
 using Application.Dto.BilItemDTOs;
 using Application.Dto.CartItemDTOs;
@@ -10,6 +11,7 @@ using Application.Dto.OrderDTOs;
 using Application.Dto.PaymentDTOs;
 using Application.Dto.PaymentMethodDTOs;
 using Application.Dto.ProductDTOs;
+using Application.Dto.UserDTOs;
 using Application.Extension;
 using Application.Features.AddressFeat.Commands;
 using Application.Features.AddressFeat.Queries;
@@ -257,7 +259,7 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<GetAllUsersQuery, Result<IEnumerable<UserDTO>>>, GetAllUsersQueryHandler>();
             services.AddScoped<IRequestHandler<GetUsersQueryById, Result<UserDTO>>, GetUsersQueryByIdHandler>();
             services.AddScoped<IRequestHandler<UploadImageCommand, Result<User>>, UploadImageCommandHandler>();
-            services.AddScoped<IRequestHandler<UsersUpdateCommand, Result<User>>, UsersUpdateCommandHandler>();
+            services.AddScoped<IRequestHandler<UsersUpdateCommand, Result<UserDTO>>, UsersUpdateCommandHandler>();
             services.AddScoped<IRequestHandler<SoftDeleteUserCommand, Result<User>>, SoftDeleteUserCommandHandler>();
             services.AddScoped<IRequestHandler<HardDeleteUserCommand, Result<User>>, HardDeleteUserCommandHandler>();
             services.AddScoped<IRequestHandler<UnDeleteUserCommnad, Result<User>>, UnDeleteUserCommandHandler>();

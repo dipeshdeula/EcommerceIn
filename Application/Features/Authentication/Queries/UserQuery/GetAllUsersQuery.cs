@@ -1,5 +1,5 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.UserDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
 using Domain.Entities;
@@ -26,6 +26,7 @@ namespace Application.Features.Authentication.Queries.UserQuery
             _logger.LogInformation("Fetching all users with pagination");
 
             var users = await _userRepository.GetAllAsync(
+                includeDeleted: false,
                 orderBy: query => query.OrderByDescending(user => user.CreatedAt),
                 includeProperties:"Addresses",
                 skip: (request.PageNumber - 1) * request.PageSize,

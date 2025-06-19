@@ -1,5 +1,6 @@
 ﻿using Application.Common.Helper;
 using Application.Dto;
+using Application.Dto.AddressDTOs;
 using Application.Dto.BannerEventSpecialDTOs;
 using Application.Dto.BilItemDTOs;
 using Application.Dto.CartItemDTOs;
@@ -10,6 +11,7 @@ using Application.Dto.PaymentDTOs;
 using Application.Dto.PaymentMethodDTOs;
 using Application.Dto.ProductDTOs;
 using Application.Dto.Shared;
+using Application.Dto.UserDTOs;
 using Application.Interfaces.Services;
 using Domain.Entities;
 using Domain.Entities.Common;

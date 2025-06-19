@@ -1,6 +1,8 @@
 ﻿using Domain.Entities.Common;
 using Domain.Enums.BannerEventSpecial;
+using Google;
 using Infrastructure.Persistence.Configurations;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Contexts
 {
@@ -68,6 +70,10 @@ namespace Infrastructure.Persistence.Contexts
             builder.ApplyConfiguration(new CompanyInfoConfig());
             builder.ApplyConfiguration(new BillingConfig());
 
+           // builder.Entity<User>().HasQueryFilter(u => !u.IsDeleted);
+
         }
+
+     
     }
 }

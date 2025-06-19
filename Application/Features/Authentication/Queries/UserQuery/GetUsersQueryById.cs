@@ -1,5 +1,5 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.UserDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
 using Domain.Entities;
@@ -27,7 +27,7 @@ namespace Application.Features.Authentication.Queries.UserQuery
         {
             _logger.LogInformation($"Fetching user with ID {request.Id}");
 
-            var user = await _userRepository.FindByIdAsync(request.Id);
+            var user = await _userRepository.FirstOrDefaultAsync(x=>x.Id == request.Id && x.IsDeleted == false);
             if (user is null)
             {
                 return Result<UserDTO>.Failure("User not found");

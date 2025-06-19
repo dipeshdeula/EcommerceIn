@@ -1,6 +1,7 @@
 ﻿using Application.Dto.CompanyDTOs;
 using Application.Dto.OrderDTOs;
 using Application.Dto.PaymentDTOs;
+using Application.Dto.UserDTOs;
 using Domain.Entities;
 using System;
 using System.Collections.Generic;

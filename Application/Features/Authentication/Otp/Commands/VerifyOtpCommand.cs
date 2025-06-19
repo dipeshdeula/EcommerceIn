@@ -1,5 +1,6 @@
 ﻿using Application.Common;
 using Application.Common.Helper;
+using Application.Dto.AuthDTOs;
 using Application.Features.Authentication.Commands;
 using Application.Interfaces.Repositories;
 using Application.Utilities;
@@ -44,7 +45,17 @@ namespace Application.Features.Authentication.Otp.Commands
                 await _userRepository.AddAsync(user, cancellationToken);
                 await _userRepository.SaveChangesAsync(cancellationToken);
 
-                var registerCommand = new RegisterCommand(user.Id,user.Email, rawPassword, user.Name, user.Contact);
+                var registerDto = new RegisterUserDTO
+                {
+                    Id = user.Id,
+                    Name = user.Name,
+                    Email = user.Email,
+                    Password = rawPassword,
+                    Contact = user.Contact,
+
+                };
+
+                var registerCommand = new RegisterCommand(registerDto);
                 return Result<RegisterCommand>.Success(registerCommand, "OTP verified successfully. Account has been created.");
             }
             catch (Exception ex)
