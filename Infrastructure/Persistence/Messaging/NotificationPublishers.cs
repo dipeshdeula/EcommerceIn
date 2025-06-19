@@ -1,17 +1,13 @@
-﻿using Application.Interfaces.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Infrastructure.Persistence.Messaging;
+﻿namespace Infrastructure.Persistence.Messaging;
 
 public class OrderConfirmedPublisher : NotificationRabbitMqPublisher
 {
-    public OrderConfirmedPublisher() : base("localhost", "OrderConfirmedQueue") { }
+    public OrderConfirmedPublisher(IConfiguration configuration)
+        : base(configuration, "OrderConfirmedQueue") { }
 }
+
 public class OrderPlacedPublisher : NotificationRabbitMqPublisher
 {
-    public OrderPlacedPublisher() : base("localhost", "OrderPlacedQueue") { }
+    public OrderPlacedPublisher(IConfiguration configuration)
+        : base(configuration, "OrderPlacedQueue") { }
 }

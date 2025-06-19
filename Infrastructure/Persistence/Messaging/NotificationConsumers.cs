@@ -1,17 +1,13 @@
-﻿using Application.Interfaces.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Infrastructure.Persistence.Messaging;
+﻿namespace Infrastructure.Persistence.Messaging;
 
 public class OrderConfirmedConsumer : NotificationRabbitMqConsumer
 {
-    public OrderConfirmedConsumer() : base("localhost", "OrderConfirmedQueue") { }
+    public OrderConfirmedConsumer(IConfiguration configuration)
+        : base(configuration, "OrderConfirmedQueue") { }
 }
+
 public class OrderPlacedConsumer : NotificationRabbitMqConsumer
 {
-    public OrderPlacedConsumer() : base("localhost", "OrderPlacedQueue") { }
+    public OrderPlacedConsumer(IConfiguration configuration)
+        : base(configuration, "OrderPlacedQueue") { }
 }
