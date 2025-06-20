@@ -1,4 +1,5 @@
 ﻿using Application.Dto.ProductDTOs;
+using Application.Dto.UserDTOs;
 
 namespace Application.Dto.CartItemDTOs
 {

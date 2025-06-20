@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Application.Dto;
 using Application.Features.AddressFeat.Queries;
+using Application.Dto.AddressDTOs;
 
 namespace Application.Features.AddressFeat.Module
 {
@@ -22,9 +23,10 @@ namespace Application.Features.AddressFeat.Module
         {
             app = app.MapGroup("address");
 
-            app.MapPost("/add", async ([FromServices] ISender mediator, [FromQuery] int userId, [FromBody] AddressCommand command) =>
+            app.MapPost("/add", async ([FromServices] ISender mediator, int UserId , AddAddressDTO addAddressDto) =>
             {
-                var result = await mediator.Send(command with { Id = userId });
+                var command = new AddressCommand(UserId, addAddressDto);
+                var result = await mediator.Send(command);
                 if (!result.Succeeded)
                 {
                     return Results.BadRequest(new { result.Message, result.Errors });
@@ -56,10 +58,9 @@ namespace Application.Features.AddressFeat.Module
             });
 
             app.MapPut("/updateAddress", async (
-                int Id, string? Label, string? Street, string? City,
-                string? Province, string? PostalCode, double? Latitude, double? Longitude, ISender mediator) =>
+                UpdateAddressDTO updateAddressDto, ISender mediator) =>
             {
-                var command = new UpdateAddressCommand(Id, Label, Street, City, Province, PostalCode, Latitude, Longitude);
+                var command = new UpdateAddressCommand(updateAddressDto);
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                     return Results.BadRequest(new { result.Message, result.Errors });

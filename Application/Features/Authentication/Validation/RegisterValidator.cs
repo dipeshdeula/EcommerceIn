@@ -1,7 +1,7 @@
 ﻿using Application.Features.Authentication.Commands;
 using Application.Interfaces.Repositories;
 using FluentValidation;
-
+using System.Text.RegularExpressions;
 namespace Application.Features.Authentication.Validation
 {
     public class RegisterValidator : AbstractValidator<RegisterCommand>
@@ -12,26 +12,33 @@ namespace Application.Features.Authentication.Validation
         {
             _userRepository = userRepository;
 
-            RuleFor(x => x.Name)
+            RuleFor(x => x.regUserDto.Name)
                 .NotEmpty().WithMessage("Name is required")
-                .Matches(@"^[a-zA-Z]+(\s[a-zA-Z]+)*$").WithMessage("Name must begin with letters and can contain spaces between words")    
+                .Matches(@"^[a-zA-Z]+(\s[a-zA-Z]+)*$").WithMessage("Name must begin with letters and can contain spaces between words")
                 .MinimumLength(3).WithMessage("Name must be at least 3 characters long");
 
-            RuleFor(x => x.Contact)
+            RuleFor(x => x.regUserDto.Contact)
                 .NotEmpty().WithMessage("Contact is required")
                 .Length(10).WithMessage("Contact must be 10 characters long")
                 .Matches(@"^9[78]\d{8}$").WithMessage("Invalid contact number where it should start with 97 or 98")
-                .MustAsync(async (model, contact, cancellation) => await IsContactUniqueAsync(model.Id, contact))
+                .MustAsync(async (model, contact, cancellation) => await IsContactUniqueAsync(model.regUserDto.Id, contact))
                 .WithMessage("Contact number already exists");
 
-            RuleFor(x => x.Email)
+            RuleFor(x => x.regUserDto.Email)
                 .NotEmpty().WithMessage("Email is required")
                 .EmailAddress().WithMessage("Invalid email format")
-                .Matches(@"^[a-zA-Z]{3,}.*@[a-zA-Z]+.*\..+$").WithMessage("Email must start with at least 3 alphabetic characters and the domain must contain letters")
-                .MustAsync(async (model, email, cancellation) => await IsEmailUniqueAsync(model.Id, email.Trim().ToLowerInvariant()))
+                .Must(email => !string.IsNullOrWhiteSpace(email?.Trim()))
+                .WithMessage("Email cannot be just spaces")
+                .Must(email => !email.Any(char.IsWhiteSpace))
+                .WithMessage("Email cannot contain spaces")
+
+                .Must(email => Regex.IsMatch(email.Trim(),
+                    @"^(?=.{6,254}$)[A-Za-z]{3,}[A-Za-z0-9._%+-]*@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}$"))
+                    .WithMessage("Email must start with at least 3 letters, contain no spaces, and have a valid domain")
+                .MustAsync(async (model, email, cancellation) => await IsEmailUniqueAsync(model.regUserDto.Id, email.Trim().ToLowerInvariant()))
                 .WithMessage("Email already exists");
 
-            RuleFor(x => x.Password)
+            RuleFor(x => x.regUserDto.Password)
                 .NotEmpty().WithMessage("Password is Required")
                 .MinimumLength(8).WithMessage("Password must be 8 characters long.")
                 .Matches("[A-Z]").WithMessage("Password must contain at least one uppercase letter")

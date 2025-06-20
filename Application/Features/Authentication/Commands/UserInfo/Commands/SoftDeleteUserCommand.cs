@@ -26,7 +26,7 @@ namespace Application.Features.Authentication.Commands.UserInfo.Commands
                 return Result<User>.Failure("User not found");
             }
 
-            await _userRepository.SoftDeleteUserAsync(request.UserId, cancellationToken);
+            await _userRepository.SoftDeleteAsync(user, cancellationToken);
             return Result<User>.Success(user, "User soft deleted successfully");
         }
     }

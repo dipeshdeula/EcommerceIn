@@ -59,7 +59,7 @@ namespace Application.Extension
                         image.IsDeleted = true; // Assuming ProductImage has an IsDeleted property
                         context.Update(image);
                     }
-                }
+                }             
 
                 await context.SaveChangesAsync(cancellationToken);
                 return;

@@ -1,5 +1,6 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.AuthDTOs;
+using Application.Dto.UserDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
@@ -7,15 +8,13 @@ using Application.Utilities;
 using Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Configuration;
+using System.Text.Json.Serialization;
 
 namespace Application.Features.Authentication.Commands
 {
     public record RegisterCommand(
-        int Id,
-        string Name,
-        string Email,
-        string Password,
-        string Contact
+      
+       RegisterUserDTO regUserDto
         ) : IRequest<Result<UserDTO>>;
 
     public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<UserDTO>>
@@ -39,26 +38,26 @@ namespace Application.Features.Authentication.Commands
         {
             try
             {
-                var userExist = await _userRepository.GetByEmailAsync(request.Email);
+                var userExist = await _userRepository.GetByEmailAsync(request.regUserDto.Email);
                 if (userExist != null)
                 {
                     return Result<UserDTO>.Failure("User already exists");
                 }
 
-                var otp = _otpService.GenerateOtp(request.Email);
-                await _emailService.SendEmailAsync(request.Email, "Account Verification", $"Your OTP code is: {otp}");
+                var otp = _otpService.GenerateOtp(request.regUserDto.Email);
+                await _emailService.SendEmailAsync(request.regUserDto.Email, "Account Verification", $"Your OTP code is: {otp}");
 
                 var user = new User
                 {
-                    Name = request.Name,
-                    Email = request.Email,
-                    Password = request.Password,
-                    Contact = request.Contact,
+                    Name = request.regUserDto.Name,
+                    Email = request.regUserDto.Email,
+                    Password = request.regUserDto.Password,
+                    Contact = request.regUserDto.Contact,
                     CreatedAt = DateTime.UtcNow,
                 };
 
                 
-                _otpService.StoreUserInfo(request.Email, user, request.Password);
+                _otpService.StoreUserInfo(request.regUserDto.Email, user, request.regUserDto.Password);
 
                 return Result<UserDTO>.Success(user.ToDTO(), "OTP has been sent to your email. Please verify your email with the OTP sent to you");
 

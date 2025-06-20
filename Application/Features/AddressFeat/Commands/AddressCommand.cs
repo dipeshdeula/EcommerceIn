@@ -1,5 +1,5 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.AddressDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
 using Domain.Entities;
@@ -11,15 +11,9 @@ using System.Threading.Tasks;
 namespace Application.Features.AddressFeat.Commands
 {
     public record AddressCommand(
-        int Id,
-        string Label,
-        string Street,
-        string City,
-        string Province,
-        string PostalCode,
-        string Latitude,
-        string Longitude,
-        bool IsDefault) : IRequest<Result<AddressDTO>>;
+        int UserId,
+        AddAddressDTO addressDTO
+        ) : IRequest<Result<AddressDTO>>;
 
     public class AddressCommandHandler : IRequestHandler<AddressCommand, Result<AddressDTO>>
     {
@@ -36,7 +30,7 @@ namespace Application.Features.AddressFeat.Commands
         {
             try
             {
-                var user = await _userRepository.FindByIdAsync(request.Id);
+                var user = await _userRepository.FindByIdAsync(request.UserId);
                 if (user == null)
                 {
                     return Result<AddressDTO>.Failure("User doesn't exist!");
@@ -44,14 +38,14 @@ namespace Application.Features.AddressFeat.Commands
 
                 // Check if the address already exists
                 var existingAddress = user.Addresses.FirstOrDefault(a =>
-                    a.Label == request.Label &&
-                    a.Street == request.Street &&
-                    a.City == request.City &&
-                    a.Province == request.Province &&
-                    a.PostalCode == request.PostalCode &&
-                    a.Latitude == Convert.ToDouble(request.Latitude) &&
-                    a.Longitude == Convert.ToDouble(request.Longitude) &&
-                    a.IsDefault == request.IsDefault);
+                    a.Label == request.addressDTO.Label &&
+                    a.Street == request.addressDTO.Street &&
+                    a.City == request.addressDTO.City &&
+                    a.Province == request.addressDTO.Province &&
+                    a.PostalCode == request.addressDTO.PostalCode &&
+                    a.Latitude == Convert.ToDouble(request.addressDTO.Latitude) &&
+                    a.Longitude == Convert.ToDouble(request.addressDTO.Longitude) 
+                    );
 
                 if (existingAddress != null)
                 {
@@ -61,14 +55,14 @@ namespace Application.Features.AddressFeat.Commands
                 var address = new Address
                 {
                     UserId = user.Id,
-                    Label = request.Label,
-                    Street = request.Street,
-                    City = request.City,
-                    Province = request.Province,
-                    PostalCode = request.PostalCode,
-                    Latitude = Convert.ToDouble(request.Latitude),
-                    Longitude = Convert.ToDouble(request.Longitude),
-                    IsDefault = request.IsDefault
+                    Label = request.addressDTO.Label,
+                    Street = request.addressDTO.Street,
+                    City = request.addressDTO.City,
+                    Province = request.addressDTO.Province,
+                    PostalCode = request.addressDTO.PostalCode,
+                    Latitude = Convert.ToDouble(request.addressDTO.Latitude),
+                    Longitude = Convert.ToDouble(request.addressDTO.Longitude),
+                    
                 };
 
                 user.Addresses.Add(address);
