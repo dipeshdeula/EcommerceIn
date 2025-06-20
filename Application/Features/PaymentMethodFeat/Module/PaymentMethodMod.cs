@@ -56,7 +56,10 @@ namespace Application.Features.PaymentMethodFeat.Module
             });
 
             app.MapPut("/updatePaymentMethod", async(
-                int Id, string ? Name, [FromForm] PaymentMethodType? Type,IFormFile? File, ISender mediator) =>
+                [FromQuery] int Id,
+                [FromForm] string ? Name,
+                [FromForm] PaymentMethodType? Type,
+                [FromForm] IFormFile? File, ISender mediator) =>
             {
                 var command = new UpdatePaymentMethodCommand(Id, Name,Type, File);
                 var result = await mediator.Send(command);

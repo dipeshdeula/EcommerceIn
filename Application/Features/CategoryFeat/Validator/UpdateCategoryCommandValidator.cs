@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Repositories;
+﻿using Application.Features.CategoryFeat.UpdateCommands;
+using Application.Interfaces.Repositories;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -7,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Features.CategoryFeat.UpdateCommands
+namespace Application.Features.CategoryFeat.Validator
 {
     public class UpdateCategoryCommandValidator : AbstractValidator<UpdateCategoryCommand>
     {
@@ -28,20 +29,26 @@ namespace Application.Features.CategoryFeat.UpdateCommands
                 RuleFor(x => x.Name!)
                     .MaximumLength(100).WithMessage("Name cannot exceed 100 characters.")
                     .MustAsync(async (name, cancellation) =>
-                        !await _categoryRepository.AnyAsync(c => c.Name == name))
-                    .WithMessage("Category name already exists.");
+                        !await _categoryRepository.AnyAsync(c => c.Name.ToLower() == name.ToLower()))
+                    .WithMessage("Category name already exists.")
+                    .MinimumLength(3).WithMessage("Name must be at least 3 characters long.");
+
             });
 
             When(x => !string.IsNullOrWhiteSpace(x.Slug), () =>
             {
                 RuleFor(x => x.Slug!)
-                    .MaximumLength(100).WithMessage("Slug cannot exceed 100 characters.");
+                    .MaximumLength(100).WithMessage("Slug cannot exceed 100 characters.")
+                    .MinimumLength(3).WithMessage("Slug must be at least 3 characters long.");
+
             });
 
             When(x => !string.IsNullOrWhiteSpace(x.Description), () =>
             {
                 RuleFor(x => x.Description!)
-                    .MaximumLength(500).WithMessage("Description cannot exceed 500 characters.");
+                    .MaximumLength(500).WithMessage("Description cannot exceed 500 characters.")
+                    .MinimumLength(150).WithMessage("Description must be at least 150 characters long.");
+
             });
 
             When(x => x.File != null, () =>

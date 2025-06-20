@@ -12,6 +12,7 @@ namespace Domain.Entities
         public string Description { get; set; } = string.Empty;
         public decimal MarketPrice { get; set; }
         public decimal CostPrice { get; set; }
+        public decimal? DiscountPercentage { get; set; }
         public decimal? DiscountPrice { get; set; }
         public int StockQuantity { get; set; }
         public int ReservedStock { get; set; }
@@ -70,12 +71,19 @@ namespace Domain.Entities
             if (quantity > 0) StockQuantity += quantity;
         }
 
-        public void ApplyProductDiscount(decimal discountPercentage)
+        public void ApplyProductDiscount(decimal? discountPercentage = null, decimal? discountPrice = null)
         {
-            if (discountPercentage > 0 && discountPercentage <= 100)
+            if (discountPercentage.HasValue)
             {
-                var discountAmount = (MarketPrice * discountPercentage) / 100;
-                DiscountPrice = Math.Max(0, MarketPrice - discountAmount);
+                DiscountPercentage = discountPercentage;
+                DiscountPrice = MarketPrice - (MarketPrice * discountPercentage.Value / 100);
+            }
+            else if (discountPrice.HasValue)
+            {
+                DiscountPrice = discountPrice;
+                DiscountPercentage = MarketPrice > 0
+                    ? 100 * (MarketPrice - discountPrice.Value) / MarketPrice
+                    : 0;
             }
         }
     }

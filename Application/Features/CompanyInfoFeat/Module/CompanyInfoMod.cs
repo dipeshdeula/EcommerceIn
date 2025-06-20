@@ -82,6 +82,34 @@ namespace Application.Features.CompanyInfoFeat.Module
             .Accepts<UploadCompanyLogoCommand>("multipart/form-data")
             .Produces<IEnumerable<ProductImageDTO>>(StatusCodes.Status200OK)
             .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
+
+            app.MapPut("/updateCompanyInfo", async (ISender mediator, int Id, UpdateCompanyInfoDTO updateCompanyInfoDto) =>
+            {
+                var command = new UpdateCompanyInfoCommand(Id, updateCompanyInfoDto);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+
+                return Results.Ok(new { result.Message, result.Data });
+
+            });
+
+            app.MapDelete("/hardDelete", async (ISender mediator, int Id) =>
+            {
+                var command = new HardDeleteCompanyInfoCommand(Id);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+
+                return Results.Ok(new { result.Message, result.Data });
+
+            });
         }
     }
 }

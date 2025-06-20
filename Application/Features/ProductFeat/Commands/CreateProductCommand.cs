@@ -1,5 +1,4 @@
 ﻿using Application.Common;
-using Application.Dto;
 using Application.Dto.ProductDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
@@ -40,16 +39,15 @@ namespace Application.Features.ProductFeat.Commands
 
             // Calculate discount price from percentage
             decimal? discountPrice = null;
-            if (request.createProductDTO.DiscountPercentage.HasValue && 
-                request.createProductDTO.DiscountPercentage.Value > 0 && 
-                request.createProductDTO.DiscountPercentage.Value <= 100)
-            {
-                var discountAmount = (request.createProductDTO.MarketPrice * request.createProductDTO.DiscountPercentage.Value) / 100;
-                discountPrice = request.createProductDTO.MarketPrice - discountAmount;
+            decimal? discountPercentage = null;
 
+            if (request.createProductDTO.DiscountPercentage.HasValue)
+            {
+                discountPercentage = request.createProductDTO.DiscountPercentage.Value;
+                discountPrice = request.createProductDTO.MarketPrice - (request.createProductDTO.MarketPrice * discountPercentage.Value / 100);
                 discountPrice = Math.Max(0, discountPrice.Value);
             }
-
+         
 
 
             // Create the new Product item
@@ -63,6 +61,7 @@ namespace Application.Features.ProductFeat.Commands
                 MarketPrice = request.createProductDTO.MarketPrice,
                 CostPrice = request.createProductDTO.CostPrice,
                 DiscountPrice = discountPrice,
+                DiscountPercentage = discountPercentage,
                 StockQuantity = request.createProductDTO.StockQuantity,
                 Sku = request.createProductDTO.Sku,
                 Weight = request.createProductDTO.Weight,

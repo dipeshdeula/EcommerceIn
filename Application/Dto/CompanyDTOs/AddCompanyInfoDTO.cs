@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Application.Dto.CompanyDTOs
 {
     public class AddCompanyInfoDTO
     {
+        [JsonIgnore]
+        public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Contact { get; set; } = string.Empty;
@@ -18,10 +21,8 @@ namespace Application.Dto.CompanyDTOs
         public string City { get; set; } = string.Empty;
         public string Province { get; set; } = string.Empty;
         public string PostalCode { get; set; } = string.Empty;
-        public string LogoUrl { get; set; } = string.Empty;
         public string? WebsiteUrl { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdateAt { get; set; }
 
     }
 }

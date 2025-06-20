@@ -131,6 +131,7 @@ namespace Application.Extension
                 MarketPrice = product.MarketPrice,
                 CostPrice = product.CostPrice,
                 DiscountPrice = product.DiscountPrice,
+                DiscountPercentage = product.DiscountPercentage,
                 StockQuantity = product.StockQuantity,
                 ReservedStock = product.ReservedStock,
                 Sku = product.Sku,
