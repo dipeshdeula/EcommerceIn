@@ -1,11 +1,12 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.StoreDTOs;
 using Application.Enums;
 using Application.Extension;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,9 +16,9 @@ using System.Threading.Tasks;
 namespace Application.Features.StoreFeat.Commands
 {
     public record UpdateStoreCommand (
-        int Id, 
-        string? Name,
-        string? OwnerName,
+         int Id, 
+         string? Name,
+         string? OwnerName,
         IFormFile? FIle) : IRequest<Result<StoreDTO>>;
 
     public class UpdateStoreCommandHandler : IRequestHandler<UpdateStoreCommand, Result<StoreDTO>>

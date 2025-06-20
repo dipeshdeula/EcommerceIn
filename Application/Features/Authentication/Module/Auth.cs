@@ -1,5 +1,6 @@
 ﻿using Application.Dto.AuthDTOs;
 using Application.Features.Authentication.Commands;
+using Application.Features.Authentication.Commands.UserInfo.Commands;
 using Application.Features.Authentication.Otp.Commands;
 using Application.Features.Authentication.Queries.Login;
 using Carter;
@@ -55,7 +56,34 @@ namespace Application.Features.Authentication.Module
             app.MapPost("/google-auth", async ([FromBody] VerifyGoogleTokenCommand command, ISender mediator) =>
             {
                 return await mediator.Send(command);
-            });            
+            });
+
+            app.MapPost("/forgot-password", async ([FromBody] ForgotPasswordDTO forgotPasswordDto, ISender mediator) =>
+            {
+                var command = new ForgotPasswordCommand(forgotPasswordDto);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Data });
+                }
+
+                return Results.Ok(new { result.Message, result.Data });
+
+            });
+
+
+            app.MapPost("/verify-otp-reset-password", async (string email,string otp , [FromServices] ISender mediator) =>
+            {
+                var command = new VerifyForgotPasswordCommand(email,otp);
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message });
+
+            });
 
 
         }

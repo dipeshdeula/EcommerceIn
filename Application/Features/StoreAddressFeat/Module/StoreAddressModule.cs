@@ -1,4 +1,5 @@
-﻿using Application.Features.StoreAddressFeat.Commands;
+﻿using Application.Dto.StoreDTOs;
+using Application.Features.StoreAddressFeat.Commands;
 using Application.Features.StoreAddressFeat.Queries;
 using Carter;
 using MediatR;
@@ -25,9 +26,12 @@ namespace Application.Features.StoreAddressFeat.Module
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
             app = app.MapGroup("StoreAddress");
-            app.MapPost("/add", async ([FromServices] ISender mediator, [FromQuery] int storeId, [FromBody] CreateStoreAddressCommand command) =>
+            app.MapPost("/add", async ([FromServices] ISender mediator, 
+                [FromQuery] int storeId,
+                AddStoreAddressDTO addStoreAddressDto) =>
             {
-                var result = await mediator.Send(command with { StoreId = storeId });
+                var command = new CreateStoreAddressCommand(storeId, addStoreAddressDto);
+                var result = await mediator.Send(command);
                 if (!result.Succeeded)
                 {
                     return Results.BadRequest(new { result.Message, result.Errors });
@@ -46,9 +50,10 @@ namespace Application.Features.StoreAddressFeat.Module
             });
 
             app.MapPut("/updateStoreAddress", async (
-                int StoreId, string? Street, string? City, string? Province, string? PostalCode, double? Latitude, double? Longitude, ISender mediator) =>
+                [FromQuery] int StoreId, 
+                [FromBody] UpdateStoreAddressDTO updateAddressStoreDto ,ISender mediator) =>
             {
-                var command = new UpdateStoreAddressCommand(StoreId, Street, City, Province, PostalCode, Latitude, Longitude);
+                var command = new UpdateStoreAddressCommand(StoreId, updateAddressStoreDto);
 
                 var result = await mediator.Send(command);
 

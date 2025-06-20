@@ -1,5 +1,5 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.StoreDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
 using Domain.Entities;
@@ -9,12 +9,7 @@ namespace Application.Features.StoreAddressFeat.Commands
 {
     public record CreateStoreAddressCommand( 
         int StoreId,
-        string Street,
-        string City,
-        string Province,
-        string PostalCode,
-        double Latitude,
-        double Longitude) : IRequest<Result<StoreAddressDTO>>;
+       AddStoreAddressDTO addStoreAddressDto) : IRequest<Result<StoreAddressDTO>>;
 
     public class CreateStoreAddressCommandHandler : IRequestHandler<CreateStoreAddressCommand, Result<StoreAddressDTO>>
     {
@@ -37,12 +32,12 @@ namespace Application.Features.StoreAddressFeat.Commands
             var storeAddress = new StoreAddress
             {
                 StoreId = request.StoreId,
-                Street = request.Street,
-                City = request.City,
-                Province = request.Province,
-                PostalCode = request.PostalCode,
-                Latitude = request.Latitude,
-                Longitude = request.Longitude
+                Street = request.addStoreAddressDto.Street,
+                City = request.addStoreAddressDto.City,
+                Province = request.addStoreAddressDto.Province,
+                PostalCode = request.addStoreAddressDto.PostalCode,
+                Latitude = request.addStoreAddressDto.Latitude,
+                Longitude = request.addStoreAddressDto.Longitude
             };
 
             await _storeAddressRepository.AddAsync(storeAddress);

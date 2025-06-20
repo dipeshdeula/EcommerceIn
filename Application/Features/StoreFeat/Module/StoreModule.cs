@@ -1,4 +1,4 @@
-﻿using Application.Dto;
+﻿using Application.Dto.StoreDTOs;
 using Application.Features.StoreFeat.Commands;
 using Application.Features.StoreFeat.DeleteCommands;
 using Application.Features.StoreFeat.Queries;
@@ -24,9 +24,9 @@ namespace Application.Features.StoreFeat.Module
         {
             app = app.MapGroup("store");
             app.MapPost("/create", async (ISender mediator,
-                string Name,
-                string OwnerName,
-                IFormFile File
+                [FromForm] string Name,
+                [FromForm] string OwnerName,
+                [FromForm] IFormFile File
                 ) =>
             {
                 var command = new CreateStoreCommand(Name, OwnerName, File);
@@ -52,7 +52,11 @@ namespace Application.Features.StoreFeat.Module
             });
 
             app.MapPut("/updateStore", async (
-                int Id, string? Name, string? OwnerName, IFormFile? File, ISender mediator) =>
+                [FromQuery] int Id,
+                [FromForm] string? Name, 
+                [FromForm] string? OwnerName, 
+                [FromForm] IFormFile? File,
+                ISender mediator) =>
             {
                 var command = new UpdateStoreCommand(Id, Name, OwnerName, File);
                 var result = await mediator.Send(command);

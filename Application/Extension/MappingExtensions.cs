@@ -11,6 +11,7 @@ using Application.Dto.PaymentDTOs;
 using Application.Dto.PaymentMethodDTOs;
 using Application.Dto.ProductDTOs;
 using Application.Dto.Shared;
+using Application.Dto.StoreDTOs;
 using Application.Dto.UserDTOs;
 using Application.Interfaces.Services;
 using Domain.Entities;
