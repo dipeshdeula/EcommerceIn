@@ -4,6 +4,7 @@ using Application.Features.Authentication.Commands;
 using Application.Features.Authentication.Commands.UserInfo.Commands;
 using Application.Features.Authentication.Otp.Commands;
 using Application.Features.Authentication.Queries.Login;
+using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Carter;
 using MediatR;
@@ -108,6 +109,19 @@ namespace Application.Features.Authentication.Module
                 }
                 return Results.Ok(new { result.Message });
 
+            });
+
+            app.MapPost("/logout", async ([FromBody] TokenRequestDto tokenRequest, [FromServices] IRefreshTokenRepository refreshTokenRepo) =>
+            {
+                // Validate and invalidate the refresh token
+                var token = await refreshTokenRepo.GetByTokenAsync(tokenRequest.RefreshToken);
+                if (token == null)
+                    return Results.BadRequest(new { Message = "Invalid refresh token." });
+
+                token.Invalidated = true;
+                await refreshTokenRepo.UpdateAsync(token);
+
+                return Results.Ok(new { Message = "Logged out successfully." });
             });
 
 
