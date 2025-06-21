@@ -33,6 +33,7 @@ namespace Application.Extension
                 CreatedAt = user.CreatedAt,
                 ImageUrl = user.ImageUrl,
                 IsDeleted = user.IsDeleted,
+                Role = user.Role,
                 Addresses = user.Addresses.Select(a => a.ToDTO()).ToList()
             };
         }

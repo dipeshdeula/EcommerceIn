@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,6 +14,8 @@ namespace Application.Interfaces.Services
         public string? UserName { get; }
         public string? GetUserIp { get; }
         public bool IsAuthenticated { get; }
+
+        public string? Role { get; }
 
     }
 }

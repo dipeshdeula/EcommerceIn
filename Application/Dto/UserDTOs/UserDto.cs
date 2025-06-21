@@ -1,4 +1,5 @@
 ﻿using Application.Dto.AddressDTOs;
+using Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,8 @@ namespace Application.Dto.UserDTOs
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string ImageUrl { get; set; } = string.Empty;
         public bool IsDeleted { get; set; } = false;
+
+        public UserRoles Role { get; set; }
 
         public ICollection<AddressDTO> Addresses { get; set; } = new List<AddressDTO>();
     }
