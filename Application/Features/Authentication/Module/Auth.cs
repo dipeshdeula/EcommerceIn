@@ -1,8 +1,10 @@
-﻿using Application.Dto.AuthDTOs;
+﻿using Application.Dto;
+using Application.Dto.AuthDTOs;
 using Application.Features.Authentication.Commands;
 using Application.Features.Authentication.Commands.UserInfo.Commands;
 using Application.Features.Authentication.Otp.Commands;
 using Application.Features.Authentication.Queries.Login;
+using Application.Interfaces.Services;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -15,7 +17,7 @@ namespace Application.Features.Authentication.Module
 {
     public class Auth : CarterModule
     {
-        public Auth():base("")
+        public Auth() : base("")
         {
             WithTags("Authentication");
             IncludeInOpenApi();
@@ -25,10 +27,10 @@ namespace Application.Features.Authentication.Module
         {
             app = app.MapGroup("auth");
 
-            app.MapPost("/register", async([FromServices] ISender mediator, RegisterUserDTO regUserDto) =>
+            app.MapPost("/register", async ([FromServices] ISender mediator, RegisterUserDTO regUserDto) =>
             {
                 var command = new RegisterCommand(regUserDto);
-                var result =  await mediator.Send(command);
+                var result = await mediator.Send(command);
                 if (!result.Succeeded)
                 {
                     return Results.BadRequest("User registration failed");
@@ -58,6 +60,26 @@ namespace Application.Features.Authentication.Module
                 return await mediator.Send(command);
             });
 
+            app.MapPost("/refresh-token", async (
+                  [FromBody] TokenRequestDto tokenRequest,
+                  [FromServices] ITokenService tokenService
+                 ) =>
+            {
+                var result = await tokenService.RefreshTokenAsync(tokenRequest);
+
+                if (!result.Success)
+                {
+                    return Results.BadRequest(new { result.Message });
+                }
+
+                return Results.Ok(new
+                {
+                    accessToken = result.AccessToken,
+                    refreshToken = result.RefreshToken,
+                    expiresIn = result.ExpiresIn
+                });
+            });
+
             app.MapPost("/forgot-password", async ([FromBody] ForgotPasswordDTO forgotPasswordDto, ISender mediator) =>
             {
                 var command = new ForgotPasswordCommand(forgotPasswordDto);
@@ -73,9 +95,12 @@ namespace Application.Features.Authentication.Module
             });
 
 
-            app.MapPost("/verify-otp-reset-password", async (string email,string otp , [FromServices] ISender mediator) =>
+            app.MapPost("/verify-otp-reset-password", async (
+                string email,
+                string otp,
+                [FromServices] ISender mediator) =>
             {
-                var command = new VerifyForgotPasswordCommand(email,otp);
+                var command = new VerifyForgotPasswordCommand(email, otp);
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                 {
@@ -88,6 +113,6 @@ namespace Application.Features.Authentication.Module
 
         }
 
-        }
- }
+    }
+}
 
