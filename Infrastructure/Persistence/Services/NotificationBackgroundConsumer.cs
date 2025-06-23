@@ -1,19 +1,13 @@
-﻿using Application.Features.OrderFeat.Events;
+﻿using Application.Dto.NotificationDTOs;
 using Infrastructure.Persistence.Configurations;
 using Infrastructure.Persistence.Messaging;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Newtonsoft.Json;
 using System.Net.Http.Headers;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Persistence.Services;
-
 
 public class NotificationBackgroundConsumer : BackgroundService
 {
@@ -55,18 +49,23 @@ public class NotificationBackgroundConsumer : BackgroundService
                 _logger.LogWarning("{Function}: Received empty message.", functionName);
                 return;
             }
-            var jsonMessage = JObject.Parse(message);
-            var messageType = jsonMessage.GetValue("Type")?.ToString();
+            var notification = JsonConvert.DeserializeObject<NotificationDto>(message);
+            if (notification == null)
+            {
+                _logger.LogWarning("{Function}: Failed to deserialize message.", functionName);
+                return;
+            }
+            
             try
             {
                 _logger.LogInformation("{Function}: Message received: {Message}", functionName, message);
 
-                //var jsonMessage = JObject.Parse(message);
+                //var notification = JObject.Parse(message);
                 var token = _serviceTokenProvider.GetServiceToken();
 
                 using var httpClient = _httpClientFactory.CreateClient();
                 var request = new HttpRequestMessage(HttpMethod.Post,
-                    jsonMessage.TryGetValue("Email", out _) ? _userNotificationApiUrl : _broadcastApiUrl)
+                    notification.Email is not null ? _userNotificationApiUrl : _broadcastApiUrl)
                 {
                     Content = new StringContent(message, Encoding.UTF8, "application/json")
                 };
@@ -85,9 +84,8 @@ public class NotificationBackgroundConsumer : BackgroundService
                 }
 
                 try
-                {
-                    var userNotification = jsonMessage.ToObject<OrderConfirmedEvent>();
-                    _logger.LogInformation("{Function}: Parsed notification object: {@UserNotification}", functionName, userNotification);
+                {                    
+                    _logger.LogInformation("{Function}: Parsed notification object: {@UserNotification}", functionName, notification);
                 }
                 catch
                 {

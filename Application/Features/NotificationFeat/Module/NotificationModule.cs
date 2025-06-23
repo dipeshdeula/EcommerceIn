@@ -1,4 +1,5 @@
-﻿using Application.Features.NotificationFeat.Command;
+﻿using Application.Features.NotificationFeat.Commands;
+using Application.Features.NotificationFeat.Queries;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -16,14 +17,30 @@ public class NotificationModule : CarterModule
 
     }
 
-    public override async void AddRoutes(IEndpointRouteBuilder app)
+    public override void AddRoutes(IEndpointRouteBuilder app)
     {
         app = app.MapGroup("notif");
 
 
         app.MapPost("/send-to-user", async (ISender mediator, SendNotificationToUser notif) =>
         {
-            return mediator.Send(notif);
+            return await mediator.Send(notif);
+        });
+        app.MapPost("/acknowledge-notification", async (ISender mediator, int notificationId) =>
+        {
+            return await mediator.Send(new AcknowledgeNotificationCommand(notificationId));
+        });
+        app.MapGet("", (ISender mediator, int pageNumber = 1, int pageSize = 10, string status = null) =>
+        {
+            return mediator.Send(new GetAllNotificationsQuery(pageNumber, pageSize, status));
+        });
+        app.MapGet("/getAllNotificationsByUserId", async (ISender mediator, int userId, int pageNumber = 1, int pageSize = 10) =>
+        {
+            return await mediator.Send(new GetAllNotificationsByUserIdQuery(userId, pageNumber, pageSize));
+        });
+        app.MapPost("/mark-as-read", async (ISender mediator, ICollection<int> notificationIds) =>
+        {
+            return await mediator.Send(new MarkNotificationsAsReadCommand(notificationIds));
         });
 
 

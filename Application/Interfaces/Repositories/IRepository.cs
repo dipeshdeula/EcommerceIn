@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace Application.Interfaces.Repositories
 {
@@ -78,7 +79,7 @@ namespace Application.Interfaces.Repositories
         // Update methods
         TEntity Update(TEntity entity);
         void UpdateRange(IEnumerable<TEntity> entities);
-        Task<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
+        Task<TEntity> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);       
         Task UpdateRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
 
         // Delete methods

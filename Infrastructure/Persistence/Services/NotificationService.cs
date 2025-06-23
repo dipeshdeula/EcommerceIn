@@ -1,11 +1,4 @@
-﻿using Application.Features.OrderFeat.Events;
-using Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http.Json;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Application.Dto.NotificationDTOs;
 
 namespace Infrastructure.Persistence.Services;
 
@@ -30,11 +23,10 @@ public class NotificationService : INotificationService
     {
         using var client = _httpClientFactory.CreateClient();
         bool isSent = false;
-
+        bool isRead = false;
         try
         {
-            String queueName = notification.Type.ToString().Equals("OrderPlaced") ? "OrderPlacedQueue" : "OrderConfirmedQueue";
-            var notif = new
+            var notif = new NotificationDto
             {
                 Id = notification.Id,
                 UserId = notification.UserId,
@@ -43,6 +35,7 @@ public class NotificationService : INotificationService
                 Title = notification.Title,
                 Message = notification.Message,
                 Type = notification.Type.ToString(),
+                IsRead = isRead,
                 OrderDate = notification.CreatedAt,
             };
             _rabbitMqPublisher.PublishMessage(notif);
