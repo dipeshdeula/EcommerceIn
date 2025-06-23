@@ -10,6 +10,7 @@
         public decimal MarketPrice { get; set; }
         public decimal CostPrice { get; set; }
         public decimal? DiscountPrice { get; set; }
+        public decimal? DiscountPercentage { get; set; }
         public int StockQuantity { get; set; }
         public int ReservedStock { get; set; }
         public string Sku { get; set; } = string.Empty;

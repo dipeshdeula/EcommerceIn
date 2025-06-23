@@ -1,5 +1,5 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.StoreDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
 using MediatR;
@@ -8,8 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Application.Features.StoreAddressFeat.Commands
 {
     public record UpdateStoreAddressCommand(
-        int StoreId, string? Street, string? City, string? Province,
-        string? PostalCode, double? Latitude, double? Longitude) : IRequest<Result<StoreAddressDTO>>;
+        int StoreId, UpdateStoreAddressDTO updateStoreAddressDTO) : IRequest<Result<StoreAddressDTO>>;
 
     public class UpdateStoreAddressCommandHandler : IRequestHandler<UpdateStoreAddressCommand, Result<StoreAddressDTO>>
     {
@@ -32,12 +31,12 @@ namespace Application.Features.StoreAddressFeat.Commands
             }
 
             // Update the store address properties
-            storeAddress.Street = request.Street ?? storeAddress.Street;
-            storeAddress.City = request.City ?? storeAddress.City;
-            storeAddress.Province = request.Province ?? storeAddress.Province;
-            storeAddress.PostalCode = request.PostalCode ?? storeAddress.PostalCode;
-            storeAddress.Latitude = request.Latitude ?? storeAddress.Latitude;
-            storeAddress.Longitude = request.Longitude?? storeAddress.Longitude ;
+            storeAddress.Street = request.updateStoreAddressDTO.Street ?? storeAddress.Street;
+            storeAddress.City = request.updateStoreAddressDTO.City ?? storeAddress.City;
+            storeAddress.Province = request.updateStoreAddressDTO.Province ?? storeAddress.Province;
+            storeAddress.PostalCode = request.updateStoreAddressDTO.PostalCode ?? storeAddress.PostalCode;
+            storeAddress.Latitude = request.updateStoreAddressDTO.Latitude ?? storeAddress.Latitude;
+            storeAddress.Longitude = request.updateStoreAddressDTO.Longitude ?? storeAddress.Longitude ;
 
             // Save changes to the database
             await _storeAddressRepository.UpdateAsync(storeAddress, cancellationToken);

@@ -11,6 +11,7 @@ using Application.Dto.PaymentDTOs;
 using Application.Dto.PaymentMethodDTOs;
 using Application.Dto.ProductDTOs;
 using Application.Dto.Shared;
+using Application.Dto.StoreDTOs;
 using Application.Dto.UserDTOs;
 using Application.Interfaces.Services;
 using Domain.Entities;
@@ -32,6 +33,7 @@ namespace Application.Extension
                 CreatedAt = user.CreatedAt,
                 ImageUrl = user.ImageUrl,
                 IsDeleted = user.IsDeleted,
+                Role = user.Role,
                 Addresses = user.Addresses.Select(a => a.ToDTO()).ToList()
             };
         }
@@ -131,6 +133,7 @@ namespace Application.Extension
                 MarketPrice = product.MarketPrice,
                 CostPrice = product.CostPrice,
                 DiscountPrice = product.DiscountPrice,
+                DiscountPercentage = product.DiscountPercentage,
                 StockQuantity = product.StockQuantity,
                 ReservedStock = product.ReservedStock,
                 Sku = product.Sku,

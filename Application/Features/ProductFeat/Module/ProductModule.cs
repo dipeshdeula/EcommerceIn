@@ -1,8 +1,6 @@
-﻿using Application.Dto;
-using Application.Dto.CategoryDTOs;
+﻿using Application.Dto.CategoryDTOs;
 using Application.Dto.ProductDTOs;
 using Application.Features.CategoryFeat.Queries;
-using Application.Features.CategoryFeat.UpdateCommands;
 using Application.Features.ProductFeat.Commands;
 using Application.Features.ProductFeat.DeleteCommands;
 using Application.Features.ProductFeat.Queries;
@@ -37,13 +35,13 @@ namespace Application.Features.ProductFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            // ✅ ENHANCED: GetAllProducts with event prioritization
+            //  ENHANCED: GetAllProducts with event prioritization
             app.MapGet("/getAllProducts", async ([FromServices] ISender mediator,
                 int PageNumber = 1,
                 int PageSize = 10,
                 int? UserId = null,
                 bool OnSaleOnly = false,
-                bool PrioritizeEventProducts = true, // ✅ NEW parameter
+                bool PrioritizeEventProducts = true, 
                 string? SearchTerm = null) =>
             {
                 var result = await mediator.Send(new GetAllProductQuery(
@@ -158,8 +156,12 @@ namespace Application.Features.ProductFeat.Module
             .Produces(StatusCodes.Status400BadRequest)
             .WithTags("Products");
 
-            app.MapPut("/updateProduct", async ([FromForm] UpdateProductCommand command, ISender mediator) =>
+            app.MapPut("/updateProduct", async (
+                [FromQuery] int ProductId,
+                [FromBody] UpdateProductDTO udpateProductDto,
+                ISender mediator) =>
             {
+                var command = new UpdateProductCommand(ProductId, udpateProductDto);
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                 {

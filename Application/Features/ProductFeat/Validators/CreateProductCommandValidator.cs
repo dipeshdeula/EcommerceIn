@@ -1,7 +1,8 @@
-﻿using Application.Interfaces.Repositories;
+﻿using Application.Features.ProductFeat.Commands;
+using Application.Interfaces.Repositories;
 using FluentValidation;
 
-namespace Application.Features.ProductFeat.Commands
+namespace Application.Features.ProductFeat.Validators
 {
     public class CreateProductCommandValidator : AbstractValidator<CreateProductCommand>
     {
@@ -16,6 +17,7 @@ namespace Application.Features.ProductFeat.Commands
             RuleFor(x => x.createProductDTO)
                 .NotNull().WithMessage("Product data is required.")
                 .SetValidator(new CreateProductDTOValidator());
+
         }
     }
 }

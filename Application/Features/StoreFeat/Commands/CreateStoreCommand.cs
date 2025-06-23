@@ -1,5 +1,5 @@
 ﻿using Application.Common;
-using Application.Dto;
+using Application.Dto.StoreDTOs;
 using Application.Enums;
 using Application.Extension;
 using Application.Interfaces.Repositories;

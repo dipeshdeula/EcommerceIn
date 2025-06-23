@@ -27,10 +27,10 @@ namespace Application.Features.CategoryFeat.Module
            
 
             app.MapPost("/create", async (ISender mediator,
-                string Name,
-                string Slug,
-                string Description,
-                IFormFile File) =>
+                [FromForm] string Name,
+                [FromForm] string Slug,
+                [FromForm] string Description,
+                [FromForm] IFormFile File) =>
             {
                 var command = new CreateCategoryCommand(Name,Slug,Description,File);
                 var result = await mediator.Send(command);
@@ -83,7 +83,12 @@ namespace Application.Features.CategoryFeat.Module
 
 
             app.MapPut("/updateCategory", async (
-                int CategoryId, string? Name, string? Slug, string? Description, IFormFile? File, ISender mediator) =>
+                [FromQuery] int CategoryId, 
+                [FromForm] string? Name,
+                [FromForm] string? Slug,
+                [FromForm] string? Description,
+                [FromForm] IFormFile? File,
+                ISender mediator) =>
             {
                 var command = new UpdateCategoryCommand(CategoryId, Name, Slug, Description, File);
                 var result = await mediator.Send(command);

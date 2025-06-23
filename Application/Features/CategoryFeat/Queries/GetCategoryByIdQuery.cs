@@ -29,7 +29,7 @@ namespace Application.Features.CategoryFeat.Queries
 
         public async Task<Result<CategoryDTO>> Handle(GetCategoryByIdQuery request, CancellationToken cancellationToken)
         {
-            var category = await _categoryRepository.FindByIdAsync(request.CategoryId);
+            var category = await _categoryRepository.FirstOrDefaultAsync(c=>c.Id == request.CategoryId && !c.IsDeleted);
             if (category == null)
             {
                 return Result<CategoryDTO>.Failure("Category Id not found");

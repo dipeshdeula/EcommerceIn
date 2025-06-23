@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using Domain.Enums;
+using System.Security.Claims;
 
 namespace Infrastructure.Persistence.Services
 {
@@ -19,5 +20,6 @@ namespace Infrastructure.Persistence.Services
 
         public string? GetUserIp => _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString();
 
+        public string? Role => _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Role)?.Value;
     }
 }

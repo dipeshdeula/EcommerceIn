@@ -1,4 +1,4 @@
-﻿using Application.Dto;
+﻿using Application.Dto.ProductDTOs;
 using FluentValidation;
 using System;
 using System.Collections.Generic;
@@ -22,12 +22,9 @@ namespace Application.Features.ProductFeat.Commands
             RuleFor(x => x.Description)
                 .NotEmpty().WithMessage("Description is required.");
 
-
-
             RuleFor(x => x.DiscountPercentage)
                 .GreaterThanOrEqualTo(0).WithMessage("Discount percentage must be greater than 0")
-                .LessThanOrEqualTo(100).WithMessage("Discount percentage must be less than or equal to 100");
-                
+                .LessThanOrEqualTo(100).WithMessage("Discount percentage must be less than or equal to 100");                
 
             RuleFor(x => x.StockQuantity)
                 .GreaterThanOrEqualTo(0).WithMessage("Stock quantity cannot be negative.");
