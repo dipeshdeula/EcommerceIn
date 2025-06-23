@@ -18,3 +18,4 @@ EcommerceBackendAPI/obj/
 **/obj/
 Ecommerce Backend API/wwwroot/uploads/**
 Ecommerce Backend API/appsettings.Development.json
+Infrastructure/Migrations/**
