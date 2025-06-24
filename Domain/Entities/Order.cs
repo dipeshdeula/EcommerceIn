@@ -5,8 +5,9 @@
         public int Id { get; set; }
         public int UserId { get; set; }
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedAt { get; set; } 
-        public string Status { get; set; } = "Pending"; // e.g. "Pending", "Shipped", "Delivered", "Cancelled" (now this is assumed as PaymentStatus later will will convert this )
+        public DateTime? UpdatedAt { get; set; }
+        public string OrderStatus { get; set; } = "Pending"; // e.g. "Pending", "Shipped", "Delivered", "Cancelled"
+        public string PaymentStatus { get; set; } = "Pending";  // e.g "Pending", "Paid"
         public decimal TotalAmount { get; set; }
         public string ShippingAddress { get; set; } = string.Empty;
         public string ShippingCity { get; set; }

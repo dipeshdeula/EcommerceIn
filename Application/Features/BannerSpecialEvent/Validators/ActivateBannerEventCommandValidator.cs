@@ -76,7 +76,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
                 return false;
 
             // Check status
-            if (bannerEvent.Status == EventStatus.Expired || bannerEvent.Status == EventStatus.Cancelled)
+            if (bannerEvent.PaymentStatus == EventStatus.Expired || bannerEvent.PaymentStatus == EventStatus.Cancelled)
                 return false;
 
             return true;
@@ -108,7 +108,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
                 predicate: e => e.Id != bannerEvent.Id &&
                             e.IsActive &&
                             !e.IsDeleted &&
-                            e.Status == EventStatus.Active &&
+                            e.PaymentStatus == EventStatus.Active &&
                             e.Priority > bannerEvent.Priority &&
                             e.StartDate <= bannerEvent.EndDate &&
                             e.EndDate >= bannerEvent.StartDate,

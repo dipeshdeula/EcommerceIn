@@ -28,7 +28,7 @@ namespace Domain.Entities
         public int CurrentUsageCount { get; set; } = 0;
         public int MaxUsagePerUser { get; set; } = int.MaxValue;
 
-        // Status management
+        // PaymentStatus management
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; } = false;

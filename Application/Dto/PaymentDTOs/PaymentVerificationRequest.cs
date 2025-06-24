@@ -9,7 +9,7 @@ namespace Application.Dto.PaymentDTOs
     public class PaymentVerificationRequest
     {
         public int PaymentRequestId { get; set; }
-        public string? Status { get; set; }
+        public string? PaymentStatus { get; set; }
         public string? EsewaTransactionId { get; set; }
         public string? KhaltiPidx { get; set; }
         public int? DeliveryPersonId { get; set; } // For COD

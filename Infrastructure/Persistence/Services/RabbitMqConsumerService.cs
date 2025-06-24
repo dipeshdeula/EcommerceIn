@@ -120,7 +120,7 @@ public class RabbitMqConsumerService : BackgroundService
         //        }
         //        else
         //        {
-        //            _logger.LogError("Failed to forward notification. Destination: {Destination}, Status Code: {StatusCode}", destination, response.StatusCode);
+        //            _logger.LogError("Failed to forward notification. Destination: {Destination}, PaymentStatus Code: {StatusCode}", destination, response.StatusCode);
         //        }
         //    }
         //    catch (Exception ex)
@@ -160,7 +160,7 @@ public class RabbitMqConsumerService : BackgroundService
         //        }
         //        else
         //        {
-        //            _logger.LogError("Failed to forward notification. Destination: {Destination}, Status Code: {StatusCode}", destination, response.StatusCode);
+        //            _logger.LogError("Failed to forward notification. Destination: {Destination}, PaymentStatus Code: {StatusCode}", destination, response.StatusCode);
         //        }
 
         //    }

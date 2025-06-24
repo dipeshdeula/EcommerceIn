@@ -103,7 +103,7 @@ namespace Application.Provider
                     PaymentUrl = result.PaymentUrl,
                     ProviderTransactionId = result.Pidx,
                     ExpiresAt = DateTime.UtcNow.AddMinutes(15),
-                    Status = "Initiated",
+                    PaymentStatus = "Initiated",
                     RequiresRedirect = true,
                     Instructions = "You will be redirected to Khalti for payment.",
                     Metadata = new Dictionary<string, string>
@@ -149,12 +149,12 @@ namespace Application.Provider
 
                 // Check if payment is successful
 
-                var isSuccessful = verificationResult?.Status?.ToUpper() == "COMPLETED";
+                var isSuccessful = verificationResult?.PaymentStatus?.ToUpper() == "COMPLETED";
 
                 return Result<PaymentVerificationResponse>.Success(new PaymentVerificationResponse
                 {
                     IsSuccessful = isSuccessful,
-                    Status = isSuccessful ? "Succeeded" : "Failed",
+                    PaymentStatus = isSuccessful ? "Succeeded" : "Failed",
                     Message = isSuccessful ? "Payment verified successfully with khalti" : "Payment verification failed",
                     Provider = ProviderName,
                     TransactionId = request.KhaltiPidx ?? "",
@@ -162,7 +162,7 @@ namespace Application.Provider
                     CollectedAt = isSuccessful ? DateTime.UtcNow : null,
                     AdditionalData = new Dictionary<string, object>
                     {
-                        ["khaltiStatus"] = verificationResult?.Status ?? "UNKNOWN",
+                        ["khaltiStatus"] = verificationResult?.PaymentStatus ?? "UNKNOWN",
                         ["transactionId"] = verificationResult?.TransactionId ?? "",
                         ["fee"] = verificationResult?.Fee??0,
                         ["refunded"] = verificationResult?.Refunded??false,
@@ -193,7 +193,7 @@ namespace Application.Provider
                 }
                 return Result<PaymentStatusResponse>.Success(new PaymentStatusResponse
                 {
-                    Status = verificationResult.Data.Status,
+                    PaymentStatus = verificationResult.Data.PaymentStatus,
                     TransactionId = transactionId,
                     Message = verificationResult.Data.Message,
                     Provider = ProviderName,
@@ -202,7 +202,7 @@ namespace Application.Provider
             }
             catch (Exception ex)
             {
-                return Result<PaymentStatusResponse>.Failure($"Status check failed: {ex.Message}");
+                return Result<PaymentStatusResponse>.Failure($"PaymentStatus check failed: {ex.Message}");
 
             }
         }
@@ -292,7 +292,7 @@ namespace Application.Provider
             public decimal TotalAmount { get; set; }
 
             [JsonPropertyName("status")]
-            public string Status { get; set; } = string.Empty;
+            public string PaymentStatus { get; set; } = string.Empty;
 
             [JsonPropertyName("transaction_id")]
             public string TransactionId { get; set; } = string.Empty;
@@ -517,16 +517,27 @@ namespace Application.Provider
                 });
 
                 // ✅ Check if payment is successful
-                var isSuccessful = verificationResult?.Status?.ToUpper() == "COMPLETED";
+               var isSuccessful = verificationResult?.Status?.ToUpper() == "COMPLETED";
+               var isPending = verificationResult?.Status?.ToUpper() == "PENDING";
+               var isRefunded = verificationResult?.Status?.ToUpper() == "REFUNDED";
+               var isExpired = verificationResult?.Status?.ToUpper() == "EXPIRED";
+               var isCanceled = verificationResult?.Status?.ToUpper().Contains("CANCELED") == true;
+
 
                 _logger.LogInformation("✅ Khalti verification completed: IsSuccessful={IsSuccessful}, Status={Status}, Pidx={Pidx}",
                     isSuccessful, verificationResult?.Status, request.KhaltiPidx);
 
+                string finalStatus = isSuccessful ? "Succeeded" :
+                    isPending ? "Pending" :
+                    isRefunded ? "Refunded" :
+                    isExpired ? "Expired" :
+                    isCanceled ? "Canceled" : "Failed";
+
                 return Result<PaymentVerificationResponse>.Success(new PaymentVerificationResponse
                 {
                     IsSuccessful = isSuccessful,
-                    Status = isSuccessful ? "Succeeded" : "Failed",
-                    Message = isSuccessful ? "Payment verified successfully with Khalti" : "Payment verification failed",
+                    Status = finalStatus,
+                    Message = isSuccessful ? "Payment verified successfully with Khalti" : $"Khalti payment status :{finalStatus}",
                     Provider = ProviderName,
                     TransactionId = request.KhaltiPidx ?? "",
                     CollectedAmount = isSuccessful ? (verificationResult?.TotalAmount ?? 0) / 100 : null, // Convert from paisa
@@ -540,7 +551,7 @@ namespace Application.Provider
                         ["verificationResponse"] = verificationResult ?? new object(),
                         ["verifiedAt"] = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
                     }
-                }, "Khalti verification completed");
+                }, $"Khalti verification completed: {finalStatus}");
             }
             catch (Exception ex)
             {

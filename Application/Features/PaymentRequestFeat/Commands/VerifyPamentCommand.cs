@@ -43,7 +43,7 @@ namespace Application.Features.PaymentRequestFeat.Commands
                     var order = new Order
                     {
                         
-                        Status = paymentRequest.PaymentStatus
+                        PaymentStatus = paymentRequest.PaymentStatus
                     };
 
                     await _orderRepository.UpdateAsync(order, cancellationToken);
@@ -63,7 +63,7 @@ namespace Application.Features.PaymentRequestFeat.Commands
                 {
                     var order = new Order
                     {
-                        Status = paymentRequest.PaymentStatus
+                        PaymentStatus = paymentRequest.PaymentStatus
                     };
 
                     await _orderRepository.UpdateAsync(order, cancellationToken);
@@ -82,7 +82,7 @@ namespace Application.Features.PaymentRequestFeat.Commands
                 {
                     var order = new Order
                     {
-                        Status = paymentRequest.PaymentStatus
+                        PaymentStatus = paymentRequest.PaymentStatus
                     };
 
                     await _orderRepository.UpdateAsync(order, cancellationToken);

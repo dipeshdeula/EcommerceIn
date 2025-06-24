@@ -11,7 +11,7 @@ namespace Application.Features.BillingItemFeat.Commands
     public record CreateBillingItemCommand(
         int UserId,
         int OrderId,
-        int CompanyId = 1
+        int CompanyId
         
     ) : IRequest<Result<List<BillingItemDTO>>>;
 
@@ -62,9 +62,13 @@ namespace Application.Features.BillingItemFeat.Commands
                 if (user.Id != order.UserId)
                     return Result<List<BillingItemDTO>>.Failure("UserId is not associated with OrderId");
 
-                // Check order status
-                if (order.Status != "Paid")
-                    return Result<List<BillingItemDTO>>.Failure("Cannot generate billing items for incomplete order.");
+                // Check Payment status
+                if (order.PaymentStatus != "Confirmed" || order.PaymentStatus != "Paid")
+                    return Result<List<BillingItemDTO>>.Failure("Cannot generate billing items for incomplete Payment.");
+                // Check Order status
+                if (order.OrderStatus != "COMPLETED")
+                    return Result<List<BillingItemDTO>>.Failure("Cannot generate billing items for incomplete Order.");
+                
 
                 // Use order.Items directly
                 var orderItems = order.Items?.Where(i => !i.IsDeleted).ToList();

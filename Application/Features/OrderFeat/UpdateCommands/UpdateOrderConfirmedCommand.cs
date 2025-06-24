@@ -91,10 +91,10 @@ namespace Application.Features.OrderFeat.UpdateCommands
                 }
 
               
-                var previousStatus = order.Status;
+                var previousStatus = order.OrderStatus;
                 var previousConfirmed = order.IsConfirmed;
 
-                order.Status = request.IsConfirmed ? "Confirmed" : "Pending";
+                order.OrderStatus = request.IsConfirmed ? "Confirmed" : "Pending";
                 order.IsConfirmed = request.IsConfirmed;
                 order.UpdatedAt = DateTime.UtcNow;
 
@@ -104,7 +104,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
                 await _orderRepository.SaveChangesAsync(cancellationToken);
 
                 _logger.LogInformation("✅ Order status updated: OrderId={OrderId}, Status={Status}, IsConfirmed={IsConfirmed}",
-                    order.Id, order.Status, order.IsConfirmed);
+                    order.Id, order.PaymentStatus, order.IsConfirmed);
 
                 
                 var notificationResult = new NotificationResultDTO { EmailSent = false, RabbitMqSent = false };
@@ -119,7 +119,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
                 {
                     OrderId = order.Id,
                     PreviousStatus = previousStatus,
-                    NewStatus = order.Status,
+                    NewStatus = order.PaymentStatus,
                     PreviousConfirmed = previousConfirmed,
                     IsConfirmed = order.IsConfirmed,
                     UpdatedAt = order.UpdatedAt.Value,

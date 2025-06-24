@@ -1,5 +1,6 @@
 ﻿using Application.Common;
 using Application.Dto.PaymentDTOs;
+using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -8,20 +9,22 @@ namespace Application.Features.PaymentRequestFeat.Commands
 {
     public record UpdateCODPaymentCommand(
         int PaymentRequestId,
-        int DeliveryPersonId,
-        decimal CollectedAmount,
+        int DeliveryPersonId,        
         string DeliveryStatus, // "Delivered", "PartialPayment", "PaymentRefused"
         string? Notes
     ) : IRequest<Result<PaymentVerificationResponse>>;
     public class UpdateCODPaymentCommandHandler : IRequestHandler<UpdateCODPaymentCommand, Result<PaymentVerificationResponse>>
     {
+        private readonly IPaymentRequestRepository _paymentRequestRepository;
         private readonly IPaymentGatewayService _paymentGatewayService;
         private readonly ILogger<UpdateCODPaymentCommandHandler> _logger;
 
         public UpdateCODPaymentCommandHandler(
+            IPaymentRequestRepository paymentRequestRepository,
             IPaymentGatewayService paymentGatewayService,
             ILogger<UpdateCODPaymentCommandHandler> logger)
         {
+            _paymentRequestRepository = paymentRequestRepository;
             _paymentGatewayService = paymentGatewayService;
             _logger = logger;
         }
@@ -33,12 +36,18 @@ namespace Application.Features.PaymentRequestFeat.Commands
                 _logger.LogInformation("Processing COD payment update: PaymentRequestId={PaymentRequestId}, DeliveryPerson={DeliveryPersonId}, Status={Status}",
                     request.PaymentRequestId, request.DeliveryPersonId, request.DeliveryStatus);
 
+                var payment = await _paymentRequestRepository.FindByIdAsync(request.PaymentRequestId);
+                if (payment == null)
+                    return Result<PaymentVerificationResponse>.Failure("PaymentRequest id not found");
+                    
+               
+
                 var verificationRequest = new PaymentVerificationRequest
                 {
                     PaymentRequestId = request.PaymentRequestId,
-                    Status = request.DeliveryStatus,
+                    PaymentStatus = request.DeliveryStatus,
                     DeliveryPersonId = request.DeliveryPersonId,
-                    CollectedAmount = request.CollectedAmount,
+                    CollectedAmount = payment.PaymentAmount,
                     DeliveryNotes = request.Notes
                 };
 

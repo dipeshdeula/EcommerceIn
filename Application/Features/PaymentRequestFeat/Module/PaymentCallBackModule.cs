@@ -1,6 +1,8 @@
 ﻿using Application.Dto.PaymentDTOs;
+using Application.Features.PaymentRequestFeat.Commands;
 using Application.Interfaces.Services;
 using Carter;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -32,19 +34,19 @@ namespace Application.Features.PaymentRequestFeat.Modules
             {
                 try
                 {
-                    logger.LogInformation("✅ eSewa success callback received: HasData={HasData}", !string.IsNullOrEmpty(data));
+                    logger.LogInformation("eSewa success callback received: HasData={HasData}", !string.IsNullOrEmpty(data));
 
                     if (string.IsNullOrEmpty(data))
                     {
-                        logger.LogError("❌ No data received in eSewa success callback");
+                        logger.LogError("No data received in eSewa success callback");
                         return Results.Redirect("http://localhost:5173/payment/failure?error=no_data");
                     }
 
-                    // ✅ Decode Base64 data
+                    // Decode Base64 data
                     var decodedBytes = Convert.FromBase64String(data);
                     var decodedJson = Encoding.UTF8.GetString(decodedBytes);
 
-                    logger.LogInformation("📥 Decoded eSewa data: {DecodedData}", decodedJson);
+                    logger.LogInformation("Decoded eSewa data: {DecodedData}", decodedJson);
 
                     var responseData = JsonSerializer.Deserialize<EsewaCallbackResponse>(decodedJson, new JsonSerializerOptions
                     {
@@ -53,24 +55,24 @@ namespace Application.Features.PaymentRequestFeat.Modules
 
                     if (responseData == null)
                     {
-                        logger.LogError("❌ Failed to deserialize eSewa response");
+                        logger.LogError("Failed to deserialize eSewa response");
                         return Results.Redirect("http://localhost:5173/payment/failure?error=invalid_response");
                     }
 
-                    logger.LogInformation("📥 eSewa Callback: Status={Status}, Amount={Amount}, TransactionUuid={TransactionUuid}",
+                    logger.LogInformation("eSewa Callback: Status={Status}, Amount={Amount}, TransactionUuid={TransactionUuid}",
                         responseData.Status, responseData.TotalAmount, responseData.TransactionUuid);
 
                     using var scope = serviceProvider.CreateScope();
                     var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-                    // ✅ Extract payment request ID from transaction UUID
+                    // Extract payment request ID from transaction UUID
                     var transactionParts = responseData.TransactionUuid.Split('_');
                     if (transactionParts.Length >= 2 && int.TryParse(transactionParts[1], out var paymentRequestId))
                     {
                         var paymentRequest = await unitOfWork.PaymentRequests.GetByIdAsync(paymentRequestId, cancellationToken: default);
                         if (paymentRequest != null)
                         {
-                            // ✅ Update payment status based on eSewa response
+                            // Update payment status based on eSewa response
                             var isSuccess = responseData.Status?.ToUpper() == "COMPLETE";
                             var oldStatus = paymentRequest.PaymentStatus;
 
@@ -79,13 +81,13 @@ namespace Application.Features.PaymentRequestFeat.Modules
 
                             await unitOfWork.PaymentRequests.UpdateAsync(paymentRequest, default);
 
-                            // ✅ Update order status if payment successful
+                            // Update order status if payment successful
                             if (isSuccess)
                             {
                                 var order = await unitOfWork.Orders.GetByIdAsync(paymentRequest.OrderId, default);
                                 if (order != null)
                                 {
-                                    order.Status = "Paid";
+                                    order.PaymentStatus = "Paid";
                                     order.UpdatedAt = DateTime.UtcNow;
                                     await unitOfWork.Orders.UpdateAsync(order, default);
                                 }
@@ -93,10 +95,10 @@ namespace Application.Features.PaymentRequestFeat.Modules
 
                             await unitOfWork.SaveChangesAsync(default);
 
-                            logger.LogInformation("✅ Payment status updated: PaymentRequestId={PaymentRequestId}, OldStatus={OldStatus}, NewStatus={NewStatus}, OrderId={OrderId}",
+                            logger.LogInformation("Payment status updated: PaymentRequestId={PaymentRequestId}, OldStatus={OldStatus}, NewStatus={NewStatus}, OrderId={OrderId}",
                                 paymentRequestId, oldStatus, paymentRequest.PaymentStatus, paymentRequest.OrderId);
 
-                            // ✅ Redirect to frontend with success
+                            //  Redirect to frontend with success
                             var redirectUrl = isSuccess
                                 ? $"http://localhost:5173/payment/success?paymentId={paymentRequestId}&transactionId={responseData.TransactionUuid}&amount={responseData.TotalAmount}&status=verified"
                                 : $"http://localhost:5173/payment/failure?paymentId={paymentRequestId}&reason=payment_failed&transactionCode={responseData.TransactionCode}";
@@ -105,19 +107,19 @@ namespace Application.Features.PaymentRequestFeat.Modules
                         }
                         else
                         {
-                            logger.LogError("❌ Payment request not found: PaymentRequestId={PaymentRequestId}", paymentRequestId);
+                            logger.LogError("Payment request not found: PaymentRequestId={PaymentRequestId}", paymentRequestId);
                             return Results.Redirect("http://localhost:5173/payment/failure?error=payment_not_found");
                         }
                     }
                     else
                     {
-                        logger.LogError("❌ Invalid transaction UUID format: {TransactionUuid}", responseData.TransactionUuid);
+                        logger.LogError("Invalid transaction UUID format: {TransactionUuid}", responseData.TransactionUuid);
                         return Results.Redirect("http://localhost:5173/payment/failure?error=invalid_transaction_format");
                     }
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "❌ Error processing eSewa success callback");
+                    logger.LogError(ex, "Error processing eSewa success callback");
                     return Results.Redirect("http://localhost:5173/payment/failure?error=callback_processing_error");
                 }
             })
@@ -130,7 +132,7 @@ namespace Application.Features.PaymentRequestFeat.Modules
                 string? data,
                 ILogger<PaymentCallbackModule> logger) =>
             {
-                logger.LogWarning("❌ eSewa failure callback received");
+                logger.LogWarning("eSewa failure callback received");
 
                 string? transactionId = null;
                 string? transactionCode = null;
@@ -145,12 +147,12 @@ namespace Application.Features.PaymentRequestFeat.Modules
                         transactionId = responseData?.TransactionUuid;
                         transactionCode = responseData?.TransactionCode;
 
-                        logger.LogInformation("📥 eSewa Failure Data: TransactionId={TransactionId}, TransactionCode={TransactionCode}",
+                        logger.LogInformation("eSewa Failure Data: TransactionId={TransactionId}, TransactionCode={TransactionCode}",
                             transactionId, transactionCode);
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError(ex, "❌ Error decoding failure data");
+                        logger.LogError(ex, "Error decoding failure data");
                     }
                 }
 
@@ -173,11 +175,11 @@ namespace Application.Features.PaymentRequestFeat.Modules
             {
                 try
                 {
-                    logger.LogInformation("✅ Khalti success callback received: Pidx={Pidx}, Status={Status}", pidx, status);
+                    logger.LogInformation("Khalti success callback received: Pidx={Pidx}, Status={Status}", pidx, status);
 
                     if (string.IsNullOrEmpty(pidx))
                     {
-                        logger.LogError("❌ No pidx received in Khalti success callback");
+                        logger.LogError("No pidx received in Khalti success callback");
                         return Results.Redirect("http://localhost:5173/payment/failure?error=no_pidx");
                     }
 
@@ -185,23 +187,23 @@ namespace Application.Features.PaymentRequestFeat.Modules
                     var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
                     var paymentGatewayService = scope.ServiceProvider.GetRequiredService<IPaymentGatewayService>();
 
-                    // ✅ Find payment request by Khalti Pidx
+                    // Find payment request by Khalti Pidx
                     var paymentRequest = await unitOfWork.PaymentRequests.GetAsync(
                         predicate: pr => pr.KhaltiPidx == pidx,
                         cancellationToken: default);
 
                     if (paymentRequest == null)
                     {
-                        logger.LogError("❌ Payment request not found for Pidx: {Pidx}", pidx);
+                        logger.LogError("Payment request not found for Pidx: {Pidx}", pidx);
                         return Results.Redirect("http://localhost:5173/payment/failure?error=payment_not_found");
                     }
 
-                    // ✅ Verify payment with Khalti
+                    // Verify payment with Khalti
                     var verificationRequest = new PaymentVerificationRequest
                     {
                         PaymentRequestId = paymentRequest.Id,
                         KhaltiPidx = pidx,
-                        Status = status?.ToUpper() == "COMPLETED" ? "SUCCESS" : "FAILED",
+                        PaymentStatus = status?.ToUpper() == "COMPLETED" ? "SUCCESS" : "FAILED",
                         CollectedAmount = amount,
                         AdditionalData = new Dictionary<string, string>
                         {
@@ -211,7 +213,7 @@ namespace Application.Features.PaymentRequestFeat.Modules
                         }
                     };
 
-                    logger.LogInformation("🔍 Verifying Khalti payment: PaymentRequestId={PaymentRequestId}", paymentRequest.Id);
+                    logger.LogInformation("Verifying Khalti payment: PaymentRequestId={PaymentRequestId}", paymentRequest.Id);
 
                     var verificationResult = await paymentGatewayService.VerifyPaymentAsync(verificationRequest, default);
 
@@ -224,7 +226,7 @@ namespace Application.Features.PaymentRequestFeat.Modules
                     }
                     else
                     {
-                        logger.LogError("❌ Khalti payment verification failed: {Error}", verificationResult.Message);
+                        logger.LogError("Khalti payment verification failed: {Error}", verificationResult.Message);
 
                         var failureUrl = $"http://localhost:5173/payment/failure?paymentId={paymentRequest.Id}&reason=verification_failed&provider=khalti&error={Uri.EscapeDataString(verificationResult.Message ?? "")}";
                         return Results.Redirect(failureUrl);
@@ -232,7 +234,7 @@ namespace Application.Features.PaymentRequestFeat.Modules
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "❌ Error processing Khalti success callback");
+                    logger.LogError(ex, "Error processing Khalti success callback");
                     return Results.Redirect("http://localhost:5173/payment/failure?error=callback_processing_error&provider=khalti");
                 }
             })
@@ -256,6 +258,123 @@ namespace Application.Features.PaymentRequestFeat.Modules
             .WithName("KhaltiFailureCallback")
             .WithSummary("Handle Khalti payment failure callback")
             .Produces(302);
+
+            group.MapPost("/khalti/webhook", async (
+             HttpRequest request,
+             IServiceProvider serviceProvider,
+             ILogger<PaymentCallbackModule> logger) =>
+                 {
+                     try
+                     {
+                         // Read payload
+                         string payload;
+                         using (var reader = new StreamReader(request.Body))
+                         {
+                             payload = await reader.ReadToEndAsync();
+                         }
+
+                         if (string.IsNullOrWhiteSpace(payload))
+                         {
+                             logger.LogError("No payload received in Khalti webhook");
+                             return Results.BadRequest(new { message = "Empty payload" });
+                         }
+
+
+                         // Optionally, verify signature/header if Khalti provides one
+
+                         // Parse payload (assume JSON with pidx)
+                         var json = JsonDocument.Parse(payload);
+                         var pidx = json.RootElement.GetProperty("pidx").GetString();
+
+                         if (string.IsNullOrEmpty(pidx))
+                         {
+                             logger.LogError("No pidx in Khalti webhook");
+                             return Results.BadRequest(new { message = "Missing pidx" });
+                         }
+
+                         using var scope = serviceProvider.CreateScope();
+                         var paymentGatewayService = scope.ServiceProvider.GetRequiredService<IPaymentGatewayService>();
+                         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+                         // Find payment request by pidx
+                         var paymentRequest = await unitOfWork.PaymentRequests.GetAsync(pr => pr.KhaltiPidx == pidx, cancellationToken: default);
+                         if (paymentRequest == null)
+                         {
+                             logger.LogError("Payment request not found for webhook pidx: {Pidx}", pidx);
+                             return Results.NotFound(new { message = "Payment request not found" });
+                         }
+
+                         // Always verify with Khalti lookup
+                         var verificationRequest = new PaymentVerificationRequest
+                         {
+                             PaymentRequestId = paymentRequest.Id,
+                             KhaltiPidx = pidx
+                         };
+
+                         var verificationResult = await paymentGatewayService.VerifyPaymentAsync(verificationRequest, default);
+
+                         if (verificationResult.Succeeded && verificationResult.Data.IsSuccessful)
+                         {
+                             logger.LogInformation("Khalti webhook: payment verified and updated for PaymentRequestId={PaymentRequestId}", paymentRequest.Id);
+                             return Results.Ok(new { message = "Payment verified and updated" });
+                         }
+                         else
+                         {
+                             logger.LogWarning("Khalti webhook: payment not completed for PaymentRequestId={PaymentRequestId}", paymentRequest.Id);
+                             return Results.Ok(new { message = "Payment not completed", status = verificationResult.Data?.Status });
+                         }
+                     }
+                     catch (Exception ex)
+                     {
+                         logger.LogError(ex, "Error processing Khalti webhook");
+                         return Results.StatusCode(500);
+                     }
+                 })
+                 .WithName("KhaltiWebhook")
+                 .WithSummary("Handle Khalti payment webhook")
+                 .Produces(200)
+                 .Produces(400)
+                 .Produces(404)
+                 .Produces(500);
+
+            group.MapPost("/cod/collect-payment", async (
+                     int PaymentRequestId,                    
+                     string DeliveryStatus, // "Delivered", "PartialPayment", "PaymentRefused"
+                     string? Notes,
+                     ICurrentUserService currentUserService,
+                     ISender mediator
+                     ) =>
+                 {
+                     // Ensure only delivery personnel can access
+                     if (currentUserService.Role?.ToLower() != "deliveryboy")
+                         return Results.Unauthorized();
+
+                     var deliveryPersonId = int.TryParse(currentUserService.UserId, out var id) ? id : 0;
+                     if (deliveryPersonId == 0)
+                         return Results.BadRequest(new { message = "Invalid delivery person" });
+
+                     var command = new UpdateCODPaymentCommand(
+                         PaymentRequestId,
+                         deliveryPersonId,                        
+                         DeliveryStatus,
+                         Notes);
+
+                     var result = await mediator.Send(command);
+
+                     if (!result.Succeeded)
+                         return Results.BadRequest(new { result.Message, result.Errors });
+
+                     return Results.Ok(new
+                     {
+                         result.Message,
+                         result.Data,
+                         Success = true,
+                         Timestamp = DateTime.UtcNow
+                     });
+                 })
+                 .RequireAuthorization("RequireDeliveryBoy")
+                 .WithName("CollectCODPaymentDelivery")
+                 .WithSummary("Update COD payment status after delivery");
         }
     }
 }

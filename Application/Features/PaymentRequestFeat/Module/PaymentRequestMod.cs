@@ -99,7 +99,7 @@ namespace Application.Features.PaymentRequestFeat.Module
                 int PaymentRequestId,
                 string? EsewaTransactionId,
                 string? KhaltiPidx,
-                string? Status,
+                string? PaymentStatus,
                 int? DeliveryPersonId,
                 string? DeliveryNotes,
                 decimal? CollectedAmount,
@@ -109,7 +109,7 @@ namespace Application.Features.PaymentRequestFeat.Module
                     PaymentRequestId,
                     EsewaTransactionId,
                     KhaltiPidx,
-                    Status);
+                    PaymentStatus);
 
                 var result = await mediator.Send(command);
 
@@ -137,7 +137,7 @@ namespace Application.Features.PaymentRequestFeat.Module
                 var verificationRequest = new PaymentVerificationRequest
                 {
                     PaymentRequestId = PaymentRequestId,
-                    Status = "COMPLETED",
+                    PaymentStatus = "COMPLETED",
                     DeliveryPersonId = DeliveryPersonId,
                     CollectedAmount = CollectedAmount,
                     DeliveryNotes = Notes
@@ -223,11 +223,11 @@ namespace Application.Features.PaymentRequestFeat.Module
             .Produces(StatusCodes.Status400BadRequest);
 
 
-            app.MapPost("/verify", async (
+           /* app.MapPost("/verify", async (
                 int PaymentRequestId,
                 string? EsewaTransactionId,
                 string? KhaltiPidx,
-                string? Status,
+                string? PaymentStatus,
                 int? DeliveryPersonId,
                 string? DeliveryNotes,
                 decimal? CollectedAmount,
@@ -237,7 +237,7 @@ namespace Application.Features.PaymentRequestFeat.Module
                     PaymentRequestId,
                     EsewaTransactionId,
                     KhaltiPidx,
-                    Status);
+                    PaymentStatus);
 
                 var result = await mediator.Send(command);
 
@@ -253,7 +253,7 @@ namespace Application.Features.PaymentRequestFeat.Module
             .WithSummary("Verify payment status")
             .WithDescription("Verify and update payment status from payment gateway")
             .Produces(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status400BadRequest);
+            .Produces(StatusCodes.Status400BadRequest);*/
 
             // Get all payment requests
 

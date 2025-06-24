@@ -85,7 +85,7 @@ namespace Application.Features.OrderFeat.Commands
             {
                 UserId = request.UserId,
                 OrderDate = DateTime.UtcNow,
-                Status = "Pending",
+                PaymentStatus = "Pending",
                 TotalAmount = totalAmount,
                 ShippingAddress = request.ShippingAddress,
                 ShippingCity = request.ShippingCity,
@@ -139,7 +139,7 @@ namespace Application.Features.OrderFeat.Commands
                 Id = order.Id,
                 UserId = request.UserId,
                 OrderDate = order.OrderDate,
-                Status = order.Status,
+                PaymentStatus = order.PaymentStatus,
                 TotalAmount = order.TotalAmount,
                 ShippingAddress = order.ShippingAddress,
                 ShippingCity = order.ShippingCity,

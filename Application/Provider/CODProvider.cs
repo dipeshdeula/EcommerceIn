@@ -3,6 +3,7 @@ using Application.Dto.PaymentDTOs;
 using Application.Interfaces.Services;
 using Domain.Entities;
 using Microsoft.Extensions.Logging;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Application.Provider
 {
@@ -56,25 +57,38 @@ namespace Application.Provider
         {
             try
             {
-                var isDeliveryCompleted = request.Status?.ToUpper() == "COMPLETED" || request.Status?.ToUpper() == "DELIVERED";
+                var isDeliveryCompleted = request.PaymentStatus?.ToUpper() == "COMPLETED" || request.PaymentStatus?.ToUpper() == "DELIVERED";
+                var isPartial = request.PaymentStatus?.ToUpper() == "PARTIALPAYMENT";
+                var isRefused = request.PaymentStatus?.ToUpper() == "PAYMENTREFUSED";
+
 
                 await Task.CompletedTask; // Simulate async operation
+
+                string status = isDeliveryCompleted ? "Succeeded"
+                        : isPartial ? "Partial"
+                        : isRefused ? "Refused"
+                        : "PendingDelivery";
 
                 return Result<PaymentVerificationResponse>.Success(new PaymentVerificationResponse
                 {
                     IsSuccessful = isDeliveryCompleted,
-                    Status = isDeliveryCompleted ? "Succeeded" : "PendingDelivery",
-                    Message = isDeliveryCompleted ? "Cash payment collected upon delivery" : "Payment pending delivery completion",
+                    Status = status,
+                    Message = isDeliveryCompleted ? "Cash payment collected upon delivery"
+                        : isPartial ? "Partial payment collected"
+                        : isRefused ? "Payment was refused by customer"
+                        : "Payment pending delivery completion",
                     Provider = ProviderName,
                     TransactionId = request.PaymentRequestId.ToString(),
-                    CollectedAmount = isDeliveryCompleted ? (request.CollectedAmount ?? 0) : null,
-                    CollectedAt = isDeliveryCompleted ? DateTime.UtcNow : null,
+                    CollectedAmount = isDeliveryCompleted || isPartial ? (request.CollectedAmount ?? 0) : null,
+                    CollectedAt = isDeliveryCompleted || isPartial ? DateTime.UtcNow : null,
                     DeliveryPersonId = request.DeliveryPersonId,
                     DeliveryNotes = request.DeliveryNotes,
                     AdditionalData = new Dictionary<string, object>
                     {
                         ["deliveryMethod"] = "cash_on_delivery",
-                        ["collectionVerified"] = isDeliveryCompleted
+                        ["collectionVerified"] = isDeliveryCompleted,
+                        ["partialPayment"] = isPartial,
+                        ["refused"] = isRefused
                     }
                 }, "COD verification completed");
             }

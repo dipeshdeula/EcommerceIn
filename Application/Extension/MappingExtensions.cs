@@ -435,7 +435,7 @@ namespace Application.Extension
             return estimatedOriginal > 0 ? estimatedOriginal : cartItem.ReservedPrice;
         }
 
-        // ✅ FALLBACK: Create fallback pricing when service is unavailable
+        /*// ✅ FALLBACK: Create fallback pricing when service is unavailable
         private static ProductPriceInfoDTO CreateFallbackPricing(CartItem cartItem)
         {
             var estimatedOriginal = CalculateOriginalPrice(cartItem) ?? cartItem.ReservedPrice;
@@ -453,7 +453,7 @@ namespace Application.Extension
                 IsPriceStable = true,
                 PriceCalculatedAt = DateTime.UtcNow
             };
-        }
+        }*/
 
         public static OrderDTO ToDTO(this Order order)
         {
@@ -462,7 +462,8 @@ namespace Application.Extension
                 Id = order.Id,
                 UserId = order.UserId,
                 OrderDate = order.OrderDate,
-                Status = order.Status,
+                OrderStatus = order.OrderStatus,
+                PaymentStatus = order.PaymentStatus,
                 TotalAmount = order.TotalAmount,
                 ShippingAddress = order.ShippingAddress,
                 ShippingCity = order.ShippingCity,
@@ -586,7 +587,7 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
         }
         catch (Exception )
         {
-            // ✅ FALLBACK: Use UTC if timezone service fails
+            // FALLBACK: Use UTC if timezone service fails
             startDateNepal = bannerEventSpecial.StartDate;
             endDateNepal = bannerEventSpecial.EndDate;
             currentNepalTime = currentUtcTime;
@@ -608,7 +609,7 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
     }
     else
     {
-        // ✅ FALLBACK: Use UTC when no timezone service
+        // FALLBACK: Use UTC when no timezone service
         startDateNepal = bannerEventSpecial.StartDate;
         endDateNepal = bannerEventSpecial.EndDate;
         currentNepalTime = currentUtcTime;
@@ -647,11 +648,11 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
         MaxDiscountAmount = bannerEventSpecial.MaxDiscountAmount,
         MinOrderValue = bannerEventSpecial.MinOrderValue,
 
-        // ✅ UTC DATES (Database storage - always UTC)
+        //  UTC DATES (Database storage - always UTC)
         StartDate = DateTime.SpecifyKind(bannerEventSpecial.StartDate, DateTimeKind.Utc),
         EndDate = DateTime.SpecifyKind(bannerEventSpecial.EndDate, DateTimeKind.Utc),
 
-        // ✅ NEPAL DATES (Display - converted for UI)
+        //  NEPAL DATES (Display - converted for UI)
         StartDateNepal = startDateNepal,
         EndDateNepal = endDateNepal,
 
@@ -668,12 +669,12 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
         TotalProductsCount = bannerEventSpecial.EventProducts?.Count ?? 0,
         TotalRulesCount = bannerEventSpecial.Rules?.Count ?? 0,
 
-        // ✅ COMPUTED PROPERTIES (Using safe logic)
+        // COMPUTED PROPERTIES (Using safe logic)
         IsCurrentlyActive = isCurrentlyActive,
         IsExpired = endDateNepal < currentNepalTime,
         TimeStatus = timeStatus,
 
-        // ✅ SAFE TIMEZONE INFO
+        //  SAFE TIMEZONE INFO
         TimeZoneInfo = timeZoneInfo,
 
         // NESTED ENTITIES
@@ -682,7 +683,7 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
         EventProducts = bannerEventSpecial.EventProducts?.Select(ep => ep.ToDTO()).ToList() ?? new List<EventProductDTO>()
     };
 
-    // ✅ CALCULATE DAYS REMAINING SAFELY
+    //  CALCULATE DAYS REMAINING SAFELY
     dto.DaysRemaining = dto.IsExpired ? 0 : (int)Math.Ceiling((endDateNepal - currentNepalTime).TotalDays);
 
     return dto;
@@ -794,7 +795,7 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
 
 
         
-        // ✅ ENHANCED: EventRule to DTO mapping
+        // ENHANCED: EventRule to DTO mapping
         public static EventRuleDTO ToDTO(this EventRule eventRule)
         {
             return new EventRuleDTO
@@ -811,13 +812,13 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
             };
         }
 
-        // ✅ ENHANCED: EventProduct to DTO mapping
+        // ENHANCED: EventProduct to DTO mapping
         public static EventProductDTO ToDTO(this EventProduct eventProduct)
         {
             return new EventProductDTO
             {
                 Id = eventProduct.Id,
-                BannerEventId = eventProduct.BannerEventId, // ✅ Use correct property name
+                BannerEventId = eventProduct.BannerEventId, 
                 ProductId = eventProduct.ProductId,
                 ProductName = eventProduct.Product?.Name ?? "Unknown Product",
                 SpecificDiscount = eventProduct.SpecificDiscount,
@@ -835,8 +836,7 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
             {
                 Id = bannerImage.Id,
                 ImageUrl = bannerImage.ImageUrl,
-                BannerEventId = bannerImage.BannerId // ✅ Use correct property name
-
+                BannerEventId = bannerImage.BannerId 
             };
         }
         public static PaymentMethodDTO ToDTO(this PaymentMethod paymentMethod)

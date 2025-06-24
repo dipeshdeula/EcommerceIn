@@ -1,15 +1,10 @@
-﻿using Application.Dto.PaymentDTOs;
-using Application.Features.PaymentRequestFeat.Commands;
+﻿using Application.Features.PaymentRequestFeat.Commands;
+using Application.Interfaces.Services;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Features.PaymentRequestFeat.Module
 {
@@ -23,52 +18,36 @@ namespace Application.Features.PaymentRequestFeat.Module
 
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
-            // ✅ COD Payment Collection Endpoint
-            app.MapPost("/cod/collect-payment", async (
+            // Managing order status while payment made through online
+
+            app.MapPut("/Delivered", async (
+                ISender mediator,
+                ICurrentUserService currentUserService,
                 int PaymentRequestId,
-                int DeliveryPersonId,
-                decimal CollectedAmount,
-                string DeliveryStatus,
-                string? Notes,
-                ISender mediator) =>
+                bool IsDelivered = false
+                ) =>
             {
-                var command = new UpdateCODPaymentCommand(
-                    PaymentRequestId,
-                    DeliveryPersonId,
-                    CollectedAmount,
-                    DeliveryStatus,
-                    Notes);
+                // only delivery personnel can access
+                if (currentUserService.Role?.ToLower() != "deliveryboy")
+                    return Results.Unauthorized();
+                var deliveryPersonId = int.TryParse(currentUserService.UserId, out var id) ? id : 0;
+                if (deliveryPersonId == 0)
+                    return Results.BadRequest(new { message = "Invalid delivery person" });
 
+                var command = new UpdateDeliveryStatusCommand(PaymentRequestId, IsDelivered);
                 var result = await mediator.Send(command);
-
                 if (!result.Succeeded)
                     return Results.BadRequest(new { result.Message, result.Errors });
 
-                return Results.Ok(new
-                {
-                    result.Message,
-                    result.Data,
-                    Success = true,
-                    Timestamp = DateTime.UtcNow
-                });
-            })
-            .WithName("CollectCODPaymentDelivery")
-            .WithSummary("Update COD payment status after delivery")
-            .WithDescription("Called by delivery personnel to update payment status when cash is collected")
-            .Produces<PaymentVerificationResponse>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status400BadRequest);
+                return Results.Ok(new { result.Message, result.Data });
 
-            // ✅ Get COD Deliveries for a delivery person
-            app.MapGet("/cod/pending-deliveries/{deliveryPersonId}", async (
-                int deliveryPersonId,
-                ISender mediator) =>
-            {
-                // Implementation to get pending COD deliveries
-                // You'll need to create this query
-                return Results.Ok(new { message = "Pending COD deliveries endpoint" });
+
+
             })
-            .WithName("GetPendingCODDeliveries")
-            .WithSummary("Get pending COD deliveries for a delivery person");
+                .RequireAuthorization("RequireDeliveryBoy")
+                .WithName("Update Delivery Status")
+                .WithSummary("Update OrderStatus after online payment");
+
         }
     }
 }

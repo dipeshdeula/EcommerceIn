@@ -4,6 +4,7 @@ using Application.Features.BillingItemFeat.Queries;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using System;
@@ -27,9 +28,14 @@ namespace Application.Features.BillingItemFeat.Module
             app = app.MapGroup("Billing");
 
 
-            app.MapPost("/createBill", async (int UserId, int OrderId, ISender mediator) =>
+            app.MapPost("/createBill", async (
+                ISender mediator,
+                int UserId,
+                int OrderId,
+                int CompanyId
+                ) =>
             {
-                var command = new CreateBillingItemCommand(UserId, OrderId);
+                var command = new CreateBillingItemCommand(UserId, OrderId, CompanyId);
                 var result = await mediator.Send(command);
 
                 if (!result.Succeeded)
