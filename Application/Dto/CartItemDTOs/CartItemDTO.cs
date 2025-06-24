@@ -1,4 +1,5 @@
-﻿using Application.Dto.ProductDTOs;
+﻿using Application.Dto.CategoryDTOs;
+using Application.Dto.ProductDTOs;
 using Application.Dto.UserDTOs;
 
 namespace Application.Dto.CartItemDTOs
@@ -63,6 +64,7 @@ namespace Application.Dto.CartItemDTOs
         }
 
         //  NAVIGATION
+        public CategoryDTO? Category { get; set; }
         public ProductDTO? Product { get; set; }
         public UserDTO? User { get; set; }
     }

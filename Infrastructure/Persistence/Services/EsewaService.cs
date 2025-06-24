@@ -34,17 +34,17 @@ namespace Infrastructure.Persistence.Services
         {
             try
             {
-                _logger.LogInformation("🚀 Initiating eSewa payment: Amount={Amount}, TransactionId={TransactionId}",
+                _logger.LogInformation("Initiating eSewa payment: Amount={Amount}, TransactionId={TransactionId}",
                     request.Amount, request.TransactionUuid);
 
-                // ✅ Generate signature according to eSewa documentation
+                //  Generate signature according to eSewa documentation
                 var signatureMessage = $"total_amount={request.TotalAmount:F2},transaction_uuid={request.TransactionUuid},product_code={_config.MerchantId}";
                 var signature = GenerateSignature(signatureMessage, _config.SecretKey);
 
-                // ✅ Build payment URL according to eSewa documentation
+                // Build payment URL according to eSewa documentation
                 var paymentUrl = BuildEsewaPaymentUrl(request, signature);
 
-                _logger.LogInformation("✅ eSewa payment URL generated: {PaymentUrl}", paymentUrl);
+                _logger.LogInformation(" eSewa payment URL generated: {PaymentUrl}", paymentUrl);
 
                 return Result<EsewaPaymentResponse>.Success(new EsewaPaymentResponse
                 {
@@ -57,7 +57,7 @@ namespace Infrastructure.Persistence.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to initiate eSewa payment");
+                _logger.LogError(ex, "Failed to initiate eSewa payment");
                 return Result<EsewaPaymentResponse>.Failure($"eSewa payment initiation failed: {ex.Message}");
             }
         }
@@ -66,12 +66,12 @@ namespace Infrastructure.Persistence.Services
         {
             try
             {
-                _logger.LogInformation("🔍 Verifying eSewa payment: TransactionId={TransactionId}", request.TransactionUuid);
+                _logger.LogInformation("Verifying eSewa payment: TransactionId={TransactionId}", request.TransactionUuid);
 
                 using var client = _httpClientFactory.CreateClient("EsewaClient");
                 client.Timeout = TimeSpan.FromSeconds(30);
 
-                // ✅ eSewa verification endpoint according to documentation
+                //  eSewa verification endpoint according to documentation
                 var verificationPayload = new
                 {
                     product_code = _config.MerchantId,
@@ -85,7 +85,7 @@ namespace Infrastructure.Persistence.Services
                 var response = await client.PostAsync(_config.VerifyUrl, content, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
-                _logger.LogDebug("📥 eSewa verification response: {Response}", responseContent);
+                _logger.LogDebug("eSewa verification response: {Response}", responseContent);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -109,13 +109,13 @@ namespace Infrastructure.Persistence.Services
                 }
                 else
                 {
-                    _logger.LogError("❌ eSewa verification failed: {StatusCode} - {Response}", response.StatusCode, responseContent);
+                    _logger.LogError("eSewa verification failed: {StatusCode} - {Response}", response.StatusCode, responseContent);
                     return Result<EsewaVerificationResponse>.Failure($"eSewa verification failed: {response.StatusCode}");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error during eSewa payment verification");
+                _logger.LogError(ex, "Error during eSewa payment verification");
                 return Result<EsewaVerificationResponse>.Failure($"Payment verification error: {ex.Message}");
             }
         }

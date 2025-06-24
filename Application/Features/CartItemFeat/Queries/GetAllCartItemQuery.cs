@@ -30,7 +30,7 @@ namespace Application.Features.CartItemFeat.Queries
                     predicate: c => !c.IsDeleted,
                     skip: (request.PageNumber - 1) * request.PageSize,
                     take: request.PageSize,
-                    includeProperties: "User,User.Addresses,Product,Product.Images",
+                    includeProperties: "User,User.Addresses,Product,Product.Images,Product.Category",
                     cancellationToken: cancellationToken
                 )
                 .QuickSortDesc(c => c.CreatedAt);

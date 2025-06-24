@@ -348,6 +348,7 @@ namespace Application.Extension
                 CreatedAt = cartItem.CreatedAt,
                 UpdatedAt = cartItem.UpdatedAt,
                 IsDeleted = cartItem.IsDeleted,
+                Category = cartItem.Product?.Category != null ? cartItem.Product.Category.ToDTO() : null,
                 Product = cartItem.Product?.ToDTO(),
                 User = cartItem.User?.ToDTO(),
                 

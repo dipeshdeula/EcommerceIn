@@ -1,4 +1,6 @@
-﻿namespace Application.Dto.ProductDTOs
+﻿using Application.Dto.CategoryDTOs;
+
+namespace Application.Dto.ProductDTOs
 {
     public class ProductDTO
     {
@@ -45,7 +47,6 @@
         //  COMPOSITION PROPERTIES (Set by services) 
         public ProductPricingDTO? Pricing { get; set; }
         public ProductStockDTO? Stock { get; set; }
-
         // convenience properties:
         public decimal CurrentPrice => Pricing?.EffectivePrice ?? BasePrice;
         public bool IsOnSale => Pricing?.HasAnyDiscount ?? HasProductDiscount;  

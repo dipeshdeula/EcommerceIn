@@ -85,7 +85,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
 
                 if (user == null)
                 {
-                    _logger.LogError("❌ User not found for order: OrderId={OrderId}, UserId={UserId}",
+                    _logger.LogError("User not found for order: OrderId={OrderId}, UserId={UserId}",
                         request.OrderId, order.UserId);
                     return Result<OrderConfirmationResponseDTO>.Failure("User not found for this order.");
                 }
@@ -103,7 +103,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
                
                 await _orderRepository.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("✅ Order status updated: OrderId={OrderId}, Status={Status}, IsConfirmed={IsConfirmed}",
+                _logger.LogInformation("Order status updated: OrderId={OrderId}, Status={Status}, IsConfirmed={IsConfirmed}",
                     order.Id, order.PaymentStatus, order.IsConfirmed);
 
                 
@@ -135,14 +135,14 @@ namespace Application.Features.OrderFeat.UpdateCommands
                     ? $"Order #{order.Id} confirmed successfully. Customer will be notified."
                     : $"Order #{order.Id} status updated to pending.";
 
-                _logger.LogInformation("🎉 Order confirmation completed: OrderId={OrderId}, EmailSent={EmailSent}, RabbitMqSent={RabbitMqSent}",
+                _logger.LogInformation("Order confirmation completed: OrderId={OrderId}, EmailSent={EmailSent}, RabbitMqSent={RabbitMqSent}",
                     order.Id, notificationResult.EmailSent, notificationResult.RabbitMqSent);
 
                 return Result<OrderConfirmationResponseDTO>.Success(responseDto, successMessage);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to update order confirmation: OrderId={OrderId}", request.OrderId);
+                _logger.LogError(ex, "Failed to update order confirmation: OrderId={OrderId}", request.OrderId);
                 return Result<OrderConfirmationResponseDTO>.Failure($"Failed to update order: {ex.Message}");
             }
         }
@@ -164,7 +164,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
                 return Result<bool>.Failure("User role not found.");
             }
 
-            // ✅ Allow Admin and SuperAdmin to confirm orders
+            //  Allow Admin and SuperAdmin to confirm orders
             if (role != UserRoles.Admin.ToString() && role != UserRoles.SuperAdmin.ToString())
             {
                 return Result<bool>.Failure("Only Admin or SuperAdmin can confirm orders.");

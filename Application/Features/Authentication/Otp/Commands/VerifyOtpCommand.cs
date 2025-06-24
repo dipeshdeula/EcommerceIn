@@ -23,20 +23,20 @@ namespace Application.Features.Authentication.Otp.Commands
 
         public async Task<Result<RegisterCommand>> Handle(VerifyOtpCommand request, CancellationToken cancellationToken)
         {
-            // ✅ Step 1: Validate OTP
+            // Step 1: Validate OTP
             if (!_otpService.ValidateOtp(request.Email, request.Otp))
             {
                 return Result<RegisterCommand>.Failure("Invalid or expired OTP.");
             }
 
-            // ✅ Step 2: Get user and password from OTPService cache/memory
+            // Step 2: Get user and password from OTPService cache/memory
             var (user, rawPassword) = _otpService.GetUserInfo(request.Email);
             if (user == null || string.IsNullOrEmpty(rawPassword))
             {
                 return Result<RegisterCommand>.Failure("User information not found.");
             }
 
-            // ✅ Step 3: Hash password and save
+            // Step 3: Hash password and save
             user.Password = PasswordHelper.HashPassword(rawPassword);
             user.IsDeleted = false;
 
