@@ -30,8 +30,16 @@ namespace Application.Features.PaymentMethodFeat.Validators
         {
             if (file == null) return false;
 
-            var allowedMimeTypes = new[] { "image/jpeg", "image/png", "image/jpg" };
+            var allowedMimeTypes = new[]
+            {
+                "image/jpeg",
+                "image/png",
+                "image/jpg",
+                "image/svg+xml" // Correct MIME type for SVG
+            };
+
             return allowedMimeTypes.Contains(file.ContentType.ToLower());
         }
+
     }
 }

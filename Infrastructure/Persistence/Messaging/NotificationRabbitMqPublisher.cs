@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Persistence.Messaging;
 
-public class NotificationRabbitMqPublisher : INotificationRabbitMqPublisher,IDisposable
+public class NotificationRabbitMqPublisher : INotificationRabbitMqPublisher, IDisposable
 {
     private readonly IConfiguration _configuration;
     private readonly string _hostname;
@@ -20,59 +20,60 @@ public class NotificationRabbitMqPublisher : INotificationRabbitMqPublisher,IDis
     {
         _configuration = configuration;
         _queueName = queueName;
-        _exchangeName = exchangeName;       
+        _exchangeName = exchangeName;      
         
+
         try
+        {
+            ConnectionFactory factory;
+
+            // Check if we have a full AMQP URI
+            var amqpUri = _configuration["RabbitMQ:Uri"];
+            if (!string.IsNullOrEmpty(amqpUri))
             {
-                ConnectionFactory factory;
-
-                // Check if we have a full AMQP URI
-                var amqpUri = _configuration["RabbitMQ:Uri"];
-                if (!string.IsNullOrEmpty(amqpUri))
+                // Use the URI directly
+                factory = new ConnectionFactory
                 {
-                    // Use the URI directly
-                    factory = new ConnectionFactory
-                    {
-                        Uri = new Uri(amqpUri)
-                    };
-                    Console.WriteLine("Connecting to RabbitMQ using URI");
-                }
-                else
-                {
-                    // Use individual component settings
-                    factory = new ConnectionFactory
-                    {
-                        HostName = _configuration["RabbitMQ:HostName"] ?? "localhost",
-                        UserName = _configuration["RabbitMQ:Username"] ?? "guest",
-                        Password = _configuration["RabbitMQ:Password"] ?? "guest",
-                        VirtualHost = _configuration["RabbitMQ:VirtualHost"] ?? "/"
-                    };
-
-                    // Enable SSL if configured
-                    if (bool.TryParse(_configuration["RabbitMQ:Ssl"], out bool useSsl) && useSsl)
-                    {
-                        factory.Ssl = new SslOption
-                        {
-                            Enabled = true,
-                            ServerName = factory.HostName
-                        };
-                    }
-                }
-
-                _connection = factory.CreateConnection();                
-                Console.WriteLine("Successfully connected to RabbitMQ");
+                    Uri = new Uri(amqpUri)
+                };
+                Console.WriteLine("Connecting to RabbitMQ using URI");
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine("Failed to connect to RabbitMQ: " + ex.Message);
-                throw new InvalidOperationException("Could not connect to RabbitMQ", ex);
+                // Use individual component settings
+                factory = new ConnectionFactory
+                {
+                    HostName = _configuration["RabbitMQ:HostName"] ?? "localhost",
+                    UserName = _configuration["RabbitMQ:Username"] ?? "guest",
+                    Password = _configuration["RabbitMQ:Password"] ?? "guest",
+                    VirtualHost = _configuration["RabbitMQ:VirtualHost"] ?? "/"
+                };
 
+                // Enable SSL if configured
+                if (bool.TryParse(_configuration["RabbitMQ:Ssl"], out bool useSsl) && useSsl)
+                {
+                    factory.Ssl = new SslOption
+                    {
+                        Enabled = true,
+                        ServerName = factory.HostName
+                    };
+                }
             }
+
+            _connection = factory.CreateConnection();
+            Console.WriteLine("Successfully connected to RabbitMQ");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Failed to connect to RabbitMQ: " + ex.Message);
+            throw new InvalidOperationException("Could not connect to RabbitMQ", ex);
+
+        }
     }
 
     public void PublishMessage<T>(T message)
     {
-        if(_connection == null)
+        if (_connection == null)
         {
             throw new InvalidOperationException("RabbitMQ connection is not established.");
         }

@@ -1,7 +1,10 @@
 ﻿using Application.Extension;
 using Application.Interfaces.Repositories;
 using Domain.Entities.Common;
+using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using System.Linq;
 
 namespace Infrastructure.Persistence.Repositories
 {
@@ -399,7 +402,7 @@ namespace Infrastructure.Persistence.Repositories
 
             _dbSet.UpdateRange(entities);
             return Task.CompletedTask;
-        }
+        }        
 
         #endregion
 

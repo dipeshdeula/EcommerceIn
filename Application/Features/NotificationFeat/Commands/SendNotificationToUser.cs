@@ -1,9 +1,12 @@
-﻿using Application.Common;
+﻿/**
+ * This is just for testing purposes for now 
+ */
+using Application.Common;
 using Application.Interfaces.Services;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 
-namespace Application.Features.NotificationFeat.Command;
+namespace Application.Features.NotificationFeat.Commands;
 public record SendNotificationToUser
 (
     int Id,
@@ -39,6 +42,7 @@ public class SendNotificationToUserCommandHandler : IRequestHandler<SendNotifica
                 OrderId = notification.OrderId,
                 Title = notification.Title,
                 Message = notification.Message,
+                Status = "Pending",
                 Type = "OrderConfirmed",
                 OrderDate = DateTime.Now,
             };
