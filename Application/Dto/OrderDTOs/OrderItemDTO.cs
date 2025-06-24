@@ -14,7 +14,7 @@ namespace Application.Dto.OrderDTOs
         public int ProductId { get; set; } // Foreign key to Product
         public int Quantity { get; set; } // Quantity of the product in the order
         public decimal UnitPrice { get; set; } // Price per unit at the time of order
-        public decimal TotalPrice { get; private set; } // Total price for this order item
+        public decimal TotalPrice { get; set; } // Total price for this order item
 
         //  ADDED: Formatted properties
         public string FormattedUnitPrice => $"Rs.{UnitPrice:F2}";

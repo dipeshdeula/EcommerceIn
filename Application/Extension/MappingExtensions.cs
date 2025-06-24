@@ -482,6 +482,7 @@ namespace Application.Extension
                 ProductId = orderItem.ProductId,
                 Quantity = orderItem.Quantity,
                 UnitPrice = orderItem.UnitPrice,
+                TotalPrice = orderItem.Quantity * orderItem.UnitPrice,
                /* Product = orderItem.Product?.ToDTO(), // Map Product to ProductDTO
                 Order = null // Avoid circular reference*/
             };

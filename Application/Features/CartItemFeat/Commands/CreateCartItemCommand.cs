@@ -29,7 +29,7 @@ namespace Application.Features.CartItemFeat.Commands
         {
             try
             {
-                _logger.LogInformation("🛒 Processing add to cart: UserId={UserId}, ProductId={ProductId}, Quantity={Quantity}",
+                _logger.LogInformation("Processing add to cart: UserId={UserId}, ProductId={ProductId}, Quantity={Quantity}",
                     request.UserId, request.ProductId, request.Quantity);
 
                 // DIRECT SERVICE CALL (No RabbitMQ blocking)
@@ -54,7 +54,7 @@ namespace Application.Features.CartItemFeat.Commands
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to add item to cart: UserId={UserId}, ProductId={ProductId}",
+                _logger.LogError(ex, "Failed to add item to cart: UserId={UserId}, ProductId={ProductId}",
                     request.UserId, request.ProductId);
                 return Result<CartItemDTO>.Failure($"Failed to add item to cart: {ex.Message}");
             }

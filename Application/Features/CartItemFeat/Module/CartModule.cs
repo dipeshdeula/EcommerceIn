@@ -1,19 +1,13 @@
-﻿using Application.Features.CartItemFeat.Commands;
+﻿using Application.Dto.CartItemDTOs;
+using Application.Features.CartItemFeat.Commands;
 using Application.Features.CartItemFeat.Queries;
-using Application.Features.CategoryFeat.Commands;
-using Application.Features.CategoryFeat.Queries;
+using Application.Interfaces.Services;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Features.CartItemFeat.Module
 {
@@ -35,10 +29,10 @@ namespace Application.Features.CartItemFeat.Module
 
                 var result = await mediator.Send(command);
 
-              /*  if (result == null)
-                {
-                    return Results.BadRequest(new { message = "No response from the consumer." });
-                }*/
+                /*  if (result == null)
+                  {
+                      return Results.BadRequest(new { message = "No response from the consumer." });
+                  }*/
 
                 if (result == null || !result.Succeeded)
                 {
@@ -58,14 +52,15 @@ namespace Application.Features.CartItemFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapGet("/getCartItemByUserId",async(ISender mediator, [FromQuery] int userId, int PageNumber = 1, int PageSize = 10) => { 
-                var result = await mediator.Send(new GetCartByUserIdQuery(userId,PageNumber, PageSize));
+            app.MapGet("/getCartItemByUserId", async (ISender mediator, [FromQuery] int userId, int PageNumber = 1, int PageSize = 10) =>
+            {
+                var result = await mediator.Send(new GetCartByUserIdQuery(userId, PageNumber, PageSize));
                 if (result == null || !result.Succeeded)
                 {
-                    return Results.BadRequest(new { message = result?.Message ?? "An error occurred." , data = result?.Data});
+                    return Results.BadRequest(new { message = result?.Message ?? "An error occurred.", data = result?.Data });
                 }
 
-                return Results.Ok(new { message = result.Message,data= result.Data });
+                return Results.Ok(new { message = result.Message, data = result.Data });
             });
 
             app.MapPut("/updateCartItem", async (
@@ -78,17 +73,58 @@ namespace Application.Features.CartItemFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapDelete("/deleteCartItemByUserId", async (
-                int Id,int? UserId, ISender mediator) =>
+           
+            app.MapPost("/add-multiple-cart-items", async (
+                int userId,
+                List<AddToCartItemDTO> items,
+                ISender mediator
+                ) =>
             {
-                var command = new HardDeleteCartItemCommand(Id, UserId);
+                var command = new CreateCartItemsCommand(userId, items);
                 var result = await mediator.Send(command);
 
                 if (!result.Succeeded)
                     return Results.BadRequest(new { result.Message, result.Errors });
-                return Results.Ok(new { result.Message, result.Data });
 
-            });
+                return Results.Ok(new { result.Message, result.Data });
+            })
+            .RequireAuthorization()
+            .WithName("AddMultipleCartItems")
+            .WithSummary("Add multiple product items to the cart in one request");
+
+            //  app.MapDelete("/deleteCartItemByUserId", async (
+            //     int Id, int? UserId, ISender mediator) =>
+            // {
+            //     var command = new HardDeleteCartItemCommand(Id, UserId);
+            //     var result = await mediator.Send(command);
+
+            //     if (!result.Succeeded)
+            //         return Results.BadRequest(new { result.Message, result.Errors });
+            //     return Results.Ok(new { result.Message, result.Data });
+
+            // });
+
+
+            app.MapDelete("/remove-cart-item", async (
+                int cartItemId,
+                ICurrentUserService currentUserService,
+                ISender mediator
+                ) =>
+            {
+                if (string.IsNullOrEmpty(currentUserService.UserId))
+                    return Results.Unauthorized();
+
+                var command = new HardDeleteCartItemCommand(cartItemId, Convert.ToInt32(currentUserService.UserId));
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+
+                return Results.Ok(new { result.Message, result.Data });
+            })
+            .RequireAuthorization()
+            .WithName("RemoveCartItem")
+            .WithSummary("Remove a particular product item from the cart");
         }
     }
 }

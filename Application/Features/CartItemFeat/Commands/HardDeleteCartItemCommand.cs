@@ -39,7 +39,7 @@ namespace Application.Features.CartItemFeat.Commands
                 var UserId = Convert.ToInt32(_userService.UserId);
                 return await _unitOfWork.ExecuteInTransactionAsync(async () =>
                 {
-                    _logger.LogInformation("🗑️ Deleting cart item: CartItemId={CartItemId}, UserId={UserId}",
+                    _logger.LogInformation("Deleting cart item: CartItemId={CartItemId}, UserId={UserId}",
                         request.CartItemId, request.UserId);
 
                     // 1. Find cart item using your repository pattern
@@ -57,7 +57,7 @@ namespace Application.Features.CartItemFeat.Commands
                         var stockReleased = await _stockService.ReleaseStockAsync(cartItem.ProductId, cartItem.Quantity, cancellationToken);
                         if (!stockReleased)
                         {
-                            _logger.LogWarning("⚠️ Failed to release stock for ProductId={ProductId}, Quantity={Quantity}",
+                            _logger.LogWarning("Failed to release stock for ProductId={ProductId}, Quantity={Quantity}",
                                 cartItem.ProductId, cartItem.Quantity);
                         }
                     }
@@ -65,11 +65,11 @@ namespace Application.Features.CartItemFeat.Commands
                     // 3. Convert to DTO before deletion
                     var cartItemDto = cartItem.ToDTO();
 
-                    // 4. ✅ Hard delete using your repository's RemoveAsync method (better performance)
+                    // 4. Hard delete using your repository's RemoveAsync method (better performance)
                     await _unitOfWork.CartItems.RemoveAsync(cartItem, cancellationToken);
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                    _logger.LogInformation("✅ Cart item deleted successfully: CartItemId={CartItemId}",
+                    _logger.LogInformation("Cart item deleted successfully: CartItemId={CartItemId}",
                         request.CartItemId);
 
                     return Result<CartItemDTO>.Success(cartItemDto, "Cart item removed successfully");
@@ -77,7 +77,7 @@ namespace Application.Features.CartItemFeat.Commands
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to delete cart item: CartItemId={CartItemId}, UserId={UserId}",
+                _logger.LogError(ex, "Failed to delete cart item: CartItemId={CartItemId}, UserId={UserId}",
                     request.CartItemId, request.UserId);
                 return Result<CartItemDTO>.Failure($"Failed to remove cart item: {ex.Message}");
             }

@@ -9,7 +9,7 @@ namespace Application.Dto.CartItemDTOs
     public class AddToCartItemDTO
     {
         public int ProductId { get; set; }
-        public int UserId { get; set; }
+        //public int UserId { get; set; }
         public int Quantity { get; set; }
     }
 }
