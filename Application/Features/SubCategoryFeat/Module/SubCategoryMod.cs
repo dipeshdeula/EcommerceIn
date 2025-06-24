@@ -40,7 +40,7 @@ namespace Application.Features.SubCategoryFeat.Module
                          .Produces<SubCategoryDTO>(StatusCodes.Status200OK)
                          .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);*/
 
-            app.MapPost("/create-subCategory/{CategoryId}", async (
+            app.MapPost("/create-subCategory", async (
                 [FromQuery] int CategoryId, string Name,string Slug,string Description,IFormFile File, ISender mediator) =>
             {
                 var command = new CreateSubCategoryCommand(CategoryId, Name, Slug, Description, File);
