@@ -1,4 +1,5 @@
 ﻿using Application.Extension;
+using Application.Provider;
 using Carter;
 using Infrastructure.DependencyInjection;
 using Infrastructure.Hubs;
@@ -10,7 +11,7 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Text.Json.Serialization;
 
-
+EnvProvider.LoadEnv();
 var builder = WebApplication.CreateBuilder(args);
 
 
