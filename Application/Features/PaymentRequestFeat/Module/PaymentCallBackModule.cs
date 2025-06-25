@@ -26,9 +26,9 @@ namespace Application.Features.PaymentRequestFeat.Modules
         {
             var group = app.MapGroup("");
 
-
             group.MapGet("/esewa/success", async (
                 string? data,
+                HttpRequest request,
                 IServiceProvider serviceProvider,
                 ILogger<PaymentCallbackModule> logger) =>
             {
@@ -39,7 +39,7 @@ namespace Application.Features.PaymentRequestFeat.Modules
                     if (string.IsNullOrEmpty(data))
                     {
                         logger.LogError("No data received in eSewa success callback");
-                        return Results.Redirect("http://localhost:5173/payment/failure?error=no_data");
+                        return HandleCallbackResponse(request, false, "No data received", null, null, null, null, null);
                     }
 
                     // Decode Base64 data
@@ -56,7 +56,7 @@ namespace Application.Features.PaymentRequestFeat.Modules
                     if (responseData == null)
                     {
                         logger.LogError("Failed to deserialize eSewa response");
-                        return Results.Redirect("http://localhost:5173/payment/failure?error=invalid_response");
+                        return HandleCallbackResponse(request, false, "Invalid response", null, null, null, null, null);
                     }
 
                     logger.LogInformation("eSewa Callback: Status={Status}, Amount={Amount}, TransactionUuid={TransactionUuid}",
@@ -98,38 +98,43 @@ namespace Application.Features.PaymentRequestFeat.Modules
                             logger.LogInformation("Payment status updated: PaymentRequestId={PaymentRequestId}, OldStatus={OldStatus}, NewStatus={NewStatus}, OrderId={OrderId}",
                                 paymentRequestId, oldStatus, paymentRequest.PaymentStatus, paymentRequest.OrderId);
 
-                            //  Redirect to frontend with success
-                            var redirectUrl = isSuccess
-                                ? $"http://localhost:5173/payment/success?paymentId={paymentRequestId}&transactionId={responseData.TransactionUuid}&amount={responseData.TotalAmount}&status=verified"
-                                : $"http://localhost:5173/payment/failure?paymentId={paymentRequestId}&reason=payment_failed&transactionCode={responseData.TransactionCode}";
-
-                            return Results.Redirect(redirectUrl);
+                            return HandleCallbackResponse(
+                                request,
+                                isSuccess,
+                                isSuccess ? "Payment verified" : "Payment failed",
+                                paymentRequestId,
+                                responseData.TransactionUuid,
+                                responseData.TotalAmount,
+                                responseData.TransactionCode,
+                                "esewa"
+                            );
                         }
                         else
                         {
                             logger.LogError("Payment request not found: PaymentRequestId={PaymentRequestId}", paymentRequestId);
-                            return Results.Redirect("http://localhost:5173/payment/failure?error=payment_not_found");
+                            return HandleCallbackResponse(request, false, "Payment request not found", paymentRequestId, null, null, null, "esewa");
                         }
                     }
                     else
                     {
                         logger.LogError("Invalid transaction UUID format: {TransactionUuid}", responseData.TransactionUuid);
-                        return Results.Redirect("http://localhost:5173/payment/failure?error=invalid_transaction_format");
+                        return HandleCallbackResponse(request, false, "Invalid transaction format", null, responseData.TransactionUuid, null, null, "esewa");
                     }
                 }
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "Error processing eSewa success callback");
-                    return Results.Redirect("http://localhost:5173/payment/failure?error=callback_processing_error");
+                    return HandleCallbackResponse(request, false, "Callback processing error", null, null, null, null, "esewa");
                 }
             })
             .WithName("EsewaSuccessCallback")
             .WithSummary("Handle eSewa payment success callback")
+            .Produces(200)
             .Produces(302);
-
 
             group.MapGet("/esewa/failure", async (
                 string? data,
+                HttpRequest request,
                 ILogger<PaymentCallbackModule> logger) =>
             {
                 logger.LogWarning("eSewa failure callback received");
@@ -156,11 +161,11 @@ namespace Application.Features.PaymentRequestFeat.Modules
                     }
                 }
 
-                var failureUrl = $"http://localhost:5173/payment/failure?transactionId={transactionId}&transactionCode={transactionCode}&provider=esewa&reason=payment_cancelled";
-                return Results.Redirect(failureUrl);
+                return HandleCallbackResponse(request, false, "Payment cancelled", null, transactionId, null, transactionCode, "esewa");
             })
             .WithName("EsewaFailureCallback")
             .WithSummary("Handle eSewa payment failure callback")
+            .Produces(200)
             .Produces(302);
 
             // khalti success callback
@@ -170,6 +175,7 @@ namespace Application.Features.PaymentRequestFeat.Modules
                 decimal? amount,
                 string? purchase_order_id,
                 string? transaction_id,
+                HttpRequest request,
                 IServiceProvider serviceProvider,
                 ILogger<PaymentCallbackModule> logger) =>
             {
@@ -180,7 +186,7 @@ namespace Application.Features.PaymentRequestFeat.Modules
                     if (string.IsNullOrEmpty(pidx))
                     {
                         logger.LogError("No pidx received in Khalti success callback");
-                        return Results.Redirect("http://localhost:5173/payment/failure?error=no_pidx");
+                        return HandleCallbackResponse(request, false, "No pidx received", null, pidx, amount?.ToString(), null, "khalti");
                     }
 
                     using var scope = serviceProvider.CreateScope();
@@ -195,7 +201,7 @@ namespace Application.Features.PaymentRequestFeat.Modules
                     if (paymentRequest == null)
                     {
                         logger.LogError("Payment request not found for Pidx: {Pidx}", pidx);
-                        return Results.Redirect("http://localhost:5173/payment/failure?error=payment_not_found");
+                        return HandleCallbackResponse(request, false, "Payment request not found", null, pidx, amount?.ToString(), null, "khalti");
                     }
 
                     // Verify payment with Khalti
@@ -221,25 +227,42 @@ namespace Application.Features.PaymentRequestFeat.Modules
                     {
                         logger.LogInformation(" Khalti payment verification successful: PaymentRequestId={PaymentRequestId}", paymentRequest.Id);
 
-                        var successUrl = $"http://localhost:5173/payment/success?paymentId={paymentRequest.Id}&transactionId={pidx}&amount={amount}&status=verified&provider=khalti";
-                        return Results.Redirect(successUrl);
+                        return HandleCallbackResponse(
+                            request,
+                            true,
+                            "Payment verified",
+                            paymentRequest.Id,
+                            pidx,
+                            amount?.ToString(),
+                            null,
+                            "khalti"
+                        );
                     }
                     else
                     {
                         logger.LogError("Khalti payment verification failed: {Error}", verificationResult.Message);
 
-                        var failureUrl = $"http://localhost:5173/payment/failure?paymentId={paymentRequest.Id}&reason=verification_failed&provider=khalti&error={Uri.EscapeDataString(verificationResult.Message ?? "")}";
-                        return Results.Redirect(failureUrl);
+                        return HandleCallbackResponse(
+                            request,
+                            false,
+                            verificationResult.Message ?? "Verification failed",
+                            paymentRequest.Id,
+                            pidx,
+                            amount?.ToString(),
+                            null,
+                            "khalti"
+                        );
                     }
                 }
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "Error processing Khalti success callback");
-                    return Results.Redirect("http://localhost:5173/payment/failure?error=callback_processing_error&provider=khalti");
+                    return HandleCallbackResponse(request, false, "Callback processing error", null, pidx, amount?.ToString(), null, "khalti");
                 }
             })
             .WithName("KhaltiSuccessCallback")
             .WithSummary("Handle Khalti payment success callback")
+            .Produces(200)
             .Produces(302);
 
             // Khalti Failure Callback
@@ -247,16 +270,17 @@ namespace Application.Features.PaymentRequestFeat.Modules
                 string? pidx,
                 string? status,
                 string? message,
+                HttpRequest request,
                 ILogger<PaymentCallbackModule> logger) =>
             {
                 logger.LogWarning("❌ Khalti failure callback received: Pidx={Pidx}, Status={Status}, Message={Message}",
                     pidx, status, message);
 
-                var failureUrl = $"http://localhost:5173/payment/failure?pidx={pidx}&provider=khalti&reason=payment_cancelled_or_failed&message={Uri.EscapeDataString(message ?? "")}";
-                return Results.Redirect(failureUrl);
+                return HandleCallbackResponse(request, false, message ?? "Payment cancelled or failed", null, pidx, null, null, "khalti");
             })
             .WithName("KhaltiFailureCallback")
             .WithSummary("Handle Khalti payment failure callback")
+            .Produces(200)
             .Produces(302);
 
             group.MapPost("/khalti/webhook", async (
@@ -278,7 +302,6 @@ namespace Application.Features.PaymentRequestFeat.Modules
                              logger.LogError("No payload received in Khalti webhook");
                              return Results.BadRequest(new { message = "Empty payload" });
                          }
-
 
                          // Optionally, verify signature/header if Khalti provides one
 
@@ -338,7 +361,7 @@ namespace Application.Features.PaymentRequestFeat.Modules
                  .Produces(500);
 
             group.MapPost("/cod/collect-payment", async (
-                     int PaymentRequestId,                    
+                     int PaymentRequestId,
                      string DeliveryStatus, // "Delivered", "PartialPayment", "PaymentRefused"
                      string? Notes,
                      ICurrentUserService currentUserService,
@@ -355,7 +378,7 @@ namespace Application.Features.PaymentRequestFeat.Modules
 
                      var command = new UpdateCODPaymentCommand(
                          PaymentRequestId,
-                         deliveryPersonId,                        
+                         deliveryPersonId,
                          DeliveryStatus,
                          Notes);
 
@@ -376,30 +399,70 @@ namespace Application.Features.PaymentRequestFeat.Modules
                  .WithName("CollectCODPaymentDelivery")
                  .WithSummary("Update COD payment status after delivery");
         }
+
+        // Helper to detect AJAX/API request and return JSON or redirect
+        private static IResult HandleCallbackResponse(
+            HttpRequest request,
+            bool isSuccess,
+            string message,
+            int? paymentId,
+            string? transactionId,
+            string? amount,
+            string? transactionCode,
+            string? provider)
+        {
+            if (IsAjaxRequest(request))
+            {
+                return Results.Ok(new
+                {
+                    success = isSuccess,
+                    message,
+                    paymentId,
+                    transactionId,
+                    amount,
+                    transactionCode,
+                    provider
+                });
+            }
+            else
+            {
+                // Build redirect URL for browser-based requests
+                string baseUrl = "http://localhost:5173/payment/";
+                string url = isSuccess
+                    ? $"{baseUrl}success?paymentId={paymentId}&transactionId={transactionId}&amount={amount}&status=verified&provider={provider}"
+                    : $"{baseUrl}failure?paymentId={paymentId}&transactionId={transactionId}&transactionCode={transactionCode}&provider={provider}&reason={Uri.EscapeDataString(message ?? "")}";
+                return Results.Redirect(url);
+            }
+        }
+
+        private static bool IsAjaxRequest(HttpRequest request)
+        {
+            return request.Headers["Accept"].ToString().Contains("application/json") ||
+                   request.Headers["X-Requested-With"] == "XMLHttpRequest";
+        }
     }
-}
 
+    public class EsewaCallbackResponse
+    {
+        [JsonPropertyName("transaction_code")]
+        public string TransactionCode { get; set; } = string.Empty;
 
-public class EsewaCallbackResponse
-{
-    [JsonPropertyName("transaction_code")]
-    public string TransactionCode { get; set; } = string.Empty;
+        [JsonPropertyName("status")]
+        public string Status { get; set; } = string.Empty;
 
-    [JsonPropertyName("status")]
-    public string Status { get; set; } = string.Empty;
+        [JsonPropertyName("total_amount")]
+        public string TotalAmount { get; set; } = string.Empty;
 
-    [JsonPropertyName("total_amount")]
-    public string TotalAmount { get; set; } = string.Empty;
+        [JsonPropertyName("transaction_uuid")]
+        public string TransactionUuid { get; set; } = string.Empty;
 
-    [JsonPropertyName("transaction_uuid")]
-    public string TransactionUuid { get; set; } = string.Empty;
+        [JsonPropertyName("product_code")]
+        public string ProductCode { get; set; } = string.Empty;
 
-    [JsonPropertyName("product_code")]
-    public string ProductCode { get; set; } = string.Empty;
+        [JsonPropertyName("signed_field_names")]
+        public string SignedFieldNames { get; set; } = string.Empty;
 
-    [JsonPropertyName("signed_field_names")]
-    public string SignedFieldNames { get; set; } = string.Empty;
-
-    [JsonPropertyName("signature")]
-    public string Signature { get; set; } = string.Empty;
+        [JsonPropertyName("signature")]
+        public string Signature { get; set; } = string.Empty;
+    }
 }

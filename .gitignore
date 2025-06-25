@@ -21,3 +21,4 @@ Ecommerce Backend API/appsettings.Development.json
 Infrastructure/Migrations/**
 
 *.env
+

@@ -64,10 +64,45 @@ services:
       - JwtSettings__Issuer=EcommerceInstant
       - JwtSettings__Audience=EcommerceInstant
       - JwtSettings__ExpirationMinutes=60
+
+      # API Settings
+      - ApiSettings__BaseUrl=https://110.34.2.30:5010/api/signalr/
+
       # File Upload Settings (ADDED: Missing file configuration)
+      - FileSettings__BaseUrl=http://110.34.2.30:5013
       - FileSettings__Root=wwwroot
       - FileSettings__FileLocation=uploads
-      - FileSettings__BaseUrl=http://110.34.2.30:5013
+
+       # SMTP Settings
+      - Smtp__Host=smtp.gmail.com
+      - Smtp__Port=587
+      - Smtp__Username=deuladipesh94@gmail.com
+      - Smtp__Password=sdgw pgxy yzeg expx
+
+      # Email Settings
+      - EmailSettings__SmtpHost=smtp.gmail.com
+      - EmailSettings__SmtpPort=587
+      - EmailSettings__FromEmail=getinstantmart.contactus@gmail.com
+      - EmailSettings__FromPassword=pzev elzr lpsk fwuh
+      - EmailSettings__FromName=GetInstantMart
+      - EmailSettings__EnableSsl=true
+      - EmailSettings__Timeout=30000
+
+          
+      # Business Settings
+      - BusinessSettings__CompanyName=GetInstantMart
+      - BusinessSettings__CompanyTagline=Fast delivery, great service, every time.
+      - BusinessSettings__SupportEmail=support@getinstantmart.com
+      - BusinessSettings__SupportPhone=+977-XXX-XXXX
+      - BusinessSettings__WebsiteUrl=https://getinstantmart.com
+      - BusinessSettings__DefaultDeliveryTimeMinutes=25
+      - BusinessSettings__BusinessHours__Start=08:00
+      - BusinessSettings__BusinessHours__End=22:00
+      - BusinessSettings__BusinessHours__Timezone=Asia/Kathmandu
+          
+      # OTP Settings
+      - OtpSettings__ExpirationMinutes=5
+      
 
       # RabbitMQ Settings
       - RabbitMQ__HostName=rabbitmq
@@ -78,22 +113,23 @@ services:
       - RabbitMQ__OrderPlacedQueue=OrderPlacedQueue
       - RabbitMQ__OrderConfirmedQueue=OrderConfirmedQueue
       - RabbitMQ__Ssl=false
-      # SMTP Settings (ADDED: Missing SMTP configuration)
-      - Smtp__Host=smtp.gmail.com
-      - Smtp__Port=587
-      - Smtp__Username=deuladipesh94@gmail.com
-      - Smtp__Password=sdgw pgxy yzeg expx
-      # Application Settings
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:8080
-      #- FileSettings__BaseUrl=http://110.34.2.30:5013
+      - RabbitMQ__Uri=
 
-      # Payment Gateway Settings
-      - PaymentGateways__Khalti__SecretKey=live_secret_key_68791341fdd94846a146f0457ff7b455ey
+      # Google Auth
+      - Google__ClientId=1081137863319-s1t3r18jk69v0tvni1eirdidv550no7j.apps.googleusercontent.com
+
+       # Payment Gateway Settings
+      - PaymentGateways__Environment=Development
+      - PaymentGateways__Khalti__SecretKey=5b48047469254382a3c858b083c80991
       - PaymentGateways__Khalti__BaseUrl=https://dev.khalti.com/api/v2/
       - PaymentGateways__Esewa__MerchantId=EPAYTEST
-      - PaymentGateways__Esewa__BaseUrl=https://rc-epay.esewa.com.np/api/epay/main/v2/
       - PaymentGateways__Esewa__SecretKey=8gBm/:&EnhH.1/q
+      - PaymentGateways__Esewa__BaseUrl=https://rc-epay.esewa.com.np
+      
+        # Application Settings
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+
     expose:
       - "8080"
     depends_on:
