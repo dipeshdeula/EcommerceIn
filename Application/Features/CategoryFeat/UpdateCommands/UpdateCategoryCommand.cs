@@ -61,6 +61,7 @@ namespace Application.Features.CategoryFeat.UpdateCommands
 
             // Save changes to the database
             await _categoryRepository.UpdateAsync(category, cancellationToken);
+            await _categoryRepository.SaveChangesAsync(cancellationToken);
 
             // Map updated category to DTO
             var categoryDTO = new CategoryDTO

@@ -20,11 +20,11 @@ namespace Application.Features.ProductFeat.Validators
 
             RuleFor(x => x.updateProductDto.Name)
                 .NotEmpty().WithMessage("Name is required.")
-                .MaximumLength(100).WithMessage("Name cannot exceed 100 characters.")
-                .MustAsync(async (command, name, cancellation) =>
+                .MaximumLength(100).WithMessage("Name cannot exceed 100 characters.");
+                /*.MustAsync(async (command, name, cancellation) =>
                     !await _productRepository.AnyAsync(p =>
                         p.Name.ToLower() == name.ToLower() && p.Id != command.ProductId))
-                .WithMessage("Another product with the same name already exists.");
+                .WithMessage("Another product with the same name already exists.");*/
 
             RuleFor(x => x.updateProductDto.Slug)
                 .NotEmpty().WithMessage("Slug is required.")

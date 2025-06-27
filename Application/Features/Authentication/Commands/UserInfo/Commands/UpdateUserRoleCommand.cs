@@ -36,13 +36,13 @@ namespace Application.Features.Authentication.Commands.UserInfo.Commands
         public async Task<Result<string>> Handle(UpdateUserRoleCommand request, CancellationToken cancellationToken)
         {
             // Get role from current user service
-            var role = _currentUserService.Role;
+            /*var role = _currentUserService.Role;
             if (string.IsNullOrEmpty(role) ||
                 !(role.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
                   role.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase)))
             {
                 return Result<string>.Failure("You are not authorized to update user roles.");
-            }
+            }*/
 
             var checkUser = await _userRepository.FirstOrDefaultAsync(x => x.Id == request.UserId && !x.IsDeleted);
 

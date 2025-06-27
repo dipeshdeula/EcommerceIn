@@ -25,10 +25,10 @@ namespace Application.Features.CategoryFeat.UpdateCommands
             When(x => !string.IsNullOrWhiteSpace(x.Name), () =>
             {
                 RuleFor(x => x.Name!)
-                    .MaximumLength(100).WithMessage("Name cannot exceed 100 characters.")
-                    .MustAsync(async (command, name, _) =>
+                    .MaximumLength(100).WithMessage("Name cannot exceed 100 characters.");
+                    /*.MustAsync(async (command, name, _) =>
                         !await _subSubCategoryRepository.AnyAsync(s => s.Name == name && s.Id != command.SubSubCategoryId))
-                    .WithMessage("Another sub-subcategory with the same name already exists.");
+                    .WithMessage("Another sub-subcategory with the same name already exists.");*/
             });
 
             When(x => !string.IsNullOrWhiteSpace(x.Slug), () =>

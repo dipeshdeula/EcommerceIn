@@ -33,7 +33,8 @@ namespace Application.Features.DashboardFeat.Module
 
                 return Results.Ok(new { result.Message, result.Data });
 
-            }).RequireAuthorization()
+            })
+                /*.RequireAuthorization()*/
             .WithName("GetAdminDashboard")
             .WithSummary("Get admin dashboard statistics");
         }

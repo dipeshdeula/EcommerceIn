@@ -21,7 +21,7 @@ namespace Application.Features.Authentication.Module
         }
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
-            app = app.MapGroup("user");
+            app = app.MapGroup("/user");
 
             app.MapGet("/getUsers", async ([FromServices] ISender mediator, int PageNumber = 1, int PageSize = 10) =>
             {

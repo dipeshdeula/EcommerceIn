@@ -22,7 +22,7 @@ namespace Application.Features.Authentication.Module
         }
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
-            app = app.MapGroup("");
+            app = app.MapGroup("/admin");
 
             app.MapPut("/updateUserRole", async (
                 [FromQuery] int UserId,
@@ -40,7 +40,8 @@ namespace Application.Features.Authentication.Module
 
                                 return Results.Ok(new { result.Message, result.Data });
 
-                            }).RequireAuthorization()
+                            })
+                /*.RequireAuthorization()*/
                             .DisableAntiforgery()
                               .Accepts<UpdateUserRoleCommand>("multipart/form-data")
                               .Produces<UpdateUserRoleDTO>(StatusCodes.Status200OK)
