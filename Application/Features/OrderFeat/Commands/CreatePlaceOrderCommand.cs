@@ -68,6 +68,7 @@ namespace Application.Features.OrderFeat.Commands
                 var orderItem = new OrderItem
                 {
                     ProductId = cartItem.ProductId,
+                    ProductName = product.Name,
                     Quantity = cartItem.Quantity,
                     UnitPrice = cartItem.Product.CostPrice
                 };

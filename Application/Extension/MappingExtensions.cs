@@ -481,6 +481,7 @@ namespace Application.Extension
                 Id = orderItem.Id,
                 OrderId = orderItem.OrderId,
                 ProductId = orderItem.ProductId,
+                ProductName = orderItem.ProductName,
                 Quantity = orderItem.Quantity,
                 UnitPrice = orderItem.UnitPrice,
                 TotalPrice = orderItem.Quantity * orderItem.UnitPrice,
