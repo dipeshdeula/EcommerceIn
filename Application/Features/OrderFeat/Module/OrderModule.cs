@@ -44,6 +44,15 @@ namespace Application.Features.OrderFeat.Module
 
             });
 
+            app.MapGet("/getOrderById", async (ISender mediator, int Id) =>
+            {
+                var command = new GetOrderByIdQuery(Id);
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
             app.MapGet("/getAllOrderByUserId", async (ISender mediator, int UserId, int PageNumber = 1, int PageSize = 10) =>
             {
                 var command = new GetOrderByUserIdQuery(UserId, PageNumber, PageSize);
