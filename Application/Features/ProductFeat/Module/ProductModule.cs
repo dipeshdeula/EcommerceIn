@@ -41,7 +41,7 @@ namespace Application.Features.ProductFeat.Module
                 int PageSize = 10,
                 int? UserId = null,
                 bool OnSaleOnly = false,
-                bool PrioritizeEventProducts = true, 
+                bool PrioritizeEventProducts = false, 
                 string? SearchTerm = null) =>
             {
                 var result = await mediator.Send(new GetAllProductQuery(

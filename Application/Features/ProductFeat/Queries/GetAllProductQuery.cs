@@ -15,7 +15,7 @@ namespace Application.Features.ProductFeat.Queries
         int PageSize = 10,
         int? UserId = null,
         bool OnSaleOnly = false,
-        bool PrioritizeEventProducts = true, 
+        bool PrioritizeEventProducts = false, 
         string? SearchTerm = null
     ) : IRequest<Result<IEnumerable<ProductDTO>>>;
 
@@ -56,7 +56,7 @@ namespace Application.Features.ProductFeat.Queries
                         {
                             eventPredicate = p => !p.IsDeleted &&
                                                 eventProductIds.Contains(p.Id) &&
-                                                p.Name.Contains(request.SearchTerm);
+                                                p.Name.ToLower().Contains(request.SearchTerm.ToLower());
                         }
 
                         // Get event products first
@@ -66,7 +66,7 @@ namespace Application.Features.ProductFeat.Queries
                             take: Math.Min(request.PageSize, eventProductIds.Count),
                             includeProperties: "Product.Images",
                             cancellationToken: cancellationToken)
-                            .QuickSortDesc(p => p.Id);
+                            .QuickSort(p => p.Name);
 
                         var eventProductDTOs = eventProducts.Select(p => p.ToDTO()).ToList();
                         await eventProductDTOs.ApplyPricingAsync(_pricingService, request.UserId, cancellationToken);
@@ -85,7 +85,7 @@ namespace Application.Features.ProductFeat.Queries
                 var remainingSlots = request.PageSize - productDTOs.Count;
                 if (remainingSlots > 0)
                 {
-                    var existingProductIds = productDTOs.Select(p => p.Id).ToList();
+                    var existingProductIds = productDTOs.Select(p => p.Id);
 
                     // Build predicate for regular products
                     System.Linq.Expressions.Expression<Func<Product, bool>> regularPredicate = p =>
@@ -95,16 +95,16 @@ namespace Application.Features.ProductFeat.Queries
                     {
                         regularPredicate = p => !p.IsDeleted &&
                                               !existingProductIds.Contains(p.Id) &&
-                                              p.Name.Contains(request.SearchTerm);
+                                              p.Name.ToLower().Contains(request.SearchTerm.ToLower());
                     }
 
                     var regularProducts = await _productRepository.GetAllAsync(
                         predicate: regularPredicate,
-                        orderBy: query => query.OrderByDescending(p => p.Id),
                         skip: request.PrioritizeEventProducts ? 0 : (request.PageNumber - 1) * request.PageSize,
                         take: remainingSlots,
                         includeProperties: "Images",
-                        cancellationToken: cancellationToken);
+                        cancellationToken: cancellationToken)
+                        .QuickSort(p=>p.Name);
 
                     var regularProductDTOs = regularProducts.Select(p => p.ToDTO()).ToList();
                     await regularProductDTOs.ApplyPricingAsync(_pricingService, request.UserId, cancellationToken);

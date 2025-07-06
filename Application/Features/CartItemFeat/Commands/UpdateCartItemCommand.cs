@@ -35,7 +35,7 @@ namespace Application.Features.CartItemFeat.Commands
             cartItem.Quantity = request.Quantity ?? cartItem.Quantity;
 
             await _cartItemRepository.UpdateAsync(cartItem,cancellationToken);
-
+            await _cartItemRepository.SaveChangesAsync(cancellationToken);
             return Result<CartItemDTO>.Success(cartItem.ToDTO(), "Cart item updated successfully");
         }
     }

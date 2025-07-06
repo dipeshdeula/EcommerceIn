@@ -13,11 +13,9 @@ using System.Threading.Tasks;
 
 namespace Application.Features.OrderFeat.Queries
 {
-    public record GetOrderByIdQuery (int id) : IRequest<Result<IEnumerable<OrderDTO>>>;
+    public record GetOrderByIdQuery (int id) : IRequest<Result<OrderDTO>>;
 
-    
-
-    public class GetOrderByIdQueryHandler : IRequestHandler<GetOrderByIdQuery, Result<IEnumerable<OrderDTO>>>
+    public class GetOrderByIdQueryHandler : IRequestHandler<GetOrderByIdQuery, Result<OrderDTO>>
     {
         private readonly IOrderRepository _orderRepository;
         public GetOrderByIdQueryHandler(IOrderRepository orderRepository)
@@ -25,21 +23,19 @@ namespace Application.Features.OrderFeat.Queries
             _orderRepository = orderRepository;
             
         }
-        public async Task<Result<IEnumerable<OrderDTO>>> Handle(GetOrderByIdQuery request, CancellationToken cancellationToken)
+        public async Task<Result<OrderDTO>> Handle(GetOrderByIdQuery request, CancellationToken cancellationToken)
         {
             try
             {
-                var orders = await _orderRepository.GetQueryable().Where(
+                var order = await _orderRepository.GetQueryable().Where(
                     o => o.Id == request.id && !o.IsDeleted)
-                     .Include(o => o.Items).ToListAsync(cancellationToken);
+                     .Include(o => o.Items).FirstOrDefaultAsync();
 
-                if (!orders.Any())
+                if (order is null)
                 {
-                    return Result<IEnumerable<OrderDTO>>.Failure("Order not found");
+                    return Result<OrderDTO>.Failure("Order not found");
                 }
-
-                var orderDTOs = orders.Select(o => o.ToDTO()).ToList();
-                return Result<IEnumerable<OrderDTO>>.Success(orderDTOs, "order fetched successfully");
+                return Result<OrderDTO>.Success(order.ToDTO(), "order fetched successfully");
             }
             catch (Exception ex)
             {
