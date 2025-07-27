@@ -36,7 +36,6 @@ namespace Application.Features.Authentication.Validation
                 .Must(email => Regex.IsMatch(email.Trim(),
                     @"^(?=.{6,254}$)[A-Za-z]{3,}[A-Za-z0-9._%+-]*@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}$"))
                     .WithMessage("Email must start with at least 3 letters, contain no spaces, and have a valid domain")
-                .MustAsync(async (model, email, cancellation) => await IsEmailUniqueAsync(model.Id, email.Trim().ToLowerInvariant()))
                 .WithMessage("Email already exists");
 
             RuleFor(x => x.updateUser.Password)

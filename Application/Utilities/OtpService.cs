@@ -1,4 +1,5 @@
-﻿using Domain.Entities;
+﻿using Application.Interfaces.Services;
+using Domain.Entities;
 using Domain.Settings;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Application.Utilities
 {
-    public class OtpService
+    public class OtpService : IOtpService
     {
         private readonly IMemoryCache _memoryCache;
         private readonly IConfiguration _configuration;

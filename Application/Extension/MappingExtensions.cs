@@ -87,6 +87,7 @@ namespace Application.Extension
                 Slug = category.Slug,
                 Description = category.Description,
                 ImageUrl = category.ImageUrl,
+                IsDeleted = category.IsDeleted,
                 SubCategories = category.SubCategories.Select(sc => sc.ToDTO()).ToList() // Map subcategories
 
             };
@@ -102,6 +103,7 @@ namespace Application.Extension
                 Slug = subCategory.Slug,
                 Description = subCategory.Description,
                 ImageUrl = subCategory.ImageUrl,
+                IsDeleted = subCategory.IsDeleted,
                 SubSubCategories = subCategory.SubSubCategories.Select(ssc => ssc.ToDTO()).ToList() // Map sub-subcategories
             };
         }
@@ -116,6 +118,7 @@ namespace Application.Extension
                 Slug = subSubCategory.Slug,
                 Description = subSubCategory.Description,
                 ImageUrl = subSubCategory.ImageUrl,
+                IsDeleted = subSubCategory.IsDeleted,
                 SubCategoryId = subSubCategory.SubCategoryId,
                 Products = subSubCategory.Products.Select(p => p.ToDTO()).ToList() // Map products
             };

@@ -31,10 +31,10 @@ namespace Application.Features.SubCategoryFeat.Queries
 
             // Fetch sub-categories with pagination
             var subCategories = await _subCategoryRepository.GetAllAsync(
-                //orderBy: query => query.OrderByDescending(subCategory => subCategory.Id),
+                orderBy: query => query.OrderByDescending(subCategory => subCategory.Id),
                 skip: (request.PageNumber - 1) * request.PageSize,
-                take: request.PageSize, cancellationToken: cancellationToken)
-                .QuickSortDesc(sc => sc.Id);
+                take: request.PageSize, cancellationToken: cancellationToken);
+               
 
             // Map subCategories to DTOs
             var subCategoryDTOs = subCategories.Select(cd => cd.ToDTO()).ToList();

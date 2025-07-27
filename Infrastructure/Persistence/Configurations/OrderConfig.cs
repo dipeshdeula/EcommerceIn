@@ -13,7 +13,7 @@ namespace Infrastructure.Persistence.Configurations
             builder.HasOne(o => o.User)
                    .WithMany()
                    .HasForeignKey(o => o.UserId)
-                   .OnDelete(DeleteBehavior.Restrict);
+                   .OnDelete(DeleteBehavior.Cascade);
             builder.Property(o => o.PaymentStatus)
                 .HasMaxLength(50).HasDefaultValue("Pending");
 

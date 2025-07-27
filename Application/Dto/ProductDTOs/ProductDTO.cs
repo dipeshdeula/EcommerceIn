@@ -20,7 +20,7 @@ namespace Application.Dto.ProductDTOs
         public int Reviews { get; set; }
         public decimal Rating { get; set; }
         public string Dimensions { get; set; } = string.Empty;
-        public bool IsDeleted { get; set; }
+        public bool IsDeleted { get; set; } = false;
         public int CategoryId { get; set; }
         public int SubSubCategoryId { get; set; }
 

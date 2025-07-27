@@ -22,7 +22,7 @@ namespace Infrastructure.Persistence.Repositories
 
         public async Task<User> GetByEmailAsync(string email)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            return await _context.Users.Where(u=>!u.IsDeleted).FirstOrDefaultAsync(u => u.Email == email);
         }
 
         public override async Task<User> FindByIdAsync(object id)

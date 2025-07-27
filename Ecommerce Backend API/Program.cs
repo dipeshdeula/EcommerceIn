@@ -83,15 +83,30 @@ Console.WriteLine($"eSewa Merchant ID: {esewaMerchantId}");
 Console.WriteLine($"eSewa Base URL: {esewaBaseUrl}");
 Console.WriteLine($"eSewa Secret Key: {esewaSecret}");
 
-if (string.IsNullOrEmpty(khaltiKey) || string.IsNullOrEmpty(khaltiBaseUrl))
+// ✅ Skip validation in Test environment
+if (!builder.Environment.IsEnvironment("Test"))
 {
-    throw new InvalidOperationException("Khalti SecretKey or BaseUrl is not configured in appsettings.json");
+    // Only validate in non-test environments
+    if (string.IsNullOrEmpty(khaltiKey) || string.IsNullOrEmpty(khaltiBaseUrl))
+    {
+        throw new InvalidOperationException("Khalti SecretKey or BaseUrl is not configured in appsettings.json");
+    }
+
+    if (string.IsNullOrEmpty(esewaMerchantId) || string.IsNullOrEmpty(esewaBaseUrl))
+    {
+        throw new InvalidOperationException("eSewa MerchantId or BaseUrl is not configured in appsettings.json");
+    }
 }
 
-if (string.IsNullOrEmpty(esewaMerchantId) || string.IsNullOrEmpty(esewaBaseUrl))
-{
-    throw new InvalidOperationException("eSewa MerchantId or BaseUrl is not configured in appsettings.json");
-}
+// if (string.IsNullOrEmpty(khaltiKey) || string.IsNullOrEmpty(khaltiBaseUrl))
+// {
+//     throw new InvalidOperationException("Khalti SecretKey or BaseUrl is not configured in appsettings.json");
+// }
+
+// if (string.IsNullOrEmpty(esewaMerchantId) || string.IsNullOrEmpty(esewaBaseUrl))
+// {
+//     throw new InvalidOperationException("eSewa MerchantId or BaseUrl is not configured in appsettings.json");
+// }
 
 // Optional: Configure named HTTP clients for Khalti and eSewa (if needed)
 builder.Services.AddHttpClient("KhaltiClient", client =>
@@ -252,3 +267,10 @@ app.MapGet("/health", async (MainDbContext db) => {
 
 
 app.Run();
+
+
+public partial class Program
+{
+    // This partial class is required for the WebApplicationFactory to work correctly
+    // in integration tests. It allows the factory to create an instance of the Program class.
+}

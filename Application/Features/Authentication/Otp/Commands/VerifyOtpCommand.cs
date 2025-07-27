@@ -3,6 +3,7 @@ using Application.Common.Helper;
 using Application.Dto.AuthDTOs;
 using Application.Features.Authentication.Commands;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
 using Application.Utilities;
 using MediatR;
 
@@ -13,9 +14,9 @@ namespace Application.Features.Authentication.Otp.Commands
     public class VerifyOtpCommandHandler : IRequestHandler<VerifyOtpCommand, Result<RegisterCommand>>
     {
         private readonly IUserRepository _userRepository;
-        private readonly OtpService _otpService;
+        private readonly IOtpService _otpService;
 
-        public VerifyOtpCommandHandler(IUserRepository userRepository, OtpService otpService)
+        public VerifyOtpCommandHandler(IUserRepository userRepository, IOtpService otpService)
         {
             _userRepository = userRepository;
             _otpService = otpService;

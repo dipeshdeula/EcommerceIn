@@ -23,9 +23,9 @@ namespace Application.Features.Authentication.Commands
         private readonly IFileServices _fileService;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
-        private readonly OtpService _otpService;
+        private readonly IOtpService _otpService;
 
-        public RegisterCommandHandler(IUserRepository userRepository, IFileServices fileService, IEmailService emailService, IConfiguration configuration, OtpService otpService)
+        public RegisterCommandHandler(IUserRepository userRepository, IFileServices fileService, IEmailService emailService, IConfiguration configuration, IOtpService otpService)
         {
             _userRepository = userRepository;
             _fileService = fileService;

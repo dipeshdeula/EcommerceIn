@@ -240,6 +240,7 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IEventRuleRepository, EventRuleRepository>();
             services.AddScoped<IProductPricingService, ProductPricingService>();
             services.AddScoped<ICurrentUserService,CurrentUserService>();
+            services.AddScoped<IOtpService,OtpService>();
 
             services.AddScoped<ICartItemRepository, CartItemRepository>();
             services.AddScoped<INotificationRepository, NotificationRepository>();

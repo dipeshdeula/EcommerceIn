@@ -62,11 +62,11 @@ namespace Application.Features.ProductFeat.Queries
                         // Get event products first
                         var eventProducts = await _productRepository.GetAllAsync(
                             predicate: eventPredicate,
-                            //orderBy: query => query.OrderByDescending(p => p.Id),
+                            orderBy: query => query.OrderByDescending(p => p.Id),
                             take: Math.Min(request.PageSize, eventProductIds.Count),
                             includeProperties: "Product.Images",
-                            cancellationToken: cancellationToken)
-                            .QuickSortDesc(p => p.Id);
+                            cancellationToken: cancellationToken);
+                          
 
                         var eventProductDTOs = eventProducts.Select(p => p.ToDTO()).ToList();
                         await eventProductDTOs.ApplyPricingAsync(_pricingService, request.UserId, cancellationToken);

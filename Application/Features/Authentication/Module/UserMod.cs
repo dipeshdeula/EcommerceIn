@@ -91,7 +91,7 @@ namespace Application.Features.Authentication.Module
                 return Results.Ok(new { result.Message });
             });
 
-            app.MapPut("/undeleteUser", async (int id, [FromServices] ISender mediator) =>
+            app.MapDelete("/undeleteUser", async (int id, [FromServices] ISender mediator) =>
             {
                 var result = await mediator.Send(new UnDeleteUserCommnad(id));
                 if (!result.Succeeded)

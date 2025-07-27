@@ -10,6 +10,7 @@ namespace Application.Dto.CategoryDTOs
         public string Slug { get; set; }  // e.g. "home-appliances"
         public string Description { get; set; }
         public string ImageUrl { get; set; } = string.Empty;
+        public bool IsDeleted { get; set; } = false;
         public List<SubCategoryDTO> SubCategories { get; set; } = new List<SubCategoryDTO>();
 
         //  Category pricing statistics

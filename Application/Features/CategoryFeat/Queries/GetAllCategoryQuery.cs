@@ -35,11 +35,12 @@ namespace Application.Features.CategoryFeat.Queries
 
             // Fetch categories with pagination
             var categories = await _categoryRepository.GetAllAsync(
-                includeProperties: "SubCategories,SubCategories.SubSubCategories, SubCategories.SubSubCategories.Products",
+                includeProperties: "SubCategories,SubCategories.SubSubCategories, SubCategories.SubSubCategories.Products, SubCategories.SubSubCategories.Products.Images",
+                orderBy: query => query.OrderByDescending(categories => categories.Id),
                 skip: (request.PageNumber - 1) * request.PageSize,
                 take: request.PageSize,
                 cancellationToken: cancellationToken
-            ).QuickSortDesc(categories => categories.Id);
+            );
 
             // Map categories to DTOs
             var categoryDTOs = categories.Select(cd => cd.ToDTO()).ToList();

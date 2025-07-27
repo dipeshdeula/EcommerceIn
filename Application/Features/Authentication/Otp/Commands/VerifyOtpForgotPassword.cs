@@ -5,6 +5,7 @@ using Application.Dto.UserDTOs;
 using Application.Extension;
 using Application.Features.Authentication.Commands.UserInfo.Commands;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
 using Application.Utilities;
 using MediatR;
 using System;
@@ -22,10 +23,10 @@ namespace Application.Features.Authentication.Otp.Commands
     public class VerifyOtpForgotPasswordDTOHandler : IRequestHandler<VerifyForgotPasswordCommand, Result<ForgotPasswordDTO>>
     {
         private readonly IUserRepository _userRepository;
-        private readonly OtpService _otpService;
+        private readonly IOtpService _otpService;
         public VerifyOtpForgotPasswordDTOHandler(
             IUserRepository userRepository,
-            OtpService otpService)
+            IOtpService otpService)
         {
             _userRepository = userRepository;
             _otpService = otpService;
