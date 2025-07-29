@@ -26,6 +26,7 @@ namespace Application.Features.StoreFeat.DeleteCommands
             if (store == null)
                 return Result<StoreDTO>.Failure("Store is not found");
             await _storeRepository.RemoveAsync(store, cancellationToken);
+            await _storeRepository.SaveChangesAsync(cancellationToken);
 
             return Result<StoreDTO>.Success(store.ToDTO(), "store is deleted successfully");
         }

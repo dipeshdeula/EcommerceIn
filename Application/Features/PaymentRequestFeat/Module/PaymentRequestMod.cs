@@ -171,6 +171,7 @@ namespace Application.Features.PaymentRequestFeat.Module
 
 using Application.Dto.PaymentDTOs;
 using Application.Features.PaymentRequestFeat.Commands;
+using Application.Features.PaymentRequestFeat.DeleteCommands;
 using Application.Features.PaymentRequestFeat.Queries;
 using Carter;
 using MediatR;
@@ -314,6 +315,47 @@ namespace Application.Features.PaymentRequestFeat.Module
             .WithDescription("Retrieve paginated list of payments for specific user")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest);
+
+            // soft delete
+            app.MapDelete("/softDeletPaymentRequest", async (int Id, ISender mediator) =>
+            {
+                var command = new SoftDeletePaymentRequestCommand(Id);
+                var result = await mediator.Send(command);
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+            // unDelete Payment Request
+            app.MapDelete("/unDeletePaymentRequest", async (int Id, ISender mediator) =>
+            {
+                var command = new UnDeletePaymentRequestCommand(Id);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+
+                }
+
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+            // Hard Delete Payment Request
+            app.MapDelete("/hardDeletePaymentRequest", async (int Id, ISender mediator) =>
+            {
+                var command = new HardDeletePaymentRequestCommand(Id);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Data });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            });
         }
     }
 }

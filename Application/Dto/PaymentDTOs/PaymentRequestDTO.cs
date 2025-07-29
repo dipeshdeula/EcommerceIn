@@ -27,6 +27,8 @@ namespace Application.Dto.PaymentDTOs
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+        public bool IsDeleted { get; set; } = false;
+
         public DateTime? ExpiresAt { get; set; }
         public string Instructions { get; set; } = string.Empty;
         public bool RequiresRedirect { get; set; }

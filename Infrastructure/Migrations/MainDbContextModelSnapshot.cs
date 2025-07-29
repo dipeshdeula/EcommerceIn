@@ -238,6 +238,9 @@ namespace Infrastructure.Migrations
                     b.Property<int>("CompanyInfoId")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("OrderId")
                         .HasColumnType("integer");
 
@@ -273,6 +276,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<decimal?>("DiscountAmount")
                         .HasColumnType("numeric");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Notes")
                         .HasColumnType("text");
@@ -883,6 +889,9 @@ namespace Infrastructure.Migrations
                     b.Property<string>("EsewaTransactionId")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("KhaltiPidx")
                         .HasMaxLength(200)
@@ -1510,7 +1519,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");

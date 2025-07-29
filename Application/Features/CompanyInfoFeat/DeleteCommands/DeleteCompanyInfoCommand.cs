@@ -7,9 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Features.CompanyInfoFeat.Commands
+namespace Application.Features.CompanyInfoFeat.DeleteCommands
 {
-    public record  HardDeleteCompanyInfoCommand (int id): IRequest<Result<string>>;
+    public record HardDeleteCompanyInfoCommand(int id) : IRequest<Result<string>>;
 
     public class HardDeleteCompanyInfoCommandHandler : IRequestHandler<HardDeleteCompanyInfoCommand, Result<string>>
     {

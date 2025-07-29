@@ -1,5 +1,6 @@
 ﻿using Application.Features.AddressFeat.Queries;
 using Application.Features.BillingItemFeat.Commands;
+using Application.Features.BillingItemFeat.DeleteCommands;
 using Application.Features.BillingItemFeat.Queries;
 using Carter;
 using MediatR;
@@ -80,6 +81,42 @@ namespace Application.Features.BillingItemFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
+            });
+
+            app.MapDelete("/softDeleteBillingItem", async (int Id, ISender mediator) =>
+            {
+                var command = new SoftDeleteBillingItemCommand(Id);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+
+                return Results.Ok(new { result.Message, result.Data });
+
+            });
+
+            app.MapDelete("/unDeleteBillingItem", async (int Id, ISender mediator) =>
+            {
+                var command = new UnDeleteBilingItemCommand(Id);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+
+                return Results.Ok(new { result.Message, result.Data });
+
+            });
+
+            app.MapDelete("/hardDeleteBillingItem", async (int Id, ISender mediator) =>
+            {
+                var command = new HardDeleteBillItemComand(Id);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+
+                return Results.Ok(new { result.Message, result.Data });
+
             });
 
 

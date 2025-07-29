@@ -471,6 +471,7 @@ namespace Application.Extension
                 TotalAmount = order.TotalAmount,
                 ShippingAddress = order.ShippingAddress,
                 ShippingCity = order.ShippingCity,
+                IsDeleted = order.IsDeleted,
                 Items = order.Items != null
                 ? order.Items.Select(i => i.ToDTO()).ToList()
                 : new List<OrderItemDTO>()
@@ -875,7 +876,7 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
                 EsewaTransactionId = paymentRequest.EsewaTransactionId,
                 CreatedAt = paymentRequest.CreatedAt,
                 UpdatedAt = paymentRequest.UpdatedAt,
-
+                IsDeleted = paymentRequest.IsDeleted,
                 UserName = paymentRequest.User?.Name,
                 PaymentMethodName = paymentRequest.PaymentMethod?.Name,
                 OrderTotal = paymentRequest.Order?.TotalAmount,
@@ -929,6 +930,7 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
                 OrderId = billing.OrderId,
                 CompanyInfoId = billing.CompanyInfoId,
                 BillingDate = billing.BillingDate,
+                IsDeleted = billing.IsDeleted,
                 User = billing.User?.ToDTO(),
                 PaymentRequest = billing.PaymentRequest?.ToDTO(),
                 Order = billing.Order?.ToDTO(),
@@ -953,7 +955,8 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
                 TotalPrice = item.TotalPrice,
                 DiscountAmount = item.DiscountAmount,
                 TaxAmount = item.TaxAmount,
-                Notes = item.Notes
+                Notes = item.Notes,
+                IsDeleted = item.IsDeleted,
 
             };
            

@@ -29,6 +29,8 @@ namespace Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+        public bool IsDeleted { get; set; } = false;
+
         public User? User { get; set; }
         public Order? Order { get; set; }
         public PaymentMethod? PaymentMethod { get; set; } // Navigation property to PaymentMethod

@@ -22,5 +22,7 @@ namespace Domain.Entities
         public decimal? DiscountAmount { get; set; }
         public decimal? TaxAmount { get; set; }
         public string? Notes { get; set; }
+
+        public bool IsDeleted { get; set; } = false;
     }
 }

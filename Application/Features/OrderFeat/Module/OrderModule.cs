@@ -1,5 +1,6 @@
 ﻿using Application.Dto.OrderDTOs;
 using Application.Features.OrderFeat.Commands;
+using Application.Features.OrderFeat.DeleteCommands;
 using Application.Features.OrderFeat.Queries;
 using Application.Features.OrderFeat.UpdateCommands;
 using Carter;
@@ -81,6 +82,42 @@ namespace Application.Features.OrderFeat.Module
                 .Produces<OrderConfirmationResponseDTO>(StatusCodes.Status200OK)
                 .Produces(StatusCodes.Status400BadRequest)
                 .Produces(StatusCodes.Status401Unauthorized);
+
+            app.MapDelete("/softDeleteOrder", async (int Id, ISender mediator) =>
+            {
+                var command = new SoftDeleteOrderCommand(Id);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+            app.MapDelete("/unDeleteOrder", async (int Id, ISender mediator) =>
+            {
+                var command = new UnDeleteOrderCommand(Id);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            });
+
+            app.MapDelete("/hardDeleteOrder", async (int Id, ISender mediator) =>
+            {
+                var command = new HardDeleteOrderCommand(Id);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            });
         }
     }
 }

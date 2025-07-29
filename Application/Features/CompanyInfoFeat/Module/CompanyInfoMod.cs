@@ -1,6 +1,7 @@
 ﻿using Application.Dto.CompanyDTOs;
 using Application.Dto.ProductDTOs;
 using Application.Features.CompanyInfoFeat.Commands;
+using Application.Features.CompanyInfoFeat.DeleteCommands;
 using Application.Features.CompanyInfoFeat.Queries;
 using Carter;
 using MediatR;
@@ -86,6 +87,34 @@ namespace Application.Features.CompanyInfoFeat.Module
             app.MapPut("/updateCompanyInfo", async (ISender mediator, int Id, UpdateCompanyInfoDTO updateCompanyInfoDto) =>
             {
                 var command = new UpdateCompanyInfoCommand(Id, updateCompanyInfoDto);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+
+                return Results.Ok(new { result.Message, result.Data });
+
+            });
+
+            app.MapDelete("/softDelete", async (ISender mediator, int Id) =>
+            {
+                var command = new SoftDeleteCompanyInfoCommand(Id);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+
+                return Results.Ok(new { result.Message, result.Data });
+
+            });
+
+            app.MapDelete("/unDelete", async (ISender mediator, int Id) =>
+            {
+                var command = new UnDeleteCompanyInfoCommand(Id);
                 var result = await mediator.Send(command);
 
                 if (!result.Succeeded)

@@ -14,6 +14,7 @@ namespace Domain.Entities
         public int OrderId { get; set; }
         public int CompanyInfoId { get; set; }
         public DateTime BillingDate { get; set; } = DateTime.UtcNow;
+        public bool IsDeleted { get; set; } = false;
 
         public User? User { get; set; }
         public PaymentRequest? PaymentRequest { get; set; }

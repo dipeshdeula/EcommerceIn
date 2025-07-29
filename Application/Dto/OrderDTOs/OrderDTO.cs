@@ -18,6 +18,8 @@ namespace Application.Dto.OrderDTOs
         public string ShippingAddress { get; set; }
         public string ShippingCity { get; set; }
 
+        public bool IsDeleted { get; set; } = false;
+
         public ICollection<OrderItemDTO> Items { get; set; }
 
     }

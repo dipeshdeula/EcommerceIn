@@ -20,6 +20,7 @@ namespace Application.Dto.BilItemDTOs
         public int CompanyInfoId { get; set; }
         public DateTime BillingDate { get; set; } = DateTime.UtcNow;
 
+        public bool IsDeleted { get; set; } = false;
         public UserDTO? User { get; set; }
         public PaymentRequestDTO? PaymentRequest { get; set; }
         public OrderDTO? Order { get; set; }
