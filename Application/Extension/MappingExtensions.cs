@@ -464,7 +464,7 @@ namespace Application.Extension
             return new OrderDTO
             {
                 Id = order.Id,
-                UserId = order.UserId,
+                UserId = order.UserId,                
                 OrderDate = order.OrderDate,
                 OrderStatus = order.OrderStatus,
                 PaymentStatus = order.PaymentStatus,
@@ -472,6 +472,7 @@ namespace Application.Extension
                 ShippingAddress = order.ShippingAddress,
                 ShippingCity = order.ShippingCity,
                 IsDeleted = order.IsDeleted,
+                UserDTO = order.User?.ToDTO(),
                 Items = order.Items != null
                 ? order.Items.Select(i => i.ToDTO()).ToList()
                 : new List<OrderItemDTO>()

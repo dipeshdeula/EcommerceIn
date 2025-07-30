@@ -1,5 +1,6 @@
 ﻿using Application.Common;
 using Application.Dto.OrderDTOs;
+using Application.Extension;
 using Application.Features.OrderFeat.Events;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
@@ -90,6 +91,7 @@ namespace Application.Features.OrderFeat.Commands
                 TotalAmount = totalAmount,
                 ShippingAddress = request.ShippingAddress,
                 ShippingCity = request.ShippingCity,
+                
 
             };
 
@@ -132,6 +134,7 @@ namespace Application.Features.OrderFeat.Commands
             // Clear cart 
             await _cartItemRepository.DeleteByUserIdAsync(request.UserId);
 
+           
 
 
             // Return OrderDTO
@@ -139,6 +142,7 @@ namespace Application.Features.OrderFeat.Commands
             {
                 Id = order.Id,
                 UserId = request.UserId,
+                UserDTO = user.ToDTO(),
                 OrderDate = order.OrderDate,
                 PaymentStatus = order.PaymentStatus,
                 TotalAmount = order.TotalAmount,
@@ -146,6 +150,7 @@ namespace Application.Features.OrderFeat.Commands
                 ShippingCity = order.ShippingCity,
 
             };
+           
 
             return Result<OrderDTO>.Success(orderDto, "Order placed successfully.");
         }

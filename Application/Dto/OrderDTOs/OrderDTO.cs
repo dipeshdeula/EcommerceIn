@@ -1,4 +1,5 @@
-﻿using Domain.Entities;
+﻿using Application.Dto.UserDTOs;
+using Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace Application.Dto.OrderDTOs
     public class OrderDTO
     {
         public int Id { get; set; }
-        public int UserId { get; set; }
+        public int UserId { get; set; }        
         public DateTime OrderDate { get; set; }
         public string OrderStatus { get; set; }
         public string PaymentStatus { get; set; }
@@ -19,6 +20,8 @@ namespace Application.Dto.OrderDTOs
         public string ShippingCity { get; set; }
 
         public bool IsDeleted { get; set; } = false;
+
+        public UserDTO? UserDTO { get; set; }
 
         public ICollection<OrderItemDTO> Items { get; set; }
 

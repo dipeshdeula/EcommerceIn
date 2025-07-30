@@ -26,8 +26,8 @@ namespace Application.Features.OrderFeat.Queries
             var orders = await _orderRepository.GetAllAsync(
                 orderBy:query=>query.OrderByDescending(order=>order.OrderDate),
                 skip:(request.PageNumber-1)*request.PageSize,
-                take:request.PageSize,
-                includeProperties:"Items",
+                take:request.PageSize,               
+                includeProperties: "User,User.Addresses, Items",
                 cancellationToken:cancellationToken
                 );
             ;
