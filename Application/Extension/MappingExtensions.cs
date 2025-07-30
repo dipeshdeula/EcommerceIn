@@ -13,6 +13,7 @@ using Application.Dto.ProductDTOs;
 using Application.Dto.Shared;
 using Application.Dto.StoreDTOs;
 using Application.Dto.UserDTOs;
+using Application.Dto.WhishListDTOs;
 using Application.Interfaces.Services;
 using Domain.Entities;
 using Domain.Entities.Common;
@@ -961,6 +962,21 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
 
             };
            
+        }
+
+        public static WishlistDTO ToDTO(this Wishlist whishlist)
+        {
+            return new WishlistDTO
+            {
+                Id = whishlist.Id,
+                UserId = whishlist.UserId,
+                ProductId = whishlist.ProductId,
+                CreatedAt = whishlist.CreatedAt,
+                UpdatedAt = whishlist.UpdatedAt,
+                IsDeleted = whishlist.IsDeleted,
+                UserDto = whishlist.User.ToDTO(),
+                ProductDto = whishlist.Product.ToDTO(),
+            };
         }
     }
 }

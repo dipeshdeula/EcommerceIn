@@ -13,6 +13,7 @@ using Application.Dto.PaymentMethodDTOs;
 using Application.Dto.ProductDTOs;
 using Application.Dto.StoreDTOs;
 using Application.Dto.UserDTOs;
+using Application.Dto.WhishListDTOs;
 using Application.Extension;
 using Application.Features.AddressFeat.Commands;
 using Application.Features.AddressFeat.Queries;
@@ -62,6 +63,7 @@ using Application.Features.SubCategoryFeat.Queries;
 using Application.Features.SubSubCategoryFeat.Commands;
 using Application.Features.SubSubCategoryFeat.DeleteCommands;
 using Application.Features.SubSubCategoryFeat.Queries;
+using Application.Features.whishlistFeat.Commands;
 using Application.Interfaces.Repositories;
 using Application.Provider;
 using Application.Utilities;
@@ -72,6 +74,7 @@ using Infrastructure.Persistence.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.DependencyInjection;
 using Polly;
 using Polly.Extensions.Http;
 using RabbitMQ.Client;
@@ -252,6 +255,8 @@ namespace Infrastructure.DependencyInjection
             // Register Authorization 
             services.AddScoped<IAuthorizationHandler, PermissionRequirementCommandHandler>();
 
+            services.AddScoped<IWishlistRepository, WishlistRepository>();
+
 
             // Register CQRS handlers with scoped lifetime
             services.AddScoped<IRequestHandler<RegisterCommand, Result<UserDTO>>, RegisterCommandHandler>();
@@ -376,6 +381,8 @@ namespace Infrastructure.DependencyInjection
 
             services.AddScoped<IRequestHandler<CreateBillingItemCommand,Result<List<BillingItemDTO>>>, CreateBillingItemCommandHandler>();
             services.AddScoped<IRequestHandler<GetAllBillingItemQuery,Result<IEnumerable<BillingItemDTO>>>, GetAllBillingItemQueryHandler>();
+
+            services.AddScoped<IRequestHandler<CreateWishlistCommand, Result<WishlistDTO>>, CreateWishlistCommandHandler>();
         }
     }
 
