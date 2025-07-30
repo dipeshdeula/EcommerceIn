@@ -83,6 +83,26 @@ namespace Application.Features.OrderFeat.Module
                 .Produces(StatusCodes.Status400BadRequest)
                 .Produces(StatusCodes.Status401Unauthorized);
 
+            app.MapPut("/cancelOrder", async (ISender mediator, int OrderId, string ReasonToCancel, bool IsConfirmed) =>
+            {
+                var command = new UpdateOrderCancelledCommand(OrderId, ReasonToCancel,IsConfirmed);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors, orderId = OrderId });
+                }
+
+                return Results.Ok(new { result.Message, result.Data, notificationSummary = result.Data.NotificationResult });
+            })
+                .RequireAuthorization()
+               .WithName("CancelOrder")
+               .WithSummary("Cancel your order")
+               .WithDescription("Updates order cancellation status and sends notifications to customer")
+               .Produces<OrderCancellationRepsonseDTO>(StatusCodes.Status200OK)
+               .Produces(StatusCodes.Status400BadRequest)
+               .Produces(StatusCodes.Status401Unauthorized);
+
             app.MapDelete("/softDeleteOrder", async (int Id, ISender mediator) =>
             {
                 var command = new SoftDeleteOrderCommand(Id);

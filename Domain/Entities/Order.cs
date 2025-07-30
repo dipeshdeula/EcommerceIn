@@ -10,8 +10,11 @@
         public string PaymentStatus { get; set; } = "Pending";  // e.g "Pending", "Paid"
         public decimal TotalAmount { get; set; }
         public string ShippingAddress { get; set; } = string.Empty;
-        public string ShippingCity { get; set; }
+        public string ShippingCity { get; set; } = string.Empty;
         public bool IsConfirmed { get; set; } = false;
+        public bool IsCancelled { get; set; } = false;
+        public string? ReasonToCancel { get; set; }
+
         public bool IsDeleted { get; set; } = false;    
         public User User { get; set; }
         public ICollection<OrderItem> Items { get; set; }

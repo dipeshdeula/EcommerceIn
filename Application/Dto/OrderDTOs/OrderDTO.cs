@@ -19,6 +19,10 @@ namespace Application.Dto.OrderDTOs
         public string ShippingAddress { get; set; }
         public string ShippingCity { get; set; }
 
+        public string ReasonToCancel { get; set; }
+
+        public bool IsCancelled { get; set; } = false;
+
         public bool IsDeleted { get; set; } = false;
 
         public UserDTO? UserDTO { get; set; }

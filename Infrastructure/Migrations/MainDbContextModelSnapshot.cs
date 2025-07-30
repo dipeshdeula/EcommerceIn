@@ -735,6 +735,9 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("IsCancelled")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsConfirmed")
                         .HasColumnType("boolean");
 
@@ -756,6 +759,9 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasDefaultValue("Pending");
+
+                    b.Property<string>("ReasonToCancel")
+                        .HasColumnType("text");
 
                     b.Property<string>("ShippingAddress")
                         .IsRequired()

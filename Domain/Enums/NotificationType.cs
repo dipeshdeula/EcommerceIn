@@ -11,4 +11,5 @@ public enum NotificationType
     OrderPlaced = 1,
     OrderConfirmed = 2,
     OrderCompleted = 3,
+    OrderCancelled = 4,
 }
