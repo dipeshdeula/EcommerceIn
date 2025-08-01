@@ -22,6 +22,7 @@ namespace Application.Features.BillingItemFeat.Module
         {
             WithTags("Billing");
             IncludeInOpenApi();
+            RequireAuthorization();
         }
 
         public override void AddRoutes(IEndpointRouteBuilder app)
@@ -57,9 +58,9 @@ namespace Application.Features.BillingItemFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
 
-            app.MapGet("/getAllBillItems", async(ISender mediator,int PageNumber = 1, int PageSize = 10) =>
+            app.MapGet("/getAllBillItems", async (ISender mediator, int PageNumber = 1, int PageSize = 10) =>
             {
                 var command = new GetAllBillingItemQuery(PageNumber, PageSize);
                 var result = await mediator.Send(command);
@@ -69,7 +70,7 @@ namespace Application.Features.BillingItemFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
 
             app.MapGet("/getBillByUserId", async (ISender mediator, int UserId) =>
             {
@@ -83,7 +84,7 @@ namespace Application.Features.BillingItemFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapDelete("/softDeleteBillingItem", async (int Id, ISender mediator) =>
+            app.MapDelete("/softDeleteBill", async (int Id, ISender mediator) =>
             {
                 var command = new SoftDeleteBillingItemCommand(Id);
                 var result = await mediator.Send(command);
@@ -95,7 +96,7 @@ namespace Application.Features.BillingItemFeat.Module
 
             });
 
-            app.MapDelete("/unDeleteBillingItem", async (int Id, ISender mediator) =>
+            app.MapDelete("/unDeleteBill", async (int Id, ISender mediator) =>
             {
                 var command = new UnDeleteBilingItemCommand(Id);
                 var result = await mediator.Send(command);
@@ -107,7 +108,7 @@ namespace Application.Features.BillingItemFeat.Module
 
             });
 
-            app.MapDelete("/hardDeleteBillingItem", async (int Id, ISender mediator) =>
+            app.MapDelete("/hardDeleteBill", async (int Id, ISender mediator) =>
             {
                 var command = new HardDeleteBillItemComand(Id);
                 var result = await mediator.Send(command);

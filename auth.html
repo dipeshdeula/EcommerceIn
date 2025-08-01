@@ -1,0 +1,104 @@
+<!-- test-google-auth-production.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>InstantMart - Google Auth Test</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .result { margin-top: 20px; padding: 20px; border: 1px solid #ddd; }
+        .error { border-color: #f00; background-color: #fee; }
+        .success { border-color: #0f0; background-color: #efe; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>InstantMart - Google Authentication Test</h1>
+        
+        <div id="g_id_onload"
+             data-client_id="660431718598-on77ppprdpbf23f9amqi3qf0egu0pm8h.apps.googleusercontent.com"
+             data-callback="handleCredentialResponse"
+             data-auto_prompt="false">
+        </div>
+        
+        <div class="g_id_signin"
+             data-type="standard"
+             data-size="large"
+             data-theme="outline"
+             data-text="sign_in_with"
+             data-shape="rectangular"
+             data-logo_alignment="left">
+        </div>
+
+        <div id="result"></div>
+    </div>
+    <a href="privacy.html" target="_blank">Privacy Policy</a> |
+    <a href="terms.html" target="_blank">Terms of Service</a>
+
+    <script>
+        function handleCredentialResponse(response) {
+            console.log("Encoded JWT ID token: " + response.credential);
+            
+            document.getElementById('result').innerHTML = `
+                <div class="result">
+                    <h3>✅ Google Sign-In Successful!</h3>
+                    <p><strong>Token received:</strong> ${response.credential.substring(0, 50)}...</p>
+                    <button onclick="testAPI('${response.credential}')">Test Backend API</button>
+                </div>
+            `;
+        }
+
+        async function testAPI(token) {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                resultDiv.innerHTML += '<p>🔄 Testing API...</p>';
+                
+                // ✅ Test your production API
+                const response = await fetch('http://localhost:5013/auth/google-auth-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        idToken: token,
+                        clientType: 'web'
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML += `
+                        <div class="result success">
+                            <h3>✅ API Test Successful!</h3>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML += `
+                        <div class="result error">
+                            <h3>❌ API Test Failed</h3>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML += `
+                    <div class="result error">
+                        <h3>❌ Network Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        window.onload = function() {
+            console.log('Google Auth test page loaded');
+        };
+    </script>
+</body>
+</html>

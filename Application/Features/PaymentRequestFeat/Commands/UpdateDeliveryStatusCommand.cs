@@ -41,7 +41,7 @@ namespace Application.Features.PaymentRequestFeat.Commands
             await _orderRepository.SaveChangesAsync(cancellationToken);
 
 
-            return Result<string>.Success(null, "Order has been delivered");
+            return Result<string>.Success("Order has been delivered");
         }
     }
 

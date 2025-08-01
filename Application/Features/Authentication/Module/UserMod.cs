@@ -17,6 +17,7 @@ namespace Application.Features.Authentication.Module
         {
             WithTags("Auth User");
             IncludeInOpenApi();
+            RequireAuthorization();
             
         }
         public override void AddRoutes(IEndpointRouteBuilder app)
@@ -31,8 +32,7 @@ namespace Application.Features.Authentication.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });
-            /*.RequireAuthorization("RequireAdmin");*/
+            }).RequireAuthorization("RequireAdmin");
 
             app.MapGet("/getUsersById", async (int id, [FromServices] ISender mediator) =>
             {
@@ -79,7 +79,7 @@ namespace Application.Features.Authentication.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message });
-            });
+            }).RequireAuthorization("RequireAdmin");
 
             app.MapDelete("/hardDeleteUser", async (int id, [FromServices] ISender mediator) =>
             {
@@ -89,7 +89,7 @@ namespace Application.Features.Authentication.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message });
-            });
+            }).RequireAuthorization("RequireAdmin");
 
             app.MapDelete("/undeleteUser", async (int id, [FromServices] ISender mediator) =>
             {
@@ -99,7 +99,7 @@ namespace Application.Features.Authentication.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message });
-            });
+            }).RequireAuthorization("RequireAdmin");
         }
     }
 }

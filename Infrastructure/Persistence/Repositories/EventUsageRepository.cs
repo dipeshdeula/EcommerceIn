@@ -10,7 +10,7 @@ namespace Infrastructure.Persistence.Repositories
     public class EventUsageRepository : Repository<EventUsage>, IEventUsageRepository
     {
         private readonly MainDbContext _context;
-        public EventUsageRepository(MainDbContext context) :base(context)
+        public EventUsageRepository(MainDbContext context) : base(context)
         {
             _context = context;
         }
@@ -47,6 +47,35 @@ namespace Infrastructure.Persistence.Repositories
                 .CountAsync(eu => eu.BannerEventId == eventId &&
                                  eu.UserId == userId &&
                                  !eu.IsDeleted);
+        }
+
+         public async Task<IEnumerable<EventUsage>> GetUsagesByDateRangeAsync(int eventId, DateTime fromDate, DateTime toDate)
+        {
+            return await _context.EventUsages
+                .Where(eu => eu.BannerEventId == eventId &&
+                           eu.UsedAt >= fromDate &&
+                           eu.UsedAt <= toDate &&
+                           !eu.IsDeleted)
+                .Include(eu => eu.User)
+                .Include(eu => eu.BannerEvent)
+                .OrderByDescending(eu => eu.UsedAt)
+                .ToListAsync();
+        }
+
+        public async Task<decimal> GetTotalDiscountByEventAsync(int eventId)
+        {
+            return await _context.EventUsages
+                .Where(eu => eu.BannerEventId == eventId && !eu.IsDeleted)
+                .SumAsync(eu => eu.DiscountApplied);
+        }
+
+        public async Task<int> GetUniqueUsersCountByEventAsync(int eventId)
+        {
+            return await _context.EventUsages
+                .Where(eu => eu.BannerEventId == eventId && !eu.IsDeleted)
+                .Select(eu => eu.UserId)
+                .Distinct()
+                .CountAsync();
         }
     }
 }

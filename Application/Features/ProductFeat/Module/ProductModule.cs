@@ -19,6 +19,7 @@ namespace Application.Features.ProductFeat.Module
         {
             WithTags("Product");
             IncludeInOpenApi();
+           /* RequireAuthorization();*/
         }
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
@@ -33,7 +34,7 @@ namespace Application.Features.ProductFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
 
             //  ENHANCED: GetAllProducts with event prioritization
             app.MapGet("/getAllProducts", async ([FromServices] ISender mediator,
@@ -123,6 +124,7 @@ namespace Application.Features.ProductFeat.Module
 
                 return Results.Ok(new { result.Message, result.Data });
             })
+            .RequireAuthorization("RequireAdminOrVendor")
             .DisableAntiforgery()
             .Accepts<UploadProductImagesCommand>("multipart/form-data")
             .Produces<IEnumerable<ProductImageDTO>>(StatusCodes.Status200OK)
@@ -168,7 +170,7 @@ namespace Application.Features.ProductFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
 
             app.MapDelete("/softdDeleteProduct", async ([FromQuery] int productId, ISender mediator) =>
             {
@@ -178,7 +180,7 @@ namespace Application.Features.ProductFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
 
             app.MapDelete("hardDeleteProduct", async ([FromQuery] int productId, ISender mediator) =>
             {
@@ -188,7 +190,7 @@ namespace Application.Features.ProductFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message });
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
 
             app.MapDelete("/unDeleteProduct", async ([FromQuery] int productId, ISender mediator) =>
             {
@@ -199,7 +201,7 @@ namespace Application.Features.ProductFeat.Module
                 }
                 return Results.Ok(new { result.Message, result.Data });
 
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
 
 
         }

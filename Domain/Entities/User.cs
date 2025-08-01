@@ -14,6 +14,11 @@ namespace Domain.Entities
         public bool IsDeleted { get; set; } = false;
         public UserRoles Role { get; set; } = UserRoles.User;
 
+        // for google Auth
+        public bool EmailVerified { get; set; } = false;
+        public string? ExternalProvider { get; set; } = null; // e.g., "Google", "Facebook"
+        public string? ExternalProviderId { get; set; } = null; // e.g., Google ID, Facebook ID
+
         public ICollection<Address> Addresses { get; set; } = new List<Address>();
 
     }

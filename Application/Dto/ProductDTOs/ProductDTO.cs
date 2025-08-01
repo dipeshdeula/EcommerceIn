@@ -27,15 +27,16 @@ namespace Application.Dto.ProductDTOs
         //  COMPUTED BASIC PROPERTIES 
         public int AvailableStock => Math.Max(0, StockQuantity - ReservedStock);
         public bool IsInStock => AvailableStock > 0;
-        public bool HasProductDiscount => DiscountPrice.HasValue && DiscountPrice < MarketPrice;
-        public decimal BasePrice => DiscountPrice ?? MarketPrice;
-        public decimal ProductDiscountAmount => HasProductDiscount ? MarketPrice - DiscountPrice.Value : 0;
+        public bool HasProductDiscount { get; set; } = false;
+        public decimal BasePrice { get; set; } = 0;
+        public decimal ProductDiscountAmount { get; set; } = 0;
 
 
         //  DISPLAY FORMATTING 
         public string FormattedMarketPrice => $"Rs. {MarketPrice:F2}";
-        public string FormattedBasePrice => $"Rs. {BasePrice:F2}";
-        public string FormattedDiscountAmount => HasProductDiscount ? $"Rs. {ProductDiscountAmount:F2}" : "Rs. 0.00";
+        public string FormattedBasePrice { get; set; } = "";
+
+        public string FormattedDiscountAmount { get; set; } = "";
 
         public string StockStatus => AvailableStock <= 0 ? "Out of Stock"
                                    : AvailableStock <= 10 ? "Low Stock"

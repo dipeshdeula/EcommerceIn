@@ -17,6 +17,7 @@ namespace Application.Features.ProductStoreFeat.Module
         {
             WithTags("ProductStore");
             IncludeInOpenApi();
+            RequireAuthorization();
 
         }
         public override async void AddRoutes(IEndpointRouteBuilder app)
@@ -32,7 +33,7 @@ namespace Application.Features.ProductStoreFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).RequireAuthorization("RequireAdmin", "RequireVendor");
 
             app.MapGet("/getAllProductStore", async (ISender mediator, int PageNumber = 1, int PageSize = 10) =>
             {

@@ -18,6 +18,7 @@ namespace Application.Features.CompanyInfoFeat.Module
         {
             WithTags("CompanyInfo");
             IncludeInOpenApi();
+            RequireAuthorization("RequireAdmin");
             
         }
 

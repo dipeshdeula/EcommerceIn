@@ -17,6 +17,7 @@ namespace Application.Features.StoreFeat.Module
         {
             WithTags("Store");
             IncludeInOpenApi();
+            RequireAuthorization();
 
         }
 
@@ -36,7 +37,9 @@ namespace Application.Features.StoreFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            }).DisableAntiforgery()
+            })
+             .RequireAuthorization("RequireAdminOrVendor")
+            .DisableAntiforgery()
             .Accepts<CreateStoreCommand>("multipart/form-data")
             .Produces<StoreDTO>(StatusCodes.Status200OK)
             .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
@@ -64,7 +67,9 @@ namespace Application.Features.StoreFeat.Module
                 if (!result.Succeeded)
                     return Results.BadRequest(new { result.Message, result.Errors });
                 return Results.Ok(new { result.Message, result.Data });
-            }).DisableAntiforgery()
+            })
+              .RequireAuthorization("RequireAdminOrVendor")
+             .DisableAntiforgery()
             .Accepts<UpdateStoreCommand>("multipart/form-data")
             .Produces<StoreDTO>(StatusCodes.Status200OK)
             .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
@@ -78,7 +83,7 @@ namespace Application.Features.StoreFeat.Module
 
                 return Results.Ok(new {result.Message, result.Data});
 
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
 
             app.MapDelete("/unDeleteStore", async (int Id, ISender mediator) =>
             {
@@ -89,7 +94,7 @@ namespace Application.Features.StoreFeat.Module
 
                 return Results.Ok(new { result.Message, result.Data });
 
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
 
             app.MapDelete("/hardDeleteStore", async (int Id, ISender mediator) =>
             {
@@ -100,7 +105,7 @@ namespace Application.Features.StoreFeat.Module
 
                 return Results.Ok(new { result.Message, result.Data });
 
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
         }
 
     }

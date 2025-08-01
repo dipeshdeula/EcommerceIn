@@ -1328,6 +1328,15 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<bool>("EmailVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ExternalProvider")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExternalProviderId")
+                        .HasColumnType("text");
+
                     b.Property<string>("ImageUrl")
                         .IsRequired()
                         .HasMaxLength(200)

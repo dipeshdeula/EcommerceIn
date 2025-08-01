@@ -10,11 +10,12 @@ using Domain.Enums.BannerEventSpecial;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Application.Features.BannerSpecialEvent.Commands
 {
     public record CreateBannerSpecialEventCommand(
-        CreateBannerSpecialEventDTO bannerSpecialDTO
+        [FromBody] CreateBannerSpecialEventDTO bannerSpecialDTO
     ) : IRequest<Result<BannerEventSpecialDTO>>;
 
     public class CreateBannerSpecialEventCommandHandler : IRequestHandler<CreateBannerSpecialEventCommand, Result<BannerEventSpecialDTO>>
@@ -150,7 +151,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
                     var createdEvent = await _unitOfWork.BannerEventSpecials.AddAsync(bannerEvent, cancellationToken);
                     await _unitOfWork.SaveChangesAsync(cancellationToken); // Save to get ID
 
-                    _logger.LogInformation("✅ Banner event created with ID: {EventId} | Status: {Status} | Active: {IsActive}",
+                    _logger.LogInformation("Banner event created with ID: {EventId} | Status: {Status} | Active: {IsActive}",
                         createdEvent.Id, createdEvent.Status, createdEvent.IsActive);
 
                     //  CREATE EVENT RULES (if any) - FIXED TYPE CONVERSION
@@ -266,7 +267,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
                 DiscountValue = ruleDto.DiscountValue,
                 MaxDiscount = ruleDto.MaxDiscount,
                 MinOrderValue = ruleDto.MinOrderValue,
-                Priority = ruleDto.Priority,
+                Priority = ruleDto.Priority ,  
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow
             }).ToList();

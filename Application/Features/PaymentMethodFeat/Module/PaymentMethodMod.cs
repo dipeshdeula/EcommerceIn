@@ -20,6 +20,7 @@ namespace Application.Features.PaymentMethodFeat.Module
         {
             WithTags("PaymentMethod");
             IncludeInOpenApi();
+            RequireAuthorization("RequireAdmin");
             
         }
         public override void AddRoutes(IEndpointRouteBuilder app)

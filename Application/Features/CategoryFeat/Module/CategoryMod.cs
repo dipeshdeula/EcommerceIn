@@ -18,6 +18,7 @@ namespace Application.Features.CategoryFeat.Module
         {
             WithTags("Category");
             IncludeInOpenApi();
+            RequireAuthorization();
 
         }
 
@@ -39,7 +40,9 @@ namespace Application.Features.CategoryFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            }).DisableAntiforgery()
+            })
+                .RequireAuthorization("RequireAdminOrVendor")
+                .DisableAntiforgery()
                 .Accepts<CreateCategoryCommand>("multipart/form-data")
                 .Produces<CategoryDTO>(StatusCodes.Status200OK)
                 .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
@@ -98,6 +101,7 @@ namespace Application.Features.CategoryFeat.Module
                 }
                 return Results.Ok(new { result.Message, result.Data });
             })
+               .RequireAuthorization("RequireAdminOrVendor")
               .DisableAntiforgery()
               .Accepts<UpdateCategoryCommand>("multipart/form-data")
               .Produces<CategoryDTO>(StatusCodes.Status200OK)
@@ -114,7 +118,7 @@ namespace Application.Features.CategoryFeat.Module
 
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
 
             app.MapDelete("/unDeleteCategory", async ([FromQuery] int categoryId, ISender mediator) =>
             {
@@ -124,7 +128,7 @@ namespace Application.Features.CategoryFeat.Module
                 if (!result.Succeeded)
                     return Results.BadRequest(new { result.Message, result.Errors });
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
 
             app.MapDelete("/hardDeleteCategory", async ([FromQuery] int categoryId, ISender mediator) =>
             {
@@ -134,7 +138,7 @@ namespace Application.Features.CategoryFeat.Module
                 if (!result.Succeeded)
                     return Results.BadRequest(new { result.Message, result.Errors });
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).RequireAuthorization("RequireAdmin","RequireVendo");
 
 
         }

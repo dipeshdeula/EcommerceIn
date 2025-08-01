@@ -17,6 +17,7 @@ namespace Application.Features.CartItemFeat.Module
         {
             WithTags("CartItem");
             IncludeInOpenApi();
+            RequireAuthorization();
 
         }
 
@@ -90,19 +91,7 @@ namespace Application.Features.CartItemFeat.Module
             })
             .RequireAuthorization()
             .WithName("AddMultipleCartItems")
-            .WithSummary("Add multiple product items to the cart in one request");
-
-            //  app.MapDelete("/deleteCartItemByUserId", async (
-            //     int Id, int? UserId, ISender mediator) =>
-            // {
-            //     var command = new HardDeleteCartItemCommand(Id, UserId);
-            //     var result = await mediator.Send(command);
-
-            //     if (!result.Succeeded)
-            //         return Results.BadRequest(new { result.Message, result.Errors });
-            //     return Results.Ok(new { result.Message, result.Data });
-
-            // });
+            .WithSummary("Add multiple product items to the cart in one request");            
 
 
             app.MapDelete("/remove-cart-item", async (

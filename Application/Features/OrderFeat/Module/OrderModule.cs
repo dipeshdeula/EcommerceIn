@@ -18,6 +18,7 @@ namespace Application.Features.OrderFeat.Module
         {
             WithTags("Order");
             IncludeInOpenApi();
+            RequireAuthorization();
         }
 
         public override void AddRoutes(IEndpointRouteBuilder app)
@@ -43,7 +44,7 @@ namespace Application.Features.OrderFeat.Module
                 }
                 return Results.Ok(new { result.Message, result.Data });
 
-            });
+            }).RequireAuthorization("RequireAdmin");
 
             app.MapGet("/getOrderById", async (ISender mediator, int Id) =>
             {
@@ -75,7 +76,7 @@ namespace Application.Features.OrderFeat.Module
 
                 return Results.Ok(new { result.Message, result.Data, notificationSummary = result.Data.NotificationResult });
             })
-               /* .RequireAuthorization("RequireAdmin")*/
+                .RequireAuthorization("RequireAdmin")
                 .WithName("ConfirmOrderStatus")
                 .WithSummary("Confirm or update order status")
                 .WithDescription("Updates order confirmation status and sends notifications to customer")
@@ -95,7 +96,7 @@ namespace Application.Features.OrderFeat.Module
 
                 return Results.Ok(new { result.Message, result.Data, notificationSummary = result.Data.NotificationResult });
             })
-                .RequireAuthorization()
+               .RequireAuthorization()
                .WithName("CancelOrder")
                .WithSummary("Cancel your order")
                .WithDescription("Updates order cancellation status and sends notifications to customer")

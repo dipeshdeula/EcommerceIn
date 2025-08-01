@@ -23,6 +23,7 @@ namespace Application.Features.SubSubCategoryFeat.Module
         {
             WithTags("SubSubCategory");
             IncludeInOpenApi();
+            RequireAuthorization();
 
         }
 
@@ -39,7 +40,9 @@ namespace Application.Features.SubSubCategoryFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            }).DisableAntiforgery()
+            })
+              .RequireAuthorization("RequireAdminOrVendor")
+             .DisableAntiforgery()
             .Accepts<CreateSubSubCategoryCommand>("multipart/form-data")
             .Produces<SubSubCategoryDTO>(StatusCodes.Status200OK)
             .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
@@ -77,7 +80,9 @@ namespace Application.Features.SubSubCategoryFeat.Module
                 }
                 return Results.Ok(new { result.Message, result.Data });
 
-            }).DisableAntiforgery()
+            })
+            .RequireAuthorization("RequireAdminOrVendor")
+            .DisableAntiforgery()
            .Accepts<UpdateSubSubCategoryCommand>("multipart/form-data")
            .Produces<SubSubCategoryDTO>(StatusCodes.Status200OK)
            .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
@@ -93,7 +98,7 @@ namespace Application.Features.SubSubCategoryFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
 
             app.MapDelete("/hardDeleteSubSubCategory", async (
                 int SubSubCategoryId, ISender mediator
@@ -106,7 +111,7 @@ namespace Application.Features.SubSubCategoryFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
 
             app.MapDelete("/unDeleteSubSubCategory", async (
                int SubSubCategoryId, ISender mediator
@@ -119,7 +124,7 @@ namespace Application.Features.SubSubCategoryFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
         }
     }
 }

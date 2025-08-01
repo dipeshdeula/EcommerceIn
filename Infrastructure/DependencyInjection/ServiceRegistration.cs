@@ -394,6 +394,8 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IBannerEventAnalyticsService, BannerEventAnalyticsService>();
+            services.AddScoped<IBannerEventRuleEngine, BannerEventRuleEngine>();
             services.AddSingleton<IRabbitMqConsumer, RabbitMQConsumer>();
             services.AddSingleton<IRabbitMqPublisher, RabbitMQPublisher>();
             services.AddScoped<RabbitMqConsumerService>();

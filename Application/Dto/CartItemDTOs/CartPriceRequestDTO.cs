@@ -12,5 +12,6 @@ namespace Application.Dto.CartItemDTOs
         public int Quantity { get; set; }
         public decimal? MaxAcceptablePrice { get; set; }
         public int? PreferredEventId { get; set; }
+        public DateTime? LastPriceCheck { get; set; }
     }
 }

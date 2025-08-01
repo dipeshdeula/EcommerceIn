@@ -1,6 +1,11 @@
 ﻿using Application.Common;
+using Application.Dto.BannerEventSpecialDTOs;
 using Application.Dto.CartItemDTOs;
+using Application.Dto.ProductDTOs;
 using Application.Extension;
+using Application.Interfaces.Services;
+using Domain.Entities.Common;
+using Domain.Enums.BannerEventSpecial;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Persistence.Services
@@ -219,7 +224,7 @@ namespace Infrastructure.Persistence.Services
             {
                 return await _unitOfWork.ExecuteInTransactionAsync(async () =>
                 {
-                   
+
                     var cartItem = await _unitOfWork.CartItems.FirstOrDefaultAsync(
                         predicate: c => c.Id == cartItemId && c.UserId == userId && !c.IsDeleted);
 
@@ -287,7 +292,7 @@ namespace Infrastructure.Persistence.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to remove cart item: CartItemId={CartItemId}", cartItemId);
+                _logger.LogError(ex, "Failed to remove cart item: CartItemId={CartItemId}", cartItemId);
                 return Result<CartItemDTO>.Failure($"Failed to remove cart item: {ex.Message}");
             }
         }
@@ -338,17 +343,17 @@ namespace Infrastructure.Persistence.Services
         {
             try
             {
-               
+
                 var cartItems = await _unitOfWork.CartItems.GetAllAsync(
                     predicate: c => c.UserId == userId && !c.IsDeleted && c.ExpiresAt > DateTime.UtcNow,
                     cancellationToken: cancellationToken);
 
-                if (cartItems?.Any() == true) 
+                if (cartItems?.Any() == true)
                 {
                     foreach (var item in cartItems)
                     {
                         var validation = await _productPricingService.ValidateCartPriceAsync(
-                            item.ProductId, item.ReservedPrice , userId);
+                            item.ProductId, item.ReservedPrice, userId);
 
                         if (!validation)
                         {
@@ -392,5 +397,153 @@ namespace Infrastructure.Persistence.Services
             var cartItemDto = existingItem.ToDTO();
             return Result<CartItemDTO>.Success(cartItemDto, "Cart item quantity updated successfully");
         }
+        
+        public async Task<CartValidationResult> ValidateCartForCheckoutAsync(int userId)
+        {
+            try
+            {
+                var cartItems = await _unitOfWork.CartItems.GetAllAsync(
+                    predicate: c => c.UserId == userId && !c.IsDeleted && c.ExpiresAt > DateTime.UtcNow,
+                    includeProperties: "Product,AppliedEvent",
+                    cancellationToken: default);
+
+                var user = await _unitOfWork.Users.GetByIdAsync(userId);
+
+                var validation = new CartValidationResult { IsValid = true, Errors = new List<string>() };
+
+                foreach (var item in cartItems.Where(c => c.AppliedEventId.HasValue))
+                {
+                    var eventId = item.AppliedEventId!.Value;
+                    var bannerEvent = await _unitOfWork.BannerEventSpecials.GetByIdAsync(eventId);
+
+                    if (bannerEvent == null || !bannerEvent.IsActive)
+                    {
+                        validation.IsValid = false;
+                        validation.Errors.Add($" Event for {item.Product.Name} is no longer active");
+                        continue;
+                    }
+
+                    // Validate event rules using your existing RuleType enum
+                    var ruleValidation = await ValidateEventRulesForCart(bannerEvent, cartItems.ToList(), user!);
+                    if (!ruleValidation.IsValid)
+                    {
+                        validation.IsValid = false;
+                        validation.Errors.AddRange(ruleValidation.Messages);
+                    }
+                }
+
+                return validation;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error validating cart for checkout: UserId={UserId}", userId);
+                return new CartValidationResult
+                {
+                    IsValid = false,
+                    Errors = new List<string> { "Cart validation failed. Please try again." }
+                };
+            }
+        }
+
+        private async Task<RuleEvaluationResultDTO> ValidateEventRulesForCart(
+            BannerEventSpecial bannerEvent,
+            List<CartItem> cartItems,
+            User user)
+        {
+            var result = new RuleEvaluationResultDTO { IsValid = true, Messages = new List<string>() };
+
+            if (bannerEvent.Rules?.Any() != true)
+            {
+                result.Messages.Add("No restrictions - applies to all");
+                return result;
+            }
+
+            foreach (var rule in bannerEvent.Rules)
+            {
+                var ruleResult = ValidateRule(rule, cartItems, user);
+                if (!ruleResult.IsValid)
+                {
+                    result.IsValid = false;
+                    result.Messages.Add(ruleResult.Message);
+                    result.FailedRules.Add(rule);
+                }
+            }
+
+            return await Task.FromResult(result);
+        }
+
+        private SingleRuleResultDTO ValidateRule(EventRule rule, List<CartItem> cartItems, User user)
+        {
+            return rule.Type switch
+            {
+                RuleType.Category => ValidateCategoryRule(rule, cartItems),
+                RuleType.SubCategory => ValidateSubCategoryRule(rule, cartItems),
+                RuleType.Product => ValidateProductRule(rule, cartItems),
+                RuleType.PriceRange => ValidatePriceRangeRule(rule, cartItems),                
+                RuleType.Geography => ValidateGeographyRule(rule, user),
+                RuleType.All => new SingleRuleResultDTO { IsValid = true, Message = "No restrictions" },
+                _ => new SingleRuleResultDTO { IsValid = true, Message = "Rule validation skipped" }
+            };
+        }
+
+        private SingleRuleResultDTO ValidatePriceRangeRule(EventRule rule, List<CartItem> cartItems)
+        {
+            var parts = rule.TargetValue.Split('-');
+            if (parts.Length != 2)
+                return new SingleRuleResultDTO { IsValid = false, Message = "Invalid price range format" };
+
+            if (!decimal.TryParse(parts[0], out var minPrice) || !decimal.TryParse(parts[1], out var maxPrice))
+                return new SingleRuleResultDTO { IsValid = false, Message = "Invalid price range values" };
+
+            var cartTotal = cartItems.Sum(item => item.ReservedPrice * item.Quantity);
+
+            return cartTotal >= minPrice && cartTotal <= maxPrice
+                ? new SingleRuleResultDTO { IsValid = true, Message = $"Cart total Rs.{cartTotal:F2} meets requirement" }
+                : new SingleRuleResultDTO { IsValid = false, Message = $"Cart total Rs.{cartTotal:F2} outside range Rs.{minPrice:F2}-{maxPrice:F2}" };
+        }
+
+        private SingleRuleResultDTO ValidateGeographyRule(EventRule rule, User user)
+        {
+            var allowedCities = rule.TargetValue.Split(',').Select(c => c.Trim()).ToList();
+            var userCity = user?.Addresses.FirstOrDefault()?.City?.Trim() ?? "";
+
+            return allowedCities.Contains(userCity, StringComparer.OrdinalIgnoreCase)
+                ? new SingleRuleResultDTO { IsValid = true, Message = $"Available in {userCity}" }
+                : new SingleRuleResultDTO { IsValid = false, Message = $"Not available in your city" };
+        }
+        
+        private SingleRuleResultDTO ValidateCategoryRule(EventRule rule, List<CartItem> cartItems)
+        {
+            var allowedCategoryIds = rule.TargetValue.Split(',').Select(int.Parse).ToList();
+            var hasMatchingProducts = cartItems.Any(item => 
+                allowedCategoryIds.Contains(item.Product?.CategoryId ?? 0));
+
+            return hasMatchingProducts
+                ? new SingleRuleResultDTO { IsValid = true, Message = $"Cart contains products from allowed categories" }
+                : new SingleRuleResultDTO { IsValid = false, Message = $" Cart must contain products from specified categories" };
+        }
+
+        private SingleRuleResultDTO ValidateSubCategoryRule(EventRule rule, List<CartItem> cartItems)
+        {
+            var allowedSubCategoryIds = rule.TargetValue.Split(',').Select(int.Parse).ToList();
+            var hasMatchingProducts = cartItems.Any(item => 
+                allowedSubCategoryIds.Contains(item.Product?.SubSubCategory?.SubCategoryId ?? 0));
+
+            return hasMatchingProducts
+                ? new SingleRuleResultDTO { IsValid = true, Message = $"Cart contains products from allowed subcategories" }
+                : new SingleRuleResultDTO { IsValid = false, Message = $"Cart must contain products from specified subcategories" };
+        }
+
+        private SingleRuleResultDTO ValidateProductRule(EventRule rule, List<CartItem> cartItems)
+        {
+            var allowedProductIds = rule.TargetValue.Split(',').Select(int.Parse).ToList();
+            var hasMatchingProducts = cartItems.Any(item => 
+                allowedProductIds.Contains(item.ProductId));
+
+            return hasMatchingProducts
+                ? new SingleRuleResultDTO { IsValid = true, Message = $"Cart contains required products" }
+                : new SingleRuleResultDTO { IsValid = false, Message = $"Cart must contain specific products for this promotion" };
+        }
+        
     }
 }

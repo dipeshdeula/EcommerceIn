@@ -41,10 +41,10 @@ namespace Application.Features.Authentication.Module
                                 return Results.Ok(new { result.Message, result.Data });
 
                             })
-                /*.RequireAuthorization()*/
+                            .RequireAuthorization()
                             .DisableAntiforgery()
-                              .Accepts<UpdateUserRoleCommand>("multipart/form-data")
-                              .Produces<UpdateUserRoleDTO>(StatusCodes.Status200OK)
+                             .Accepts<UpdateUserRoleCommand>("multipart/form-data")
+                             .Produces<UpdateUserRoleDTO>(StatusCodes.Status200OK)
                              .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
 
 

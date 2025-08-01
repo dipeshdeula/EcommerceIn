@@ -14,5 +14,10 @@ namespace Infrastructure.Persistence.Repositories
         Task<IEnumerable<EventUsage>> GetByUserIdAsync(int userId);
         Task<int> GetUsageCountByEventAndUserAsync(int eventId, int userId);
         Task<EventUsage?> GetByOrderIdAsync(int orderId);
+
+        // Enhanced methods for analytics
+        Task<IEnumerable<EventUsage>> GetUsagesByDateRangeAsync(int eventId, DateTime fromDate, DateTime toDate);
+        Task<decimal> GetTotalDiscountByEventAsync(int eventId);
+        Task<int> GetUniqueUsersCountByEventAsync(int eventId);
     }
 }

@@ -45,9 +45,11 @@ namespace Application.Features.BannerSpecialEvent.Validators
 
             // DISCOUNT VALIDATION
             RuleFor(x => x.bannerSpecialDTO.EventDto.DiscountValue)
-                .GreaterThan(0).WithMessage("Discount value must be greater than 0")
-                .LessThanOrEqualTo(100).When(x => x.bannerSpecialDTO.EventDto.PromotionType == Domain.Enums.BannerEventSpecial.PromotionType.Percentage)
-                .WithMessage("Percentage discount cannot exceed 100%");
+       .GreaterThan(0).WithMessage("Discount value must be greater than 0")
+       .LessThanOrEqualTo(100).When(x => x.bannerSpecialDTO.EventDto.PromotionType == Domain.Enums.BannerEventSpecial.PromotionType.Percentage)
+       .WithMessage("Percentage discount cannot exceed 100%")
+       .LessThanOrEqualTo(50000).When(x => x.bannerSpecialDTO.EventDto.PromotionType == Domain.Enums.BannerEventSpecial.PromotionType.FixedAmount)
+       .WithMessage("Fixed amount discount cannot exceed 50,000");
 
             RuleFor(x => x.bannerSpecialDTO.EventDto.MaxDiscountAmount)
                 .GreaterThan(0).When(x => x.bannerSpecialDTO.EventDto.MaxDiscountAmount.HasValue)
@@ -64,12 +66,11 @@ namespace Application.Features.BannerSpecialEvent.Validators
                     $"Current Nepal time: {_nepalTimeService.GetNepalCurrentTime():yyyy-MM-dd h:mm tt}");
 
             RuleFor(x => x.bannerSpecialDTO.EventDto.EndDateNepal)
-                .NotEmpty().WithMessage("End date is required")
-                .Must(BeValidDateTime).WithMessage(dto =>
-                    $"Invalid end date format: '{dto.bannerSpecialDTO.EventDto.EndDateNepal}'. " +
-                    $"Supported formats: {string.Join(", ", TimeParsingHelper.GetSupportedFormats())}")
-                .Must((dto, endDate) => BeAfterStartDate(dto.bannerSpecialDTO.EventDto.StartDateNepal, endDate))
-                .WithMessage("End date must be after start date");
+        .Must(BeReasonableYear).WithMessage("End date year seems incorrect. Please check for typos (e.g., 5025 instead of 2025)");
+
+            RuleFor(x => x.bannerSpecialDTO.EventDto.ActiveTimeSlot)
+        .Must(BeValidTimeSlotFormat).When(x => !string.IsNullOrWhiteSpace(x.bannerSpecialDTO.EventDto.ActiveTimeSlot))
+        .WithMessage("Invalid time slot format. Use formats like '08:00-23:59' or '1:00 PM-11:59 PM'");
 
             //  DURATION VALIDATION
             RuleFor(x => x.bannerSpecialDTO.EventDto)
@@ -88,6 +89,11 @@ namespace Application.Features.BannerSpecialEvent.Validators
             RuleFor(x => x.bannerSpecialDTO.ProductIds)
                 .MustAsync(AllProductsExist).When(x => x.bannerSpecialDTO.ProductIds?.Any() == true)
                 .WithMessage("One or more products don't exist or are deleted");
+
+            RuleFor(x => x.bannerSpecialDTO.EventDto.Priority)
+        .InclusiveBetween(1, 10).When(x => x.bannerSpecialDTO.EventDto.Priority.HasValue)
+        .WithMessage("Priority must be between 1 (lowest) and 10 (highest)");
+
 
             // CONFLICT VALIDATION (Non-blocking warning)
             RuleFor(x => x)
@@ -115,14 +121,36 @@ namespace Application.Features.BannerSpecialEvent.Validators
 
         private bool HaveValidDuration(Application.Dto.BannerEventSpecialDTOs.AddBannerEventSpecialDTO dto)
         {
-            var startResult = TimeParsingHelper.ParseFlexibleDateTime(dto.StartDateNepal);
-            var endResult = TimeParsingHelper.ParseFlexibleDateTime(dto.EndDateNepal);
+            try
+            {
+                var startResult = TimeParsingHelper.ParseFlexibleDateTime(dto.StartDateNepal);
+                var endResult = TimeParsingHelper.ParseFlexibleDateTime(dto.EndDateNepal);
 
-            if (!startResult.Succeeded || !endResult.Succeeded)
+                if (!startResult.Succeeded || !endResult.Succeeded)
+                {
+                    _logger.LogWarning("Duration validation failed: Unable to parse dates. Start: {Start}, End: {End}",
+                        dto.StartDateNepal, dto.EndDateNepal);
+                    return false;
+                }
+                var startDate = startResult.Data;
+                var endDate = endResult.Data;
+                var duration = endDate - startDate;
+
+                var isValid = duration.TotalMinutes >= 30 && duration.TotalDays <= 365;
+                if (!isValid)
+                {
+                    _logger.LogWarning("Duration validation failed. Duration: {Duration} minutes ({Days} days). " +
+                    "Must be between 30 minutes and 365 days. Start: {Start}, End: {End}",
+                    duration.TotalMinutes, duration.TotalDays, dto.StartDateNepal, dto.EndDateNepal);
+                }
+                return isValid;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception during duration validation for Start: {Start}, End: {End}",
+                dto.StartDateNepal, dto.EndDateNepal);
                 return false;
-
-            var duration = endResult.Data - startResult.Data;
-            return duration.TotalMinutes >= 30 && duration.TotalDays <= 365;
+            }
         }
 
         private async Task<bool> BeValidStartTime(string startDateString, CancellationToken cancellationToken)
@@ -248,6 +276,38 @@ namespace Application.Features.BannerSpecialEvent.Validators
             {
                 _logger.LogWarning(ex, "Error during conflict validation. Proceeding with creation: {ErrorMessage}", ex.Message);
                 return true; // Allow creation if conflict check fails
+            }
+        }
+        private bool BeValidTimeSlotFormat(string? timeSlot)
+        {
+            if (string.IsNullOrWhiteSpace(timeSlot)) return true; // Optional field
+
+            var patterns = new[]
+            {
+                @"^\d{1,2}:\d{2}-\d{1,2}:\d{2}$",                    // "08:00-23:59"
+                @"^\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2}$",             // "08:00 - 23:59"
+                @"^\d{1,2}:\d{2}\s*[APap][Mm]\s*-\s*\d{1,2}:\d{2}\s*[APap][Mm]$"  // "8:00 AM - 11:59 PM"
+            };
+
+            return patterns.Any(pattern => System.Text.RegularExpressions.Regex.IsMatch(timeSlot, pattern));
+        }
+
+        private bool BeReasonableYear(string endDateString)
+        {
+            try
+            {
+                var parseResult = TimeParsingHelper.ParseFlexibleDateTime(endDateString);
+                if (!parseResult.Succeeded) return false;
+
+                var year = parseResult.Data.Year;
+                var currentYear = DateTime.Now.Year;
+                
+                // Allow events up to 2 years in the future
+                return year >= currentYear && year <= currentYear + 2;
+            }
+            catch
+            {
+                return false;
             }
         }
     }

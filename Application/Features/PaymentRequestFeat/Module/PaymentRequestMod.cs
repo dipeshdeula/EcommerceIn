@@ -187,6 +187,7 @@ namespace Application.Features.PaymentRequestFeat.Module
         {
             WithTags("Payment");
             IncludeInOpenApi();
+            RequireAuthorization();
         }
 
         public override void AddRoutes(IEndpointRouteBuilder app)
@@ -223,38 +224,7 @@ namespace Application.Features.PaymentRequestFeat.Module
             .Produces<PaymentInitiationResponse>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest);
 
-
-           /* app.MapPost("/verify", async (
-                int PaymentRequestId,
-                string? EsewaTransactionId,
-                string? KhaltiPidx,
-                string? PaymentStatus,
-                int? DeliveryPersonId,
-                string? DeliveryNotes,
-                decimal? CollectedAmount,
-                ISender mediator) =>
-            {
-                var command = new VerifyPaymentCommand(
-                    PaymentRequestId,
-                    EsewaTransactionId,
-                    KhaltiPidx,
-                    PaymentStatus);
-
-                var result = await mediator.Send(command);
-
-                if (!result.Succeeded)
-                {
-                    return Results.BadRequest(new { 
-                        result.Message, result.Errors, success = false,timeStamp = DateTime.UtcNow });
-                }
-
-                return Results.Ok(new { result.Message, result.Data });
-            })
-            .WithName("VerifyPayment")
-            .WithSummary("Verify payment status")
-            .WithDescription("Verify and update payment status from payment gateway")
-            .Produces(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status400BadRequest);*/
+           
 
             // Get all payment requests
 
@@ -284,6 +254,7 @@ namespace Application.Features.PaymentRequestFeat.Module
                 return Results.Ok(new { 
                     result.Message, result.Data, result.TotalCount,result.TotalPages,result.PageSize,result.HasNextPage,result.HasPreviousPage });
             })
+            .RequireAuthorization("RequireAdmin")
             .WithName("GetAllPaymentRequests")
             .WithSummary("Get all payment requests")
             .WithDescription("Retrieve paginated list of payment requests")

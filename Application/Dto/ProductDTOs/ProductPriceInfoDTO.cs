@@ -13,39 +13,58 @@ namespace Application.Dto.ProductDTOs
         public decimal BasePrice { get; set; }            // Product discount price (DiscountPrice ?? MarketPrice)
         public decimal EffectivePrice { get; set; }       // Final price after all discounts
 
-        public decimal RegularDiscountAmount => Math.Max(0, OriginalPrice - BasePrice); // Product discount
+        public decimal ProductDiscountAmount { get; set; } // Regular discount amount - SET by SERVICE
+
+
+        public decimal RegularDiscountAmount => ProductDiscountAmount;
         public decimal EventDiscountAmount { get; set; }    // Event discount amount
-        public decimal TotalDiscountAmount => RegularDiscountAmount + EventDiscountAmount; // Combined savings
+        public decimal TotalDiscountAmount => ProductDiscountAmount + EventDiscountAmount; // Combined savings
 
         // Calculated properties with proper validation
         public decimal DiscountAmount => Math.Max(0, OriginalPrice - EffectivePrice); // Total discount (for backward compatibility)
-        public decimal DiscountPercentage => OriginalPrice > 0 ? Math.Round((TotalDiscountAmount / OriginalPrice) * 100, 2) : 0;
+        public decimal TotalDiscountPercentage => OriginalPrice > 0 ? Math.Round((TotalDiscountAmount / OriginalPrice) * 100, 2) : 0;
+
+        // Discount flags (set by service)
+        public bool HasProductDiscount { get; set; } = false; // Indicates if product has any discount
+        public bool HasEventDiscount { get; set; } = false; // Indicates if event discount is applied
+
+        // computed flags (Based on amounts)
         public bool HasDiscount => TotalDiscountAmount > 0;
-        public bool HasRegularDiscount => RegularDiscountAmount > 0;
-        public bool HasEventDiscount => EventDiscountAmount > 0;
+        public bool HasRegularDiscount => ProductDiscountAmount > 0;
+        public bool HasAnyDiscount => HasDiscount;
+        public bool IsOnSale { get; set; } = false; // Alias for UI convenience
+
+        
 
         //  EVENT INFORMATION
         public int? AppliedEventId { get; set; }
         public string? AppliedEventName { get; set; }
+        public int? ActiveEventId { get; set; } 
+        public string? ActiveEventName { get; set; } 
+        
         public string? EventTagLine { get; set; }
         public PromotionType? PromotionType { get; set; }
+        public DateTime? EventStartDate { get; set; }
         public DateTime? EventEndDate { get; set; }
 
         //  Event status helpers
-        public bool IsEventActive => AppliedEventId.HasValue && EventEndDate > DateTime.UtcNow;
-        public TimeSpan? EventTimeRemaining => EventEndDate.HasValue && EventEndDate > DateTime.UtcNow
-            ? EventEndDate - DateTime.UtcNow
-            : null;
+         public bool HasActiveEvent { get; set; }
+        public bool IsEventActive { get; set; }
+        public TimeSpan? EventTimeRemaining { get; set; }
+        public bool IsEventExpiringSoon { get; set; }
+        public string EventStatus { get; set; } = "";
 
+        // Special PROMOTIONS
+        public bool HasFreeShipping { get; set; } = false;
         
         // FORMATTED DISPLAY STRINGS
         public string FormattedOriginalPrice => $"Rs.{OriginalPrice:F2}";
         public string FormattedBasePrice => $"Rs.{BasePrice:F2}";
         public string FormattedEffectivePrice => $"Rs.{EffectivePrice:F2}";
-        public string FormattedSavings => HasDiscount ? GetFormattedSavings() : string.Empty;
-        public bool IsOnSale => HasDiscount; // alias for UI convenience
+        public string FormattedSavings { get; set; } = "";
+        public string FormattedDiscountBreakdown { get; set; } = "";
 
-        // CART SPECIFIC PROPERTIES
+        // CART SPECIFIC PROPERTIES : STOCK MANAGEMENT
         public bool IsStockAvailable { get; set; } = true;
         public int AvailableStock { get; set; }
         public bool CanReserveStock { get; set; } = true;
@@ -54,7 +73,13 @@ namespace Application.Dto.ProductDTOs
         //  PRICE VALIDATION FOR CART
         public bool IsPriceStable { get; set; } = true;
         public DateTime PriceCalculatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CalculatedAt { get; set; } = DateTime.UtcNow; // Alias
+        public bool IsPriceStable1 { get; set; } = true; // for compatibility
         public bool IsValidForCart => IsStockAvailable && CanReserveStock && IsPriceStable;
+
+        // Backward compatibliy aliases
+        public decimal BaseDiscountAmount => ProductDiscountAmount;
+        public decimal DiscountPercentage => TotalDiscountPercentage;
 
         // Price validation with tolerance
         public bool IsPriceValidWithTolerance(decimal expectedPrice, decimal tolerance = 0.01m)
@@ -75,6 +100,8 @@ namespace Application.Dto.ProductDTOs
         public ProductPriceInfoDTO WithEventInfo(int? eventId, string? eventName, string? tagLine = null, DateTime? endDate = null)
         {
             AppliedEventId = eventId;
+            ActiveEventId = eventId;
+            ActiveEventName = eventName;
             AppliedEventName = eventName;
             EventTagLine = tagLine;
             EventEndDate = endDate;
@@ -84,7 +111,9 @@ namespace Application.Dto.ProductDTOs
         public ProductPriceInfoDTO WithPriceValidation(bool isStable = true, DateTime? calculatedAt = null)
         {
             IsPriceStable = isStable;
+            IsPriceStable1 = isStable; // for compatibility set alias
             PriceCalculatedAt = calculatedAt ?? DateTime.UtcNow;
+            CalculatedAt = PriceCalculatedAt; // Alias for backward compatibility
             return this;
         }
 
@@ -124,12 +153,12 @@ namespace Application.Dto.ProductDTOs
                 OriginalPrice = OriginalPrice,
                 BasePrice = BasePrice,
                 FinalPrice = EffectivePrice,
-                RegularDiscount = RegularDiscountAmount,
+                RegularDiscount = ProductDiscountAmount,
                 EventDiscount = EventDiscountAmount,
                 TotalSavings = TotalDiscountAmount,
                 HasRegularDiscount = HasRegularDiscount,
                 HasEventDiscount = HasEventDiscount,
-                DiscountPercentage = DiscountPercentage,
+                DiscountPercentage = TotalDiscountPercentage,
                 FormattedBreakdown = GetFormattedSavings()
             };
         }

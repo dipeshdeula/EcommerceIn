@@ -1,5 +1,6 @@
 ﻿using Application.Dto;
 using Application.Dto.AuthDTOs;
+using Application.Dto.AuthDTOs.GoogleAuthDTOs;
 using Application.Features.Authentication.Commands;
 using Application.Features.Authentication.Commands.UserInfo.Commands;
 using Application.Features.Authentication.Otp.Commands;
@@ -12,6 +13,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Configuration;
 
 
 namespace Application.Features.Authentication.Module
@@ -56,10 +58,79 @@ namespace Application.Features.Authentication.Module
                 return await mediator.Send(query);
             });
 
-            app.MapPost("/google-auth", async ([FromBody] VerifyGoogleTokenCommand command, ISender mediator) =>
+            // Test google auth for single client id
+           /* app.MapPost("/google-auth", async ([FromBody] VerifyGoogleTokenCommand command, ISender mediator) =>
             {
                 return await mediator.Send(command);
-            });
+            });*/
+
+
+            // Google OAuth login endpoint
+            app.MapPost("/google-auth-login", async (
+                [FromBody] GoogleLoginRequest request,
+                ISender mediator) =>
+            {
+                if (string.IsNullOrEmpty(request.IdToken))
+                {
+                    return Results.BadRequest(new { message = "ID token is required" });
+                }
+
+                var command = new GoogleAuthCommand(request.IdToken, request.ClientType);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new
+                    {
+                        message = result.Message,
+                        errors = result.Errors
+                    });
+                }
+
+                //  Set secure HTTP-only cookies for web clients
+                if (request.ClientType == "web")
+                {
+                    var cookieOptions = new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = true, // HTTPS only in production
+                        SameSite = SameSiteMode.Lax, // Allow for OAuth redirects
+                        Expires = result.Data.ExpiresAt
+                    };
+
+                    var response = Results.Ok(new
+                    {
+                        message = result.Message,
+                        user = result.Data.User,
+                        isNewUser = result.Data.IsNewUser
+                    });
+
+                    // Add cookies to response
+                    return Results.Ok(result.Data);
+                }
+
+                return Results.Ok(result.Data);
+            })
+            .WithName("GoogleLogin")
+            .WithSummary("Authenticate user with Google OAuth");
+
+
+            // Get Google auth configuration
+            app.MapGet("/config", (IConfiguration configuration) =>
+            {
+                var config = new
+                {
+                    webClientId = configuration["GoogleAuth:WebClientId"],
+                    supportedPlatforms = new[] { "web", "android", "ios" }
+                };
+
+                return Results.Ok(config);
+            })
+            .WithName("GoogleAuthConfig")
+            .WithSummary("Get Google OAuth configuration");      
+        
+
+
 
             app.MapPost("/refresh-token", async (
                   [FromBody] TokenRequestDto tokenRequest,

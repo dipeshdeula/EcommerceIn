@@ -14,6 +14,7 @@ using Application.Dto.Shared;
 using Application.Dto.StoreDTOs;
 using Application.Dto.UserDTOs;
 using Application.Dto.WhishListDTOs;
+using Application.Features.BannerSpecialEvent.Module;
 using Application.Interfaces.Services;
 using Domain.Entities;
 using Domain.Entities.Common;
@@ -171,6 +172,7 @@ namespace Application.Extension
             return new ProductPricingDTO
             {
                 ProductId = priceInfo.ProductId,
+                ProductName = priceInfo.ProductName,
                 OriginalPrice = priceInfo.OriginalPrice,
                 BasePrice = priceInfo.BasePrice,
                 EffectivePrice = priceInfo.EffectivePrice,
@@ -178,17 +180,42 @@ namespace Application.Extension
                 // MAP DISCOUNT AMOUNTS
                 ProductDiscountAmount = priceInfo.RegularDiscountAmount,
                 EventDiscountAmount = priceInfo.EventDiscountAmount,
+                TotalDiscountAmount = priceInfo.TotalDiscountAmount,
+                TotalDiscountPercentage = priceInfo.TotalDiscountPercentage,
+
+                // MAP DISCOUNT FLAGS
+                HasProductDiscount = priceInfo.HasProductDiscount,
+                HasEventDiscount = priceInfo.HasEventDiscount,
+                HasAnyDiscount = priceInfo.HasAnyDiscount,
+                IsOnSale = priceInfo.IsOnSale,
 
                 // MAP EVENT INFO
                 ActiveEventId = priceInfo.AppliedEventId,
                 ActiveEventName = priceInfo.AppliedEventName,
                 EventTagLine = priceInfo.EventTagLine,
                 PromotionType = priceInfo.PromotionType,
+                EventStartDate = priceInfo.EventStartDate,
                 EventEndDate = priceInfo.EventEndDate,
+                HasActiveEvent = priceInfo.HasActiveEvent,
+                IsEventActive = priceInfo.IsEventActive,
+                EventTimeRemaining = priceInfo.EventTimeRemaining,
+                IsEventExpiringSoon = priceInfo.IsEventExpiringSoon,
 
-                //  MAP METADATA
+
+
+                 // ✅ MAP FORMATTED STRINGS
+                FormattedOriginalPrice = priceInfo.FormattedOriginalPrice,
+                FormattedEffectivePrice = priceInfo.FormattedEffectivePrice,
+                FormattedSavings = priceInfo.FormattedSavings,
+                FormattedDiscountBreakdown = priceInfo.FormattedDiscountBreakdown,
+                EventStatus = priceInfo.EventStatus,
+
+                // ✅ MAP SPECIAL FLAGS
+                HasFreeShipping = priceInfo.HasFreeShipping,
+
+                // ✅ MAP METADATA
                 IsPriceStable = priceInfo.IsPriceStable,
-                CalculatedAt = priceInfo.PriceCalculatedAt
+                CalculatedAt = priceInfo.CalculatedAt
             };
         }
         public static ProductStockDTO ToStockDTO(this Product product)
@@ -228,6 +255,17 @@ namespace Application.Extension
 
             // APPLY PRICING DATA via composition
             productDTO.Pricing = priceInfo.ToPricingDTO();
+            productDTO.DiscountPrice = priceInfo.EffectivePrice; // Final price after all discounts
+            productDTO.DiscountPercentage = priceInfo.TotalDiscountPercentage; // Total discount percentage
+
+            productDTO.HasProductDiscount = priceInfo.HasProductDiscount;
+            productDTO.ProductDiscountAmount = priceInfo.ProductDiscountAmount;
+
+            productDTO.BasePrice = priceInfo.BasePrice;
+
+            productDTO.FormattedBasePrice = $"Rs. {priceInfo.BasePrice:F2}";
+        productDTO.FormattedDiscountAmount = $"Rs. {priceInfo.TotalDiscountAmount:F2}";
+
 
             return productDTO;
         }
@@ -276,16 +314,38 @@ namespace Application.Extension
 
             return new ProductPricingDTO
             {
-                ProductId = productDTO.Id,
-                OriginalPrice = productDTO.MarketPrice,
-                BasePrice = productDTO.BasePrice,
-                EffectivePrice = productDTO.BasePrice,
-                ProductDiscountAmount = productDiscountAmount,
-                EventDiscountAmount = 0,
-                ActiveEventId = null,
-                ActiveEventName = null,
-                IsPriceStable = true,
-                CalculatedAt = DateTime.UtcNow
+               ProductId = productDTO.Id,
+        ProductName = productDTO.Name,
+        OriginalPrice = productDTO.MarketPrice,
+        BasePrice = productDTO.BasePrice,
+        EffectivePrice = productDTO.BasePrice,
+        ProductDiscountAmount = productDiscountAmount,
+        EventDiscountAmount = 0,
+        TotalDiscountAmount = productDiscountAmount,
+        TotalDiscountPercentage = productDTO.MarketPrice > 0 
+            ? Math.Round((productDiscountAmount / productDTO.MarketPrice) * 100, 2) 
+            : 0,
+        HasProductDiscount = productDTO.HasProductDiscount,
+        HasEventDiscount = false,
+        HasAnyDiscount = productDTO.HasProductDiscount,
+        IsOnSale = productDTO.HasProductDiscount,
+        ActiveEventId = null,
+        ActiveEventName = null,
+        EventTagLine = null,
+        PromotionType = null,
+        EventStartDate = null,
+        EventEndDate = null,
+        HasActiveEvent = false,
+        IsEventActive = false,
+        EventTimeRemaining = null,
+        IsEventExpiringSoon = false,
+        FormattedOriginalPrice = $"Rs. {productDTO.MarketPrice:F2}",
+        FormattedEffectivePrice = $"Rs. {productDTO.BasePrice:F2}",
+        FormattedSavings = productDiscountAmount > 0 ? $"Save Rs. {productDiscountAmount:F2}" : "",
+        FormattedDiscountBreakdown = productDiscountAmount > 0 ? $"Product discount: Rs. {productDiscountAmount:F2}" : "",
+        EventStatus = "",
+        IsPriceStable = true,
+        CalculatedAt = DateTime.UtcNow
             };
         }
   
@@ -440,25 +500,7 @@ namespace Application.Extension
             return estimatedOriginal > 0 ? estimatedOriginal : cartItem.ReservedPrice;
         }
 
-        /*// ✅ FALLBACK: Create fallback pricing when service is unavailable
-        private static ProductPriceInfoDTO CreateFallbackPricing(CartItem cartItem)
-        {
-            var estimatedOriginal = CalculateOriginalPrice(cartItem) ?? cartItem.ReservedPrice;
-
-            return new ProductPriceInfoDTO
-            {
-                ProductId = cartItem.ProductId,
-                OriginalPrice = estimatedOriginal,
-                BasePrice = cartItem.ReservedPrice + (cartItem.EventDiscountAmount ?? 0), // Add back event discount to get base
-                EffectivePrice = cartItem.ReservedPrice,
-                EventDiscountAmount = cartItem.EventDiscountAmount ?? 0,
-                AppliedEventId = cartItem.AppliedEventId,
-                AppliedEventName = cartItem.AppliedEvent?.Name,
-                EventTagLine = cartItem.AppliedEvent?.TagLine,
-                IsPriceStable = true,
-                PriceCalculatedAt = DateTime.UtcNow
-            };
-        }*/
+       
 
         public static OrderDTO ToDTO(this Order order)
         {
@@ -838,6 +880,135 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
                     : eventProduct.Product?.MarketPrice ?? 0
             };
         }
+        
+        /// <summary>
+/// Convert BannerEventSpecialDTO back to Entity for rule engine processing
+/// </summary>
+public static BannerEventSpecial ToEntity(this BannerEventSpecialDTO dto)
+{
+    if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+    return new BannerEventSpecial
+    {
+        Id = dto.Id,
+        Name = dto.Name,
+        Description = dto.Description,
+        TagLine = dto.TagLine,
+        EventType = dto.EventType,
+        PromotionType = dto.PromotionType,
+        DiscountValue = dto.DiscountValue,
+        MaxDiscountAmount = dto.MaxDiscountAmount,
+        MinOrderValue = dto.MinOrderValue,
+        
+        // ✅ USE UTC DATES (stored dates)
+        StartDate = dto.StartDate,
+        EndDate = dto.EndDate,
+        
+        ActiveTimeSlot = dto.ActiveTimeSlot,
+        MaxUsageCount = dto.MaxUsageCount,
+        CurrentUsageCount = dto.CurrentUsageCount,
+        MaxUsagePerUser = dto.MaxUsagePerUser,
+        Priority = dto.Priority,
+        IsActive = dto.IsActive,
+        IsDeleted = dto.IsDeleted,
+        Status = dto.Status,
+        CreatedAt = dto.CreatedAt,
+        UpdatedAt = dto.UpdatedAt,
+
+        // ✅ MAP RELATED ENTITIES
+        Rules = dto.Rules?.Select(r => r.ToEntity()).ToList() ?? new List<EventRule>(),
+        EventProducts = dto.EventProducts?.Select(ep => ep.ToEntity()).ToList() ?? new List<EventProduct>(),
+        Images = dto.Images?.Select(i => i.ToEntity()).ToList() ?? new List<BannerImage>()
+    };
+}
+
+        /// <summary>
+        /// Convert EventRuleDTO back to Entity
+        /// </summary>
+        public static EventRule ToEntity(this EventRuleDTO dto)
+        {
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            return new EventRule
+            {
+                Id = dto.Id,
+                BannerEventId = 0, // Will be set by parent
+                Type = dto.Type,                
+                TargetValue = dto.TargetValue,
+                Conditions = dto.Conditions,
+                DiscountType = dto.DiscountType,
+                DiscountValue = dto.DiscountValue,
+                MaxDiscount = dto.MaxDiscount,
+                MinOrderValue = dto.MinOrderValue,
+                Priority = dto.Priority
+            };
+        }
+
+        /// <summary>
+        /// Convert EventProductDTO back to Entity
+        /// </summary>
+        public static EventProduct ToEntity(this EventProductDTO dto)
+        {
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            return new EventProduct
+            {
+                Id = dto.Id,
+                BannerEventId = dto.BannerEventId,
+                ProductId = dto.ProductId,
+                SpecificDiscount = dto.SpecificDiscount
+                // Note: Product navigation property will be loaded separately if needed
+            };
+        }
+
+        /// <summary>
+        /// Convert BannerImageDTO back to Entity
+        /// </summary>
+        public static BannerImage ToEntity(this BannerImageDTO dto)
+        {
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            return new BannerImage
+            {
+                Id = dto.Id,
+                BannerId = dto.BannerEventId,
+                ImageUrl = dto.ImageUrl
+            };
+        }
+
+        /// <summary>
+        /// ✅ ENHANCED: Convert CartValidationRequestDTO to EvaluationContextDTO
+        /// </summary>
+        public static EvaluationContextDTO ToEvaluationContext(this CartValidationRequestDTO request)
+        {
+            if (request == null) throw new ArgumentNullException(nameof(request));
+
+            return new EvaluationContextDTO
+            {
+                CartItems = request.CartItems ?? new List<CartItem>(),
+                User = request.User,
+                PaymentMethod = request.PaymentMethod,
+                OrderTotal = request.CartItems?.Sum(c => c.ReservedPrice * c.Quantity),
+                EvaluationTime = DateTime.UtcNow
+            };
+        }
+
+        /// <summary>
+        /// ✅ ENHANCED: Convert RuleTestRequestDTO to EvaluationContextDTO
+        /// </summary>
+        public static EvaluationContextDTO ToEvaluationContext(this RuleTestRequestDTO request)
+        {
+            if (request == null) throw new ArgumentNullException(nameof(request));
+
+            return new EvaluationContextDTO
+            {
+                CartItems = request.TestCartItems ?? new List<CartItem>(),
+                User = request.TestUser,
+                PaymentMethod = request.TestPaymentMethod,
+                OrderTotal = request.TestOrderTotal ?? request.TestCartItems?.Sum(c => c.ReservedPrice * c.Quantity),
+                EvaluationTime = DateTime.UtcNow
+            };
+        }
 
         public static BannerImageDTO ToDTO(this BannerImage bannerImage)
         {
@@ -845,7 +1016,7 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
             {
                 Id = bannerImage.Id,
                 ImageUrl = bannerImage.ImageUrl,
-                BannerEventId = bannerImage.BannerId 
+                BannerEventId = bannerImage.BannerId
             };
         }
         public static PaymentMethodDTO ToDTO(this PaymentMethod paymentMethod)

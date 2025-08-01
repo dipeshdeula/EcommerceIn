@@ -19,26 +19,13 @@ namespace Application.Features.SubCategoryFeat.Module
         {
             WithTags("SubCategory");
             IncludeInOpenApi();
+            RequireAuthorization();
 
         }
 
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
-            app = app.MapGroup("subCategory");
-
-            /*            app.MapPost("/create-subCategory", async ([FromQuery] int ParentCategoryId, [FromForm] CreateSubCategoryCommand command, ISender mediator) =>
-                        {
-                            var result = await mediator.Send(command);
-                            if (!result.Succeeded)
-                            {
-                                return Results.BadRequest(new { result.Message, result.Errors });
-                            }
-                            return Results.Ok(new { result.Message, result.Data });
-                        })
-                         .DisableAntiforgery()
-                         .Accepts<CreateSubCategoryCommand>("multipart/form-data")
-                         .Produces<SubCategoryDTO>(StatusCodes.Status200OK)
-                         .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);*/
+            app = app.MapGroup("subCategory");          
 
             app.MapPost("/create-subCategory", async (
                 [FromQuery] int CategoryId, string Name,string Slug,string Description,IFormFile File, ISender mediator) =>
@@ -51,6 +38,7 @@ namespace Application.Features.SubCategoryFeat.Module
                 }
                 return Results.Ok(new { result.Message, result.Data });
             })
+            .RequireAuthorization("RequireAdminOrVendor")
             .DisableAntiforgery()
             .Accepts<CreateSubCategoryCommand>("multipart/form-data")
             .Produces<SubCategoryDTO>(StatusCodes.Status200OK)
@@ -88,7 +76,9 @@ namespace Application.Features.SubCategoryFeat.Module
                 }
                 return Results.Ok(new { result.Message, result.Data });
 
-            }).DisableAntiforgery()
+            })
+               .RequireAuthorization("RequireAdminOrVendor")
+               .DisableAntiforgery()
               .Accepts<UpdateSubCategoryCommand>("multipart/form-data")
               .Produces<SubCategoryDTO>(StatusCodes.Status200OK)
               .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest);
@@ -104,7 +94,7 @@ namespace Application.Features.SubCategoryFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
 
             app.MapDelete("/unDeleteSubCategory", async (
                int SubCategoryId, ISender mediator
@@ -117,7 +107,7 @@ namespace Application.Features.SubCategoryFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
 
             app.MapDelete("/hardDeleteSubCategory", async (
                int SubCategoryId, ISender mediator
@@ -130,7 +120,7 @@ namespace Application.Features.SubCategoryFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            });
+            }).RequireAuthorization("RequireAdminOrVendor");
         }
     }
 }
