@@ -51,7 +51,7 @@ namespace Application.Features.CategoryFeat.Queries
             var productDTOs = getProducts.Select(p => p.ToDTO()).ToList();
 
             // Apply dynamic pricing to all products
-            await productDTOs.ApplyPricingAsync(_pricingService,null,cancellationToken);
+            await productDTOs.ApplyPricingAsync(_pricingService,null);
 
             var categoryWithProductsDto = new CategoryWithProductsDTO
             {

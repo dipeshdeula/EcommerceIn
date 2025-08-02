@@ -25,15 +25,18 @@ namespace Application.Features.CategoryFeat.Queries
     {
         private readonly ICategoryRepository _categoryRepository;
         private readonly IProductPricingService _pricingService;
+        private readonly IHybridCacheService _cacheService;
         private ILogger<GetAllProductsByCategoryId> _logger;
         public GetAllProductsByCategoryIdHandler(
             ICategoryRepository categoryRepository,
             IProductPricingService pricingService,
+            IHybridCacheService cacheService,
             ILogger<GetAllProductsByCategoryId> logger
             )
         {
             _categoryRepository = categoryRepository;
             _pricingService = pricingService;
+            _cacheService = cacheService;
             _logger = logger;
 
         }
@@ -58,7 +61,7 @@ namespace Application.Features.CategoryFeat.Queries
                 var productDTOs = products.Select(p => p.ToDTO()).ToList();
 
                 // Apply dynamic pricing to all products
-                await productDTOs.ApplyPricingAsync(_pricingService, request.UserId, cancellationToken);
+                await productDTOs.ApplyPricingAsync(_pricingService, _cacheService,request.UserId, cancellationToken);
 
                 // Filter by sale status if requested
                 if (request.OnSaleOnly)
@@ -82,10 +85,10 @@ namespace Application.Features.CategoryFeat.Queries
                     //  Pricing statistics
                     TotalProducts = productDTOs.Count,
                     ProductsOnSale = productDTOs.Count(p => p.IsOnSale),
-                    AveragePrice = productDTOs.Any() ? productDTOs.Average(p => p.Pricing.EffectivePrice) : 0,
-                    MinPrice = productDTOs.Any() ? productDTOs.Min(p => p.Pricing.EffectivePrice) : 0,
-                    MaxPrice = productDTOs.Any() ? productDTOs.Max(p => p.Pricing.EffectivePrice) : 0,
-                    TotalSavings = productDTOs.Sum(p => p.Pricing.ProductDiscountAmount + p.Pricing.EventDiscountAmount)
+                    AveragePrice = productDTOs.Any() ? productDTOs.Average(p => p.Pricing?.EffectivePrice ?? 0) : 0,
+                    MinPrice = productDTOs.Any() ? productDTOs.Min(p => p.Pricing?.EffectivePrice ?? 0) : 0,
+                    MaxPrice = productDTOs.Any() ? productDTOs.Max(p => p.Pricing? .EffectivePrice ?? 0) : 0,
+                    TotalSavings = productDTOs.Sum(p => p.Pricing?.ProductDiscountAmount ?? 0 + p.Pricing?.EventDiscountAmount ?? 0)
                 };
                 
                 _logger.LogInformation("Retrieved category {CategoryId} with {ProductCount} products, {OnSaleCount} on sale, total savings: Rs.{TotalSavings}",
@@ -102,32 +105,19 @@ namespace Application.Features.CategoryFeat.Queries
             }
         }
 
-        //private List<ProductDTO> ApplySorting(List<ProductDTO> products, string? sortBy)
-        //{
-        //    return sortBy?.ToLower() switch
-        //    {
-        //        "price" => products.OrderBy(p => p.Pricing.EffectivePrice).ToList(),
-        //        "name" => products.OrderBy(p => p.Name).ToList(),
-        //        "rating" => products.OrderByDescending(p => p.Rating).ToList(),
-        //        "discount" => products.OrderByDescending(p => p.Pricing.TotalDiscountPercentage).ToList(),
-        //        _ => products.OrderByDescending(p => p.Id).ToList()
-        //    };
-        //}
-
         private List<ProductDTO> ApplySorting(List<ProductDTO> products, string? sortBy)
         {
-            return sortBy?.ToLower() switch
-            {
-                "price" => products.QuickSort(p=>p.Pricing.EffectivePrice).ToList<ProductDTO>(),
-
-                "name" => products.QuickSort(p => p.Name).ToList<ProductDTO>(),
-                "rating" => products.QuickSortDesc(p => p.Rating).ToList<ProductDTO>(),
-
-                "discount" => products.QuickSortDesc(p => p.Pricing.TotalDiscountPercentage).ToList<ProductDTO>(),
-
-                _ => products.QuickSortDesc(p => p.Id).ToList<ProductDTO>()
-            };
+           return sortBy?.ToLower() switch
+           {
+               "price" => products.OrderBy(p => p.Pricing!.EffectivePrice).ToList(),
+               "name" => products.OrderBy(p => p.Name).ToList(),
+               "rating" => products.OrderByDescending(p => p.Rating).ToList(),
+               "discount" => products.OrderByDescending(p => p.Pricing!.TotalDiscountPercentage).ToList(),
+               _ => products.OrderByDescending(p => p.Id).ToList()
+           };
         }
+
+        
     }
 
 }

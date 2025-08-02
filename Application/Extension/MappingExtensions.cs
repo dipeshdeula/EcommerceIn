@@ -1,4 +1,5 @@
-﻿using Application.Common.Helper;
+﻿using System.Diagnostics;
+using Application.Common.Helper;
 using Application.Dto;
 using Application.Dto.AddressDTOs;
 using Application.Dto.BannerEventSpecialDTOs;
@@ -270,33 +271,110 @@ namespace Application.Extension
             return productDTO;
         }
 
+        // Initial version - no caching direct service call
+        // public static async Task<List<ProductDTO>> ApplyPricingAsync(
+        //     this List<ProductDTO> productDTOs,
+        //     IProductPricingService pricingService,
+        //     int? userId = null,
+        //     CancellationToken cancellationToken = default)
+        // {
+        //     if (productDTOs == null || !productDTOs.Any()) return productDTOs ?? new List<ProductDTO>();
+
+        //     try
+        //     {
+
+
+        //         var productIds = productDTOs.Select(p => p.Id).ToList();
+        //         var priceInfos = await pricingService.GetEffectivePricesAsync(productIds, userId, cancellationToken);
+
+
+        //         foreach (var productDTO in productDTOs)
+        //         {
+        //             var priceInfo = priceInfos.FirstOrDefault(p => p.ProductId == productDTO.Id);
+        //             if (priceInfo != null)
+        //             {
+        //                 productDTO.ApplyPricing(priceInfo);
+        //             }
+        //         }
+
+        //         return productDTOs;
+        //     }
+        //     catch (Exception)
+        //     {
+        //         // FALLBACK: Apply default pricing on error
+        //         foreach (var productDTO in productDTOs)
+        //         {
+        //             productDTO.ApplyPricing(null);
+        //         }
+        //         return productDTOs;
+        //     }
+        // }
+
+        // Version 1 : with hybird Cache (primary method)
         public static async Task<List<ProductDTO>> ApplyPricingAsync(
-            this List<ProductDTO> productDTOs,
-            IProductPricingService pricingService,
-            int? userId = null,
-            CancellationToken cancellationToken = default)
+                this List<ProductDTO> productDTOs,
+                IProductPricingService pricingService,
+                IHybridCacheService cacheService, // ✅ ADD THIS
+                int? userId = null,
+                CancellationToken cancellationToken = default)
         {
-            if (productDTOs == null || !productDTOs.Any()) return productDTOs ?? new List<ProductDTO>();
+            if (productDTOs == null || !productDTOs.Any())
+                return productDTOs ?? new List<ProductDTO>();
 
             try
             {
+                var stopwatch = Stopwatch.StartNew();
                 var productIds = productDTOs.Select(p => p.Id).ToList();
-                var priceInfos = await pricingService.GetEffectivePricesAsync(productIds, userId, cancellationToken);
 
-                foreach (var productDTO in productDTOs)
+                // ✅ STEP 1: Try to get pricing from cache first
+                var cachedPricing = await cacheService.GetPricingAsync(productIds, userId, cancellationToken);
+                var cachedPricingLookup = cachedPricing.ToDictionary(p => p.ProductId, p => p);
+
+                // ✅ STEP 2: Identify missing pricing data
+                var missingProductIds = productIds.Where(id => !cachedPricingLookup.ContainsKey(id)).ToList();
+
+                // ✅ STEP 3: Fetch missing pricing from service
+                if (missingProductIds.Any())
                 {
-                    var priceInfo = priceInfos.FirstOrDefault(p => p.ProductId == productDTO.Id);
-                    if (priceInfo != null)
+                    var freshPricing = await pricingService.GetEffectivePricesAsync(missingProductIds, userId, cancellationToken);
+
+                    // ✅ STEP 4: Cache the fresh pricing
+                    if (freshPricing.Any())
                     {
-                        productDTO.ApplyPricing(priceInfo);
+                        await cacheService.SetPricingAsync(freshPricing, userId, cancellationToken);
+
+                        // Add to lookup
+                        foreach (var pricing in freshPricing)
+                        {
+                            cachedPricingLookup[pricing.ProductId] = pricing;
+                        }
                     }
                 }
 
+                // ✅ STEP 5: Apply pricing to all products
+                foreach (var productDTO in productDTOs)
+                {
+                    if (cachedPricingLookup.TryGetValue(productDTO.Id, out var priceInfo))
+                    {
+                        productDTO.ApplyPricing(priceInfo);
+                    }
+                    else
+                    {
+                        productDTO.ApplyPricing(null);
+                    }
+                }
+
+                stopwatch.Stop();
+                var cacheHitRate = (double)(productIds.Count - missingProductIds.Count) / productIds.Count * 100;
+
+                Console.WriteLine($"⚡ PRICING APPLIED: {productDTOs.Count} products in {stopwatch.ElapsedMilliseconds}ms " +
+                                $"(Cache hit rate: {cacheHitRate:F1}%)");
+
                 return productDTOs;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // FALLBACK: Apply default pricing on error
+                // ✅ FALLBACK: Apply default pricing on error
                 foreach (var productDTO in productDTOs)
                 {
                     productDTO.ApplyPricing(null);
@@ -305,7 +383,59 @@ namespace Application.Extension
             }
         }
 
-        // NEW: Create default pricing when no pricing service data
+        // ✅ VERSION 2: Without Cache (Fallback method)
+        public static async Task<List<ProductDTO>> ApplyPricingDirectAsync(
+            this List<ProductDTO> productDTOs,
+            IProductPricingService pricingService,
+            int? userId = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (productDTOs == null || !productDTOs.Any()) 
+                return productDTOs ?? new List<ProductDTO>();
+
+            try
+            {
+                var stopwatch = Stopwatch.StartNew();
+                var productIds = productDTOs.Select(p => p.Id).ToList();
+
+                // ✅ DIRECT SERVICE CALL (No caching)
+                var priceInfos = await pricingService.GetEffectivePricesAsync(productIds, userId, cancellationToken);
+                var pricingLookup = priceInfos.ToDictionary(p => p.ProductId, p => p);
+
+                // ✅ Apply pricing to all products
+                foreach (var productDTO in productDTOs)
+                {
+                    if (pricingLookup.TryGetValue(productDTO.Id, out var priceInfo))
+                    {
+                        productDTO.ApplyPricing(priceInfo);
+                    }
+                    else
+                    {
+                        productDTO.ApplyPricing(null);
+                    }
+                }
+
+                stopwatch.Stop();
+                Console.WriteLine($"⚡ DIRECT PRICING: {productDTOs.Count} products in {stopwatch.ElapsedMilliseconds}ms (No Cache)");
+
+                return productDTOs;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"🚨 PRICING ERROR: {ex.Message}");
+                
+                // ✅ FINAL FALLBACK: Apply default pricing
+                foreach (var productDTO in productDTOs)
+                {
+                    productDTO.ApplyPricing(null);
+                }
+                return productDTOs;
+            }
+        }
+
+
+
+        // Create default pricing when no pricing service data
 
         private static ProductPricingDTO CreateDefaultPricing(ProductDTO productDTO)
         {
@@ -314,38 +444,38 @@ namespace Application.Extension
 
             return new ProductPricingDTO
             {
-               ProductId = productDTO.Id,
-        ProductName = productDTO.Name,
-        OriginalPrice = productDTO.MarketPrice,
-        BasePrice = productDTO.BasePrice,
-        EffectivePrice = productDTO.BasePrice,
-        ProductDiscountAmount = productDiscountAmount,
-        EventDiscountAmount = 0,
-        TotalDiscountAmount = productDiscountAmount,
-        TotalDiscountPercentage = productDTO.MarketPrice > 0 
-            ? Math.Round((productDiscountAmount / productDTO.MarketPrice) * 100, 2) 
+                ProductId = productDTO.Id,
+                ProductName = productDTO.Name,
+                OriginalPrice = productDTO.MarketPrice,
+                BasePrice = productDTO.BasePrice,
+                EffectivePrice = productDTO.BasePrice,
+                ProductDiscountAmount = productDiscountAmount,
+                EventDiscountAmount = 0,
+                TotalDiscountAmount = productDiscountAmount,
+                TotalDiscountPercentage = productDTO.MarketPrice > 0
+            ? Math.Round((productDiscountAmount / productDTO.MarketPrice) * 100, 2)
             : 0,
-        HasProductDiscount = productDTO.HasProductDiscount,
-        HasEventDiscount = false,
-        HasAnyDiscount = productDTO.HasProductDiscount,
-        IsOnSale = productDTO.HasProductDiscount,
-        ActiveEventId = null,
-        ActiveEventName = null,
-        EventTagLine = null,
-        PromotionType = null,
-        EventStartDate = null,
-        EventEndDate = null,
-        HasActiveEvent = false,
-        IsEventActive = false,
-        EventTimeRemaining = null,
-        IsEventExpiringSoon = false,
-        FormattedOriginalPrice = $"Rs. {productDTO.MarketPrice:F2}",
-        FormattedEffectivePrice = $"Rs. {productDTO.BasePrice:F2}",
-        FormattedSavings = productDiscountAmount > 0 ? $"Save Rs. {productDiscountAmount:F2}" : "",
-        FormattedDiscountBreakdown = productDiscountAmount > 0 ? $"Product discount: Rs. {productDiscountAmount:F2}" : "",
-        EventStatus = "",
-        IsPriceStable = true,
-        CalculatedAt = DateTime.UtcNow
+                HasProductDiscount = productDTO.HasProductDiscount,
+                HasEventDiscount = false,
+                HasAnyDiscount = productDTO.HasProductDiscount,
+                IsOnSale = productDTO.HasProductDiscount,
+                ActiveEventId = null,
+                ActiveEventName = null,
+                EventTagLine = null,
+                PromotionType = null,
+                EventStartDate = null,
+                EventEndDate = null,
+                HasActiveEvent = false,
+                IsEventActive = false,
+                EventTimeRemaining = null,
+                IsEventExpiringSoon = false,
+                FormattedOriginalPrice = $"Rs. {productDTO.MarketPrice:F2}",
+                FormattedEffectivePrice = $"Rs. {productDTO.BasePrice:F2}",
+                FormattedSavings = productDiscountAmount > 0 ? $"Save Rs. {productDiscountAmount:F2}" : "",
+                FormattedDiscountBreakdown = productDiscountAmount > 0 ? $"Product discount: Rs. {productDiscountAmount:F2}" : "",
+                EventStatus = "",
+                IsPriceStable = true,
+                CalculatedAt = DateTime.UtcNow
             };
         }
   

@@ -54,8 +54,15 @@ namespace Infrastructure.Persistence.Services
             var utcNow = DateTime.UtcNow;
             var nepalTime = ConvertFromUtcToNepal(utcNow);
 
+            var cacheOptions = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(1),
+                Size = 1,
+                Priority = CacheItemPriority.High
+            };
+
             // Cache for 1 second with absolute expiration
-            _cache.Set(cacheKey, nepalTime, TimeSpan.FromSeconds(1));
+            _cache.Set(cacheKey, nepalTime, cacheOptions);
 
             _logger.LogTrace(" Current time - UTC: {UtcTime} → Nepal: {NepalTime}",
                 utcNow.ToString("yyyy-MM-dd HH:mm:ss"),

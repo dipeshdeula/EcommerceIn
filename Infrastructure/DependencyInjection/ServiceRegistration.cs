@@ -69,6 +69,7 @@ using Application.Provider;
 using Application.Utilities;
 using FluentMigrator;
 using FluentValidation;
+using Infrastructure.Persistence.Configurations;
 using Infrastructure.Persistence.Messaging;
 using Infrastructure.Persistence.Repositories;
 using MediatR;
@@ -414,7 +415,12 @@ namespace Infrastructure.DependencyInjection
             services.AddValidatorsFromAssemblyContaining<AddressCommandValidator>();
             services.AddScoped<PaymentContextDto>();
             services.AddHostedService<EventPriceInvalidationService>();
+            
             services.AddMemoryCache();
+
+            // Add HybridCache Service
+            services.AddScoped<IHybridCacheService, HybridCacheService>();
+            services.AddSingleton<HybridCacheOptions>();
 
             services.AddSingleton<INepalTimeZoneService, NepalTimeZoneService>();
 

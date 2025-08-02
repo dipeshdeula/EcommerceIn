@@ -24,6 +24,46 @@ services:
       timeout: 10s
       retries: 3
 
+  # Redis Cache Server
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce_redis
+    restart: always
+    command: redis-server --appendonly yes --requirepass redis123
+    environment:
+      - REDIS_PASSWORD=redis123
+    volumes:
+      - redis_data:/data  # ✅ FIXED: Removed extra space
+    ports:
+      - "6379:6379"
+    expose:
+      - "6379"
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis123", "ping"]  # ✅ FIXED: Proper Redis ping
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    sysctls:
+      - net.core.somaxconn=1024  # ✅ FIXED: Added space after hyphen
+
+  # Redis Commander (Web UI for Redis)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: ecommerce_redis_ui
+    restart: always
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:redis123
+      - HTTP_USER=admin
+      - HTTP_PASSWORD=admin123
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - ecommerce-network
+
   # RabbitMQ Message Broker
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -59,6 +99,8 @@ services:
     environment:
       # Database Connection
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=EcommerceInstant;Username=postgres;Password=dipesh;
+      #  Redis Connection
+      - ConnectionStrings__Redis=redis:6379,password=redis123,abortConnect=false,connectTimeout=10000,syncTimeout=10000
       # JWT Settings (ADDED: Missing JWT configuration)
       - JwtSettings__Key=AQUCIKBROWNFOXJUMPSOVERALAZYDOG=@34
       - JwtSettings__Issuer=EcommerceInstant
@@ -125,6 +167,12 @@ services:
       - PaymentGateways__Esewa__MerchantId=EPAYTEST
       - PaymentGateways__Esewa__SecretKey=8gBm/:&EnhH.1/q
       - PaymentGateways__Esewa__BaseUrl=https://rc-epay.esewa.com.np
+
+      #  Cache Settings
+      - CacheSettings__DefaultExpiration=00:05:00
+      - CacheSettings__L1Expiration=00:02:00
+      - CacheSettings__EnableDistributedCache=true
+      - CacheSettings__Redis__InstanceName=EcommerceCache
       
         # Application Settings
       - ASPNETCORE_ENVIRONMENT=Development
@@ -136,6 +184,8 @@ services:
       postgres:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - ecommerce-network
@@ -183,3 +233,4 @@ networks:
 volumes:
   postgres_data:
   rabbitmq_data:
+  redis_data:

@@ -23,15 +23,18 @@ namespace Application.Features.ProductFeat.Queries
     {
         private readonly IProductRepository _productRepository;
         private readonly IProductPricingService _pricingService;
+        private readonly IHybridCacheService _cacheService;
         private readonly ILogger<GetAllProductQueryHandler> _logger;
 
         public GetAllProductQueryHandler(
             IProductRepository productRepository,
             IProductPricingService pricingService,
+            IHybridCacheService cacheService,
             ILogger<GetAllProductQueryHandler> logger)
         {
             _productRepository = productRepository;
             _pricingService = pricingService;
+            _cacheService = cacheService;
             _logger = logger;
         }
 
@@ -69,7 +72,7 @@ namespace Application.Features.ProductFeat.Queries
                           
 
                         var eventProductDTOs = eventProducts.Select(p => p.ToDTO()).ToList();
-                        await eventProductDTOs.ApplyPricingAsync(_pricingService, request.UserId, cancellationToken);
+                        await eventProductDTOs.ApplyPricingAsync(_pricingService, _cacheService, request.UserId, cancellationToken);
 
                         // Filter by sale status if requested
                         if (request.OnSaleOnly)
@@ -107,7 +110,7 @@ namespace Application.Features.ProductFeat.Queries
                         cancellationToken: cancellationToken);
 
                     var regularProductDTOs = regularProducts.Select(p => p.ToDTO()).ToList();
-                    await regularProductDTOs.ApplyPricingAsync(_pricingService, request.UserId, cancellationToken);
+                    await regularProductDTOs.ApplyPricingAsync(_pricingService, _cacheService, request.UserId, cancellationToken);
 
                     // Filter by sale status if requested
                     if (request.OnSaleOnly)
@@ -122,17 +125,18 @@ namespace Application.Features.ProductFeat.Queries
                 if (request.PrioritizeEventProducts)
                 {
                     productDTOs = productDTOs
-                        .OrderByDescending(p => p.Pricing.HasActiveEvent) // Event products first
-                        .ThenByDescending(p => p.Pricing.TotalDiscountPercentage) // Highest discount first
+                        .OrderByDescending(p => p.Pricing?.HasActiveEvent ?? false) // Event products first
+                        .ThenByDescending(p => p.Pricing?.TotalDiscountPercentage ?? 0) // Highest discount first
                         .ThenByDescending(p => p.Id) // Newest first
                         .Take(request.PageSize)
                         .ToList();
                 }
 
                 var onSaleCount = productDTOs.Count(p => p.IsOnSale);
+                var eventProductCount = productDTOs.Count(p => p.Pricing?.HasActiveEvent ?? false);
 
                 _logger.LogInformation("Retrieved {Count} products with dynamic pricing for user {UserId}. {OnSaleCount} items on sale, {EventCount} event products",
-                    productDTOs.Count, request.UserId, onSaleCount, productDTOs.Count(p => p.Pricing.HasActiveEvent));
+                    productDTOs.Count, request.UserId, onSaleCount, eventProductCount);
 
                 return Result<IEnumerable<ProductDTO>>.Success(productDTOs,
                     $"Products retrieved successfully. {onSaleCount} items on sale.");
