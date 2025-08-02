@@ -419,7 +419,7 @@ namespace Infrastructure.DependencyInjection
             services.AddMemoryCache();
 
             // Add HybridCache Service
-            services.AddScoped<IHybridCacheService, HybridCacheService>();
+            services.AddSingleton<IHybridCacheService, HybridCacheService>();
             services.AddSingleton<HybridCacheOptions>();
 
             services.AddSingleton<INepalTimeZoneService, NepalTimeZoneService>();

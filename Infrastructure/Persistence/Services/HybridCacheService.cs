@@ -116,6 +116,8 @@ namespace Infrastructure.Persistence.Services
 
             try
             {
+                _logger.LogInformation("CACHE REQUEST: Type={Type}, Keys=[{keys}]", cacheType, string.Join(",", keysList));
+
                 // ✅ STEP 1: Check L1 cache (memory) for all keys
                 var l1Hits = new List<string>();
                 var l1Misses = new List<string>();
@@ -126,21 +128,30 @@ namespace Infrastructure.Persistence.Services
                     {
                         results[key] = memoryValue;
                         l1Hits.Add(key);
+                        _logger.LogDebug("L1 HIT: {Key}", key);
                     }
                     else
                     {
                         l1Misses.Add(key);
+                        _logger.LogDebug("L1 Miss : {key}", key);
                     }
                 }
 
-                _logger.LogDebug("🎯 L1 BULK: {L1Hits}/{Total} hits", l1Hits.Count, keysList.Count);
+                _logger.LogInformation("🎯 L1 SUMMARY: {Hits}/{Total} hits, Missed=[{Misses}]", 
+                l1Hits.Count, keysList.Count, string.Join(", ", l1Misses));
 
                 // ✅ STEP 2: Bulk fetch from Redis for L1 misses
                 if (l1Misses.Any())
                 {
+                     _logger.LogInformation("🔍 REDIS LOOKUP: Checking {Count} keys: [{Keys}]", 
+                    l1Misses.Count, string.Join(", ", l1Misses));
+
                     // Use Redis MGET for bulk retrieval
+                    var redisStopWatch = Stopwatch.StartNew();
                     var redisKeys = l1Misses.Select(k => (RedisKey)k).ToArray();
                     var redisValues = await _redisDatabase.StringGetAsync(redisKeys);
+                    _logger.LogInformation("⚡ REDIS RESPONSE: {ElapsedMs}ms for {Count} keys", 
+                    redisStopWatch.ElapsedMilliseconds, redisKeys.Length);
 
                     var l2Hits = new List<string>();
                     var backfillTasks = new List<Task>();
@@ -152,6 +163,7 @@ namespace Infrastructure.Persistence.Services
 
                         if (redisValue.HasValue)
                         {
+                            _logger.LogDebug("⚡ REDIS HIT: {Key} = {Length} chars", key, redisValue.ToString().Length);
                             try
                             {
                                 var deserializedValue = JsonConvert.DeserializeObject<T>(redisValue!, _options.JsonSettings);
@@ -165,17 +177,22 @@ namespace Infrastructure.Persistence.Services
                                     Priority = CacheItemPriority.High,
                                     Size = EstimateSize(deserializedValue)
                                 };
-                                
-                                backfillTasks.Add(Task.Run(() => _memoryCache.Set(key, deserializedValue, memoryCacheOptions)));
+
+                                backfillTasks.Add(Task.Run(() =>
+                                {
+                                    _memoryCache.Set(key, deserializedValue, memoryCacheOptions);
+                                    _logger.LogDebug("L1 BACKFILL : {key}", key);
+                            }));
                             }
                             catch (JsonException ex)
                             {
-                                _logger.LogWarning(ex, "Failed to deserialize value for key {Key}", key);
+                                _logger.LogError(ex, "🚨 DESERIALIZATION ERROR: {Key} - {Error}", key, ex.Message);
                                 results[key] = default(T);
                             }
                         }
                         else
                         {
+                            _logger.LogDebug("❌ REDIS MISS: {Key}", key);
                             results[key] = default(T);
                         }
                     }
@@ -183,7 +200,8 @@ namespace Infrastructure.Persistence.Services
                     // Wait for backfill operations
                     await Task.WhenAll(backfillTasks);
 
-                    _logger.LogDebug("⚡ L2 BULK: {L2Hits}/{L1Misses} hits", l2Hits.Count, l1Misses.Count);
+                    _logger.LogInformation("⚡ REDIS SUMMARY: {Hits}/{Misses} hits, Found=[{HitKeys}]", 
+                    l2Hits.Count, l1Misses.Count, string.Join(", ", l2Hits));
                 }
 
                 stopwatch.Stop();
@@ -193,17 +211,16 @@ namespace Infrastructure.Persistence.Services
 
                 RecordBulkCacheOperation(cacheType, keysList.Count, totalHits, stopwatch.ElapsedMilliseconds);
                 
-                _logger.LogInformation("✅ BULK GET: {Keys} keys, {HitRate:F1}% hit rate in {ElapsedMs}ms", 
-                    keysList.Count, hitRate, stopwatch.ElapsedMilliseconds);
+                _logger.LogInformation("✅ CACHE RESULT: {Keys} keys, {HitRate:F1}% hit rate in {ElapsedMs}ms", 
+                keysList.Count, hitRate, stopwatch.ElapsedMilliseconds);
 
                 return results;
             }
             catch (Exception ex)
             {
                 stopwatch.Stop();
-                _logger.LogError(ex, "🚨 Bulk cache GET error for {KeyCount} keys: {Error}", keysList.Count, ex.Message);
-                RecordCacheError(cacheType, stopwatch.ElapsedMilliseconds);
-                
+                _logger.LogError(ex, "🚨 CACHE ERROR: {KeyCount} keys failed - {Error}", keysList.Count, ex.Message);
+
                 // Return empty results for all keys on error
                 return keysList.ToDictionary(k => k, k => default(T));
             }

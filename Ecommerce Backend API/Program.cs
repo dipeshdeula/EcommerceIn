@@ -50,8 +50,6 @@ if (!string.IsNullOrEmpty(redisConnectionString))
         return ConnectionMultiplexer.Connect(configuration);
     });
 
-    // ✅ REGISTER HYBRID CACHE SERVICE
-    builder.Services.AddSingleton<IHybridCacheService, HybridCacheService>();
 }
 else
 {
@@ -175,6 +173,16 @@ new UserServiceManager().AddServices(builder.Services);
 new AuthorizationServiceRegistration().AddServices(builder.Services);
 builder.Services.AddApplicationInsightsTelemetry();
 
+// verfiy single service registration
+var serviceDescriptors = builder.Services.Where(
+    s => s.ServiceType == typeof(IHybridCacheService)).ToList();
+
+Console.WriteLine($"🔍 HybridCacheService registrations found: {serviceDescriptors.Count}");
+foreach (var descriptor in serviceDescriptors)
+{
+    Console.WriteLine($"   - {descriptor.Lifetime}: {descriptor.ImplementationType?.Name}");
+}
+
 
 var app = builder.Build();
 
@@ -281,18 +289,20 @@ app.UseAuthorization();
 app.Use(async (context, next) =>
 {
     // ✅ Special handling for payment callback routes
-    if (context.Request.Path.StartsWithSegments("/payment/callback"))
-    {
-        context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
-        context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        context.Response.Headers.Add("Access-Control-Allow-Headers", "*");
-
-        if (context.Request.Method == "OPTIONS")
+   
+        if (context.Request.Path.StartsWithSegments("/payment/callback"))
         {
-            context.Response.StatusCode = 200;
-            return;
+            context.Response.Headers["Access-Control-Allow-Origin"] = "*";
+            context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS";
+            context.Response.Headers["Access-Control-Allow-Headers"] = "*";
+
+            if (context.Request.Method == "OPTIONS")
+            {
+                context.Response.StatusCode = 200;
+                return;
+            }
         }
-    }
+    
 
     await next();
 });
@@ -484,7 +494,7 @@ app.MapGet("/redis-dashboard", async (IHybridCacheService cacheService) =>
         await cacheService.SetAsync("dashboard-test", "test", TimeSpan.FromMinutes(1));
         var pingResult = await cacheService.GetAsync<string>("dashboard-test");
         var pingLatency = (DateTime.UtcNow - pingStart).TotalMilliseconds;
-        
+
         var html = $@"
 <!DOCTYPE html>
 <html>
@@ -552,12 +562,47 @@ app.MapGet("/redis-dashboard", async (IHybridCacheService cacheService) =>
     </script>
 </body>
 </html>";
-        
+
         return Results.Content(html, "text/html");
     }
     catch (Exception ex)
     {
         return Results.Content($"<h1>Error</h1><p>{ex.Message}</p>", "text/html");
+    }
+});
+
+app.MapGet("/test-product-cache", async (IHybridCacheService cacheService) =>
+{
+    try
+    {
+        var testProductIds = new List<int> { 56, 55, 54, 10 };
+        
+        // First call - should be miss and populate cache
+        var result1 = await cacheService.GetPricingBulkAsync(testProductIds, null);
+        
+        // Second call - should hit cache
+        var result2 = await cacheService.GetPricingBulkAsync(testProductIds, null);
+        
+        return Results.Ok(new
+        {
+            FirstCall = new
+            {
+                CacheHits = result1.Values.Count(v => v != null),
+                Total = testProductIds.Count,
+                Keys = result1.Keys.ToList()
+            },
+            SecondCall = new
+            {
+                CacheHits = result2.Values.Count(v => v != null),
+                Total = testProductIds.Count,
+                Keys = result2.Keys.ToList()
+            },
+            Message = "Second call should have higher hit rate"
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { Error = ex.Message });
     }
 });
 

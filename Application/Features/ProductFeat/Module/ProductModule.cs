@@ -38,12 +38,12 @@ namespace Application.Features.ProductFeat.Module
 
             //  ENHANCED: GetAllProducts with event prioritization
             app.MapGet("/getAllProducts", async ([FromServices] ISender mediator,
-                int PageNumber = 1,
-                int PageSize = 10,
-                int? UserId = null,
-                bool OnSaleOnly = false,
-                bool PrioritizeEventProducts = true, 
-                string? SearchTerm = null) =>
+                int PageNumber,
+                int PageSize,
+                int? UserId ,
+                bool OnSaleOnly ,
+                bool PrioritizeEventProducts , 
+                string? SearchTerm ) =>
             {
                 var result = await mediator.Send(new GetAllProductQuery(
                     PageNumber,
