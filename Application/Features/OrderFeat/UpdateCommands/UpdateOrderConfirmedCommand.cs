@@ -27,6 +27,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
         private readonly IRabbitMqPublisher _rabbitMqPublisher;
         private readonly ILogger<UpdateOrderConfirmedCommandHandler> _logger;
         private readonly IMediator _mediator;
+        
         public UpdateOrderConfirmedCommandHandler(
             IOrderRepository orderRepository,
             IUserRepository userRepository,

@@ -552,11 +552,37 @@ namespace Infrastructure.Migrations
                     b.Property<decimal>("DiscountApplied")
                         .HasColumnType("decimal(18,4)");
 
+                    b.Property<string>("IpAddress")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("OrderId")
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("OrderId")
                         .HasColumnType("integer");
+
+                    b.Property<decimal>("OrderValue")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
+
+                    b.Property<int>("ProductsCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
 
                     b.Property<DateTime>("UsedAt")
                         .ValueGeneratedOnAdd()
@@ -568,6 +594,8 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("OrderId");
+
                     b.HasIndex("UsedAt")
                         .HasDatabaseName("IX_EventUsage_UsedAt");
 
@@ -575,6 +603,9 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("BannerEventId", "UserId")
                         .HasDatabaseName("IX_EventUsage_BannerEvent_User");
+
+                    b.HasIndex("BannerEventId", "UserId", "IsActive")
+                        .HasDatabaseName("IX_EventUsage_BannerEvent_User_Active");
 
                     b.ToTable("EventUsages", (string)null);
                 });
@@ -1542,6 +1573,12 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -1549,6 +1586,8 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("BannerEvent");
+
+                    b.Navigation("Order");
 
                     b.Navigation("User");
                 });

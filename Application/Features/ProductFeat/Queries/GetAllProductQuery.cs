@@ -11,12 +11,12 @@ using Microsoft.Extensions.Logging;
 namespace Application.Features.ProductFeat.Queries
 {
     public record GetAllProductQuery(
-        int PageNumber = 1,
-        int PageSize = 10,
-        int? UserId = null,
-        bool OnSaleOnly = false,
-        bool PrioritizeEventProducts = true, 
-        string? SearchTerm = null
+        int PageNumber ,
+        int PageSize ,
+        int? UserId ,
+        bool? OnSaleOnly ,
+        bool? PrioritizeEventProducts , 
+        string? SearchTerm 
     ) : IRequest<Result<IEnumerable<ProductDTO>>>;
 
     public class GetAllProductQueryHandler : IRequestHandler<GetAllProductQuery, Result<IEnumerable<ProductDTO>>>
@@ -45,7 +45,7 @@ namespace Application.Features.ProductFeat.Queries
                 var productDTOs = new List<ProductDTO>();
 
                 //  1. Get event-highlighted products first (if prioritization enabled)
-                if (request.PrioritizeEventProducts)
+                if (request.PrioritizeEventProducts == true)
                 {
                     var eventProductIds = await _pricingService.GetEventHighlightedProductIdsAsync(cancellationToken);
 
@@ -75,7 +75,7 @@ namespace Application.Features.ProductFeat.Queries
                         await eventProductDTOs.ApplyPricingAsync(_pricingService, _cacheService, request.UserId, cancellationToken);
 
                         // Filter by sale status if requested
-                        if (request.OnSaleOnly)
+                        if (request.OnSaleOnly == true)
                         {
                             eventProductDTOs = eventProductDTOs.Where(p => p.IsOnSale).ToList();
                         }
@@ -104,7 +104,7 @@ namespace Application.Features.ProductFeat.Queries
                     var regularProducts = await _productRepository.GetAllAsync(
                         predicate: regularPredicate,
                         orderBy: query => query.OrderByDescending(p => p.Id),
-                        skip: request.PrioritizeEventProducts ? 0 : (request.PageNumber - 1) * request.PageSize,
+                        skip: request.PrioritizeEventProducts is true ? 0 : (request.PageNumber - 1) * request.PageSize,
                         take: remainingSlots,
                         includeProperties: "Images",
                         cancellationToken: cancellationToken);
@@ -113,7 +113,7 @@ namespace Application.Features.ProductFeat.Queries
                     await regularProductDTOs.ApplyPricingAsync(_pricingService, _cacheService, request.UserId, cancellationToken);
 
                     // Filter by sale status if requested
-                    if (request.OnSaleOnly)
+                    if (request.OnSaleOnly is true)
                     {
                         regularProductDTOs = regularProductDTOs.Where(p => p.IsOnSale).ToList();
                     }
@@ -122,7 +122,7 @@ namespace Application.Features.ProductFeat.Queries
                 }
 
                 //  3. Final sorting - event products first, then regular products
-                if (request.PrioritizeEventProducts)
+                if (request.PrioritizeEventProducts ?? false)
                 {
                     productDTOs = productDTOs
                         .OrderByDescending(p => p.Pricing?.HasActiveEvent ?? false) // Event products first

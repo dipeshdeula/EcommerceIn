@@ -12,6 +12,7 @@ namespace Application.Interfaces.Repositories
         public Task LoadNavigationProperties(CartItem cartItem);
         public Task<IEnumerable<CartItem>> GetByUserIdAsync(int userId);
         public Task DeleteByUserIdAsync(int userId);
+        Task<int> CountActiveCartItemsByEventAsync(int userId, int eventId,int productId);
 
         
     }

@@ -38,12 +38,12 @@ namespace Application.Features.ProductFeat.Module
 
             //  ENHANCED: GetAllProducts with event prioritization
             app.MapGet("/getAllProducts", async ([FromServices] ISender mediator,
-                int PageNumber,
-                int PageSize,
-                int? UserId ,
-                bool OnSaleOnly ,
-                bool PrioritizeEventProducts , 
-                string? SearchTerm ) =>
+                [FromQuery] int PageNumber =1 ,
+                [FromQuery] int PageSize =10,
+                [FromQuery] int? UserId = 1,
+                [FromQuery] bool? OnSaleOnly = false ,
+                [FromQuery] bool? PrioritizeEventProducts = false, 
+                [FromQuery] string? SearchTerm ="") =>
             {
                 var result = await mediator.Send(new GetAllProductQuery(
                     PageNumber,
@@ -74,8 +74,10 @@ namespace Application.Features.ProductFeat.Module
                 var result = await mediator.Send(new GetAllProductQuery(
                     PageNumber,
                     PageSize,
+                    UserId:null,
                     OnSaleOnly: true,
-                    PrioritizeEventProducts: true));
+                    PrioritizeEventProducts: true,
+                    SearchTerm:null));
 
                 if (!result.Succeeded)
                 {
@@ -202,6 +204,8 @@ namespace Application.Features.ProductFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
 
             }).RequireAuthorization("RequireAdminOrVendor");
+
+            
 
 
         }

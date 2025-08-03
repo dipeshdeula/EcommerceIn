@@ -171,7 +171,7 @@ new RepositoryRegistration().AddServices(builder.Services);
 new DatabaseRegistration().AddServices(builder.Services, builder.Configuration);
 new UserServiceManager().AddServices(builder.Services);
 new AuthorizationServiceRegistration().AddServices(builder.Services);
-builder.Services.AddApplicationInsightsTelemetry();
+//builder.Services.AddApplicationInsightsTelemetry();
 
 // verfiy single service registration
 var serviceDescriptors = builder.Services.Where(

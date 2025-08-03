@@ -1,11 +1,8 @@
 ﻿using Application.Common;
+using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
 using Domain.Entities.Common;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Persistence.Services
 {
@@ -24,13 +21,12 @@ namespace Infrastructure.Persistence.Services
         {
             try
             {
-                var bannerEvent = await _unitOfWork.BannerEventSpecials.GetByIdAsync(eventId);
-                if (bannerEvent == null) return false;
+                var bannerEvent = await _unitOfWork.BannerEventSpecials.GetAsync(
+                    predicate: e => e.Id == eventId && e.IsActive && !e.IsDeleted);
 
-                // check if event is active
-                if (!bannerEvent.IsActive || bannerEvent.IsDeleted)
+                if (bannerEvent == null)
                 {
-                    _logger.LogWarning("Event {EventId} is not found", eventId);
+                    _logger.LogWarning("Event {EventId} not found or inactive", eventId);
                     return false;
                 }
 
@@ -38,26 +34,17 @@ namespace Infrastructure.Persistence.Services
                 var now = DateTime.UtcNow;
                 if (now < bannerEvent.StartDate || now > bannerEvent.EndDate)
                 {
-                    _logger.LogWarning("Event {EventId} is outside valid time range", eventId);
+                    _logger.LogWarning("Event {EventId} is outside valid time range. Current: {Now}, Valid: {Start} - {End}",
+                         eventId, now, bannerEvent.StartDate, bannerEvent.EndDate);
                     return false;
                 }
 
                 // Check global usage limit
                 if (bannerEvent.CurrentUsageCount >= bannerEvent.MaxUsageCount)
                 {
-                    _logger.LogWarning("Event {EventId} has reached global usage limit", eventId);
+                    _logger.LogWarning("Event {EventId} has reached global usage limit: {Current}/{Max}",
+                       eventId, bannerEvent.CurrentUsageCount, bannerEvent.MaxUsageCount);
                     return false;
-                }
-
-                // Check per-user limit
-                if (bannerEvent.MaxUsagePerUser > 0)
-                {
-                    var userUsageCount = await GetUserEventUsageCountAsync(eventId, userId);
-                    if (userUsageCount >= bannerEvent.MaxUsagePerUser)
-                    {
-                        _logger.LogWarning("User {UserId} has reached usage limit for event {EventId}", userId, eventId);
-                        return false;
-                    }
                 }
 
                 return true;
@@ -67,7 +54,153 @@ namespace Infrastructure.Persistence.Services
                 _logger.LogError(ex, "Error checking if user {UserId} can use event {EventId}", userId, eventId);
                 return false;
             }
+        }
 
+        // Get total usage including cart items and completed orders (all products)
+        public async Task<int> GetTotalUserEventUsageAsync(int eventId, int userId)
+        {
+            try
+            {
+                // step 1 : Get completed order usage
+                var completedUsage = await _unitOfWork.EventUsages.GetUsageCountByEventAndUserAsync(eventId, userId);
+
+                // step 2 : Get current cart items with this event (all products)
+                var cartUsage = await _unitOfWork.CartItems.CountActiveCartItemsByEventAsync(userId, eventId, 0); // 0 = all products
+                var totalUsage = completedUsage + cartUsage;
+
+                _logger.LogDebug("User {UserId} event {EventId} usage: Completed={Completed}, InCart={InCart}, Total={Total}",
+                    userId, eventId, completedUsage, cartUsage, totalUsage);
+
+                return totalUsage;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting total user event usage: User {UserId}, Event {EventId}", userId, eventId);
+                return int.MaxValue; // Fail safe - assume limit reached
+            }
+        }
+
+        // Fixed: Product-specific event usage count
+        public async Task<int> GetUserEventUsageCountAsync(int eventId, int userId, int productId)
+        {
+            return await GetUserProductEventUsageCountAsync(eventId, userId, productId);
+        }
+
+        public async Task<int> GetUserProductEventUsageCountAsync(int eventId, int userId, int productId)
+        {
+            try
+            {
+                // STEP 1: Count completed orders for this specific product
+                var completedUsage = await _unitOfWork.EventUsages.CountAsync(
+                    predicate: u => u.BannerEventId == eventId &&
+                                u.UserId == userId &&
+                                u.IsActive &&
+                                !u.IsDeleted);
+
+                // STEP 2: Count EXISTING cart items for this specific product
+                var existingCartUsage = await _unitOfWork.CartItems.CountActiveCartItemsByEventAsync(userId, eventId, productId);
+
+                var totalCurrentUsage = completedUsage + existingCartUsage;
+
+                _logger.LogDebug("User {UserId} product {ProductId} event {EventId} usage: Completed={Completed}, ExistingCart={ExistingCart}, Total={Total}",
+                    userId, productId, eventId, completedUsage, existingCartUsage, totalCurrentUsage);
+
+                return totalCurrentUsage;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user product event usage: User {UserId}, Product {ProductId}, Event {EventId}", userId, productId, eventId);
+                return 0;
+            }
+        }
+
+        // check if user can add specific quantity to cart (global)
+        public async Task<Result<string>> CanUserAddQuantityToCartAsync(int eventId, int userId, int requestedQuantity)
+        {
+            try
+            {
+                var bannerEvent = await _unitOfWork.BannerEventSpecials.GetAsync(
+                    predicate: e => e.Id == eventId && e.IsActive && !e.IsDeleted);
+
+                if (bannerEvent == null)
+                {
+                    return Result<string>.Failure("Event not found or inactive");
+                }
+
+                // Check if event is valid
+                if (!await CanUserUseEventAsync(eventId, userId))
+                {
+                    return Result<string>.Failure("User cannot use this event at this time, limit reached");
+                }
+
+                // Check if adding this quantity would exceed limits
+                if (bannerEvent.MaxUsagePerUser > 0)
+                {
+                    var currentUsage = await GetTotalUserEventUsageAsync(eventId, userId);
+                    var wouldBeTotal = currentUsage + requestedQuantity;
+
+                    _logger.LogInformation("User {UserId} event {EventId}: Current={Current}, Requested={Requested}, WouldBe={WouldBe}, Max={Max}",
+                    userId, eventId, currentUsage, requestedQuantity, wouldBeTotal, bannerEvent.MaxUsagePerUser);
+
+                    if (wouldBeTotal > bannerEvent.MaxUsagePerUser)
+                    {
+                        var remainingUsage = bannerEvent.MaxUsagePerUser - currentUsage;
+                        return Result<string>.Failure(
+                            $"You can only add {remainingUsage} more items with this event discount. " +
+                            $"You have used {currentUsage} out of {bannerEvent.MaxUsagePerUser} allowed uses.");
+                    }
+                }
+
+                _logger.LogInformation("User {UserId} can add {Quantity} items for event {EventId}",
+               userId, requestedQuantity, eventId);
+
+                return Result<string>.Success("User can add requested quantity");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if user can add quantity to cart: User {UserId}, Event {EventId}, Quantity {Quantity}",
+                    userId, eventId, requestedQuantity);
+                return Result<string>.Failure("Error validating cart addition");
+            }
+        }
+
+        // Fixed: Product-specific cart validation
+        public async Task<Result<bool>> CanUserAddQuantityToCartForProductAsync(int eventId, int userId, int productId, int requestedQuantity)
+        {
+            try
+            {
+                var eventDetails = await _unitOfWork.BannerEventSpecials.GetAsync(
+                    predicate: e => e.Id == eventId && e.IsActive && !e.IsDeleted);
+
+                if (eventDetails == null)
+                {
+                    return Result<bool>.Failure("Event not found or inactive");
+                }
+
+                // Count product-specific cart items with this event
+                var currentProductQuantity = await GetUserProductEventUsageCountAsync(eventId, userId, productId);
+                var wouldBeQuantity = currentProductQuantity + requestedQuantity;
+
+                _logger.LogInformation("User {UserId} product {ProductId} event {EventId}: Current={Current}, Requested={Requested}, WouldBe={WouldBe}, Max={Max}",
+                    userId, productId, eventId, currentProductQuantity, requestedQuantity, wouldBeQuantity, eventDetails.MaxUsagePerUser);
+
+                if (wouldBeQuantity > eventDetails.MaxUsagePerUser)
+                {
+                    var remaining = eventDetails.MaxUsagePerUser - currentProductQuantity;
+                    return Result<bool>.Failure($"You can only add {remaining} more items of this product with this event discount. You have used {currentProductQuantity} out of {eventDetails.MaxUsagePerUser} allowed uses for this product.");
+                }
+
+                _logger.LogInformation("User {UserId} can add {RequestedQuantity} items of product {ProductId} for event {EventId}",
+                    userId, requestedQuantity, productId, eventId);
+
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking product-specific event usage for user {UserId}, product {ProductId}, event {EventId}",
+                    userId, productId, eventId);
+                return Result<bool>.Failure("Error validating event usage");
+            }
         }
 
         public async Task<Result<string>> RecordEventUsageAsync(int eventId, int userId, int orderId, decimal discountApplied)
@@ -97,54 +230,46 @@ namespace Infrastructure.Persistence.Services
                 {
                     return Result<string>.Failure("Event already applied to this order");
                 }
-                var usage = new EventUsage
+
+                // Database Operation
+                var result = await _unitOfWork.ExecuteInTransactionAsync(async () =>
                 {
-                    BannerEventId = eventId,
-                    UserId = userId,
-                    OrderId = orderId,
-                    DiscountApplied = discountApplied,
-                    UsedAt = DateTime.UtcNow,
-                    IsDeleted = false
-                };
+                    var usage = new EventUsage
+                    {
+                        BannerEventId = eventId,
+                        UserId = userId,
+                        OrderId = orderId,
+                        DiscountApplied = discountApplied,
+                        UsedAt = DateTime.UtcNow,
+                        IsActive = true,
+                        IsDeleted = false
+                    };
+                    await _unitOfWork.EventUsages.AddAsync(usage);
 
-                await _unitOfWork.EventUsages.AddAsync(usage);
+                    // Update banner event usage count
+                    var bannerEvent = await _unitOfWork.BannerEventSpecials.GetByIdAsync(eventId);
+                    if (bannerEvent != null)
+                    {
+                        bannerEvent.CurrentUsageCount++;
+                        bannerEvent.UpdatedAt = DateTime.UtcNow;
+                        await _unitOfWork.BannerEventSpecials.UpdateAsync(bannerEvent);
+                    }
 
-                // Update event usage count
-                var bannerEvent = await _unitOfWork.BannerEventSpecials.GetByIdAsync(eventId);
-                if (bannerEvent != null)
-                {
-                    bannerEvent.CurrentUsageCount++;
-                    await _unitOfWork.BannerEventSpecials.UpdateAsync(bannerEvent);
-                }
+                    // save all changes 
+                    await _unitOfWork.SaveChangesAsync();
+                    _logger.LogInformation("Recorded event usage: User {UserId},Event {EventId},Order {OrderId},Discount Rs.{Discount}",
+                        userId, eventId, orderId, discountApplied);
 
-                await _unitOfWork.SaveChangesAsync();
+                    return "Event usage recorded successfully";
+                });
 
-                _logger.LogInformation("Recorded event usage: User {UserId}, Event {EventId}, Discount Rs.{Discount}",
-                    userId, eventId, discountApplied);
-                return Result<string>.Success("Event usage Recorded successfully");
+                return Result<string>.Success(result);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error recording event usage: User {UserId}, Event {EventId}, Order {OrderId}",
                     userId, eventId, orderId);
                 return Result<string>.Failure($"Failed to record event usage: {ex.Message}");
-
-            }
-        }
-
-        public async Task<int> GetUserEventUsageCountAsync(int eventId, int userId)
-        {
-            try
-            {
-                return await _unitOfWork.EventUsages.CountAsync(
-                    predicate: u => u.BannerEventId == eventId &&
-                                   u.UserId == userId &&
-                                   !u.IsDeleted);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting user event usage count: User {UserId}, Event {EventId}", userId, eventId);
-                return 0;
             }
         }
 
@@ -152,11 +277,13 @@ namespace Infrastructure.Persistence.Services
         {
             try
             {
-                var bannerEvent = await _unitOfWork.BannerEventSpecials.GetByIdAsync(eventId);
-                if (bannerEvent?.MaxUsagePerUser <= 0) return false;
+                var bannerEvent = await _unitOfWork.BannerEventSpecials.GetAsync(
+                    predicate: e => e.Id == eventId);
 
-                var userUsageCount = await GetUserEventUsageCountAsync(eventId, userId);
-                return userUsageCount >= bannerEvent?.MaxUsagePerUser;
+                if (bannerEvent == null) return true;
+
+                var userUsageCount = await GetTotalUserEventUsageAsync(eventId, userId);
+                return userUsageCount >= bannerEvent.MaxUsagePerUser;
             }
             catch (Exception ex)
             {
@@ -164,8 +291,8 @@ namespace Infrastructure.Persistence.Services
                 return true; // Return true (limit reached) on error for safety
             }
         }
-        
-         public async Task<Result<EventUsage>> CreateEventUsageAsync(EventUsage eventUsage)
+
+        public async Task<Result<EventUsage>> CreateEventUsageAsync(EventUsage eventUsage)
         {
             try
             {

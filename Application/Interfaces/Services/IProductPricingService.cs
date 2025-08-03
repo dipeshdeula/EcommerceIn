@@ -11,7 +11,6 @@ namespace Application.Interfaces.Services
         Task<List<ProductPriceInfoDTO>> GetEffectivePricesAsync(List<int> productIds, int? userId = null, CancellationToken cancellationToken = default);
         Task<BannerEventSpecial?> GetBestActiveEventForProductAsync(int productId, int? userId = null, CancellationToken cancellationToken = default);
         // Usage validation
-        Task<bool> CanUserUseEventAsync(int eventId, int? userId, CancellationToken cancellationToken = default);
 
         //  Background service support for price refresh
         Task RefreshPricesForEventAsync(int eventId, CancellationToken cancellationToken = default);

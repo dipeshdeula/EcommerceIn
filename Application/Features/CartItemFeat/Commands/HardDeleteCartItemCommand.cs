@@ -1,6 +1,7 @@
 ﻿using Application.Common;
 using Application.Dto.CartItemDTOs;
 using Application.Extension;
+using Application.Extension.Cache;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using MediatR;
@@ -17,19 +18,22 @@ namespace Application.Features.CartItemFeat.Commands
         private readonly ICartStockService _stockService;
         private readonly ILogger<HardDeleteCartItemCommandHandler> _logger;
         private readonly ICurrentUserService _userService;
+        private readonly IHybridCacheService _cacheService;
 
         public HardDeleteCartItemCommandHandler(
             IUnitOfWork unitOfWork,
             ICartStockService stockService,
             ILogger<HardDeleteCartItemCommandHandler> logger,
-            ICurrentUserService userService
+            ICurrentUserService userService,
+            IHybridCacheService cacheService
             )
         {
             _unitOfWork = unitOfWork;
             _stockService = stockService;
             _logger = logger;
             _userService = userService;
-          
+            _cacheService = cacheService;
+
         }
 
         public async Task<Result<CartItemDTO>> Handle(HardDeleteCartItemCommand request, CancellationToken cancellationToken)
@@ -69,8 +73,13 @@ namespace Application.Features.CartItemFeat.Commands
                     await _unitOfWork.CartItems.RemoveAsync(cartItem, cancellationToken);
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+                    await _cacheService.InvalidateUserCartCacheAsync(UserId, cancellationToken);
+
                     _logger.LogInformation("Cart item deleted successfully: CartItemId={CartItemId}",
                         request.CartItemId);
+
+                    _logger.LogInformation("CART DELETE SUCCESS: CartItemId={Id} for UserId={UserId}",
+                    cartItemDto.Id, UserId);
 
                     return Result<CartItemDTO>.Success(cartItemDto, "Cart item removed successfully");
                 });

@@ -24,6 +24,23 @@ namespace Infrastructure.Persistence.Configurations
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .IsRequired();
 
+            builder.Property(eu => eu.OrderValue)
+                    .HasColumnType("decimal(18,2)")
+                    .HasDefaultValue(0);
+
+            builder.Property(eu => eu.ProductsCount)
+                .HasDefaultValue(1);
+
+            builder.Property(eu => eu.IsActive)
+                    .HasDefaultValue(true);
+
+            builder.Property(eu => eu.Notes)
+                    .HasMaxLength(500);
+
+            builder.Property(eu => eu.IpAddress)
+                    .HasMaxLength(50)
+                    .HasDefaultValue(string.Empty);                        
+
             // Relationships
             builder.HasOne(eu => eu.BannerEvent)
                 .WithMany(be => be.UsageHistory)
@@ -35,12 +52,19 @@ namespace Infrastructure.Persistence.Configurations
                 .HasForeignKey(eu => eu.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.HasOne(eu=>eu.Order)
+                .WithMany().HasForeignKey(eu => eu.OrderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Indexes
             builder.HasIndex(eu => new { eu.BannerEventId, eu.UserId })
                 .HasDatabaseName("IX_EventUsage_BannerEvent_User");
 
             builder.HasIndex(eu => eu.UsedAt)
                 .HasDatabaseName("IX_EventUsage_UsedAt");
+
+            builder.HasIndex(eu => new { eu.BannerEventId, eu.UserId, eu.IsActive })
+                .HasDatabaseName("IX_EventUsage_BannerEvent_User_Active");
         }
     }
 }

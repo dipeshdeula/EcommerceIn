@@ -45,7 +45,7 @@ namespace Infrastructure.Persistence.Repositories
         {
             return await _context.EventUsages
                 .CountAsync(eu => eu.BannerEventId == eventId &&
-                                 eu.UserId == userId &&
+                                 eu.UserId == userId && eu.IsActive &&
                                  !eu.IsDeleted);
         }
 

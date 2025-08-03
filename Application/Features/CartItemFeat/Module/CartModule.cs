@@ -1,4 +1,5 @@
 ﻿using Application.Dto.CartItemDTOs;
+using Application.Extension.Cache;
 using Application.Features.CartItemFeat.Commands;
 using Application.Features.CartItemFeat.Queries;
 using Application.Interfaces.Services;
@@ -74,7 +75,7 @@ namespace Application.Features.CartItemFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-           
+
             app.MapPost("/add-multiple-cart-items", async (
                 int userId,
                 List<AddToCartItemDTO> items,
@@ -91,7 +92,7 @@ namespace Application.Features.CartItemFeat.Module
             })
             .RequireAuthorization()
             .WithName("AddMultipleCartItems")
-            .WithSummary("Add multiple product items to the cart in one request");            
+            .WithSummary("Add multiple product items to the cart in one request");
 
 
             app.MapDelete("/remove-cart-item", async (
@@ -114,6 +115,61 @@ namespace Application.Features.CartItemFeat.Module
             .RequireAuthorization()
             .WithName("RemoveCartItem")
             .WithSummary("Remove a particular product item from the cart");
+
+            // Performance analysis endpoint
+
+            app.MapGet("/cart-performance/{userId:int}", async (
+                int userId,
+                ISender mediator,
+                IHybridCacheService cacheService) =>
+            {
+                try
+                {
+                    var stats = new List<object>();
+                    
+                    // Test multiple page loads
+                    for (int page = 1; page <= 3; page++)
+                    {
+                        var start = DateTime.UtcNow;
+                        
+                        var result = await mediator.Send(new GetCartByUserIdQuery(userId, page, 10));
+                        
+                        var elapsed = (DateTime.UtcNow - start).TotalMilliseconds;
+                        var isCacheHit = elapsed < 30; // Under 30ms is likely cache hit
+                        
+                        if (result.Succeeded)
+                        {
+                            stats.Add(new
+                            {
+                                Page = page,
+                                ElapsedMs = elapsed,
+                                ItemCount = result.Data?.Count() ?? 0,
+                                CacheHit = isCacheHit,
+                                Message = result.Message
+                            });
+                        }
+                    }
+                    
+                    // Get cache summary
+                    var summary = await cacheService.GetCachedCartSummaryAsync(userId);
+                    
+                    return Results.Ok(new
+                    {
+                        UserId = userId,
+                        PageStats = stats,
+                        CacheSummary = summary,
+                        AverageResponseTime = stats.Count > 0 ? stats.Average(s => (double)s.GetType().GetProperty("ElapsedMs").GetValue(s)) : 0,
+                        CacheHitRate = stats.Count(s => (bool)s.GetType().GetProperty("CacheHit").GetValue(s)) * 100.0 / Math.Max(stats.Count, 1)
+                    });
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(new { Error = ex.Message });
+                }
+            })
+            .WithName("GetCartPerformanceStats")
+            .WithSummary("Analyze cart performance and cache efficiency for a user")
+            .WithTags("CartItem", "Performance");
         }
     }
 }

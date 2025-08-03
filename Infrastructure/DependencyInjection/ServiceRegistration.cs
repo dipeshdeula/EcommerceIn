@@ -419,6 +419,7 @@ namespace Infrastructure.DependencyInjection
             services.AddMemoryCache();
 
             // Add HybridCache Service
+            services.AddScoped<IEventUsageService, EventUsageService>();
             services.AddSingleton<IHybridCacheService, HybridCacheService>();
             services.AddSingleton<HybridCacheOptions>();
 

@@ -1,5 +1,4 @@
-﻿// ✅ FIXED: ProductPricingService.cs
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Application.Common;
 using Application.Dto.CartItemDTOs;
 using Application.Dto.ProductDTOs;
@@ -21,6 +20,8 @@ namespace Infrastructure.Persistence.Services
         private readonly ILogger<ProductPricingService> _logger;
         private readonly INepalTimeZoneService _nepalTimeZoneService;
         private readonly IHybridCacheService _hybridCacheService;
+        private readonly IEventUsageService _eventUsageService;
+        
         private readonly TimeSpan _cacheExpiry = TimeSpan.FromMinutes(5);
 
         public ProductPricingService(
@@ -28,16 +29,18 @@ namespace Infrastructure.Persistence.Services
             IMemoryCache cache,
             INepalTimeZoneService nepalTimeZoneService,
             IHybridCacheService hybridCacheService,
+            IEventUsageService eventUsageService,
             ILogger<ProductPricingService> logger)
         {
             _unitOfWork = unitOfWork;
             _cache = cache;
             _nepalTimeZoneService = nepalTimeZoneService;
             _hybridCacheService = hybridCacheService;
+            _eventUsageService = eventUsageService;
             _logger = logger;
         }
 
-        // ✅ CORE METHOD 1: Single Product Pricing
+        // CORE METHOD 1: Single Product Pricing
         public async Task<ProductPriceInfoDTO> GetEffectivePriceAsync(int productId, int? userId = null, CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Getting effective price for product ID: {ProductId}", productId);
@@ -48,7 +51,7 @@ namespace Infrastructure.Persistence.Services
             
             if (cachedPricing != null)
             {
-                _logger.LogDebug("🎯 Cache HIT for product {ProductId}", productId);
+                _logger.LogDebug("Cache HIT for product {ProductId}", productId);
                 return cachedPricing;
             }
 
@@ -67,7 +70,7 @@ namespace Infrastructure.Persistence.Services
             return result;
         }
 
-        // ✅ CORE METHOD 2: Single Product with Entity
+        // CORE METHOD 2: Single Product with Entity - FIXED EVENT LOGIC
         public async Task<ProductPriceInfoDTO> GetEffectivePriceAsync(Product product, int? userId = null, CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Getting effective price for product {ProductId} - {ProductName}", product.Id, product.Name);
@@ -84,7 +87,9 @@ namespace Infrastructure.Persistence.Services
                 EventDiscountAmount = 0,
                 ProductDiscountAmount = product.DiscountPrice.HasValue ? product.MarketPrice - basePrice : 0,
                 HasProductDiscount = product.DiscountPrice.HasValue && product.DiscountPrice < product.MarketPrice,
-                CalculatedAt = DateTime.UtcNow
+                CalculatedAt = DateTime.UtcNow,
+                HasActiveEvent = false,
+                CanUseEvent = false
             };
 
             try
@@ -92,28 +97,67 @@ namespace Infrastructure.Persistence.Services
                 // Get the best active event for this product
                 var activeEvent = await GetBestActiveEventForProductAsync(product.Id, userId, cancellationToken);
 
-                if (activeEvent != null)
+                if (activeEvent != null && userId.HasValue)
                 {
-                    _logger.LogInformation("🎉 Found active event for product {ProductId}: {EventName} (Type: {PromotionType}, Discount: {DiscountValue})",
+                    _logger.LogInformation("Found active event for product {ProductId}: {EventName} (Type: {PromotionType}, Discount: {DiscountValue})",
                         product.Id, activeEvent.Name, activeEvent.PromotionType, activeEvent.DiscountValue);
 
-                    // Calculate discount
-                    var discountResult = CalculateDiscount(product, activeEvent);
+                    // Check if user can still use this event for this specific product
+                    bool canUseEventForThisProduct = true;
+                    int userProductEventUsage = 0;
+                    int remainingEventUsage = activeEvent.MaxUsagePerUser;
 
-                    if (discountResult.HasEventDiscount || discountResult.HasFreeShipping)
+                    if (userId.HasValue)
                     {
-                        ApplyDiscountToPriceInfo(priceInfo, discountResult, activeEvent);
+                        // FIXED: Check product-specific event usage with correct parameter order
+                        userProductEventUsage = await _eventUsageService.GetUserEventUsageCountAsync(activeEvent.Id, userId.Value, product.Id);
 
-                        _logger.LogInformation("✅ Applied event pricing to product {ProductId}: " +
-                                            "Rs.{OriginalPrice} → Rs.{FinalPrice} " +
-                                            "(Total saved: Rs.{TotalSavings}) Event: {EventName}",
-                            product.Id, priceInfo.OriginalPrice, priceInfo.EffectivePrice,
-                            priceInfo.TotalDiscountAmount, activeEvent.Name);
+                        remainingEventUsage = Math.Max(0, activeEvent.MaxUsagePerUser - userProductEventUsage);
+                        canUseEventForThisProduct = remainingEventUsage > 0;
+                        
+                        _logger.LogInformation("User {UserId} event usage for product {ProductId}: {Used}/{Max} (Remaining: {Remaining})",
+                            userId.Value, product.Id, userProductEventUsage, activeEvent.MaxUsagePerUser, remainingEventUsage);
                     }
+
+                    // Apply event pricing based on usage status
+                    if (canUseEventForThisProduct)
+                    {
+                        // User can still use event discount for this product
+                        var discountResult = CalculateDiscount(product, activeEvent);
+
+                        if (discountResult.HasEventDiscount || discountResult.HasFreeShipping)
+                        {
+                            ApplyDiscountToPriceInfo(priceInfo, discountResult, activeEvent);
+
+                            _logger.LogInformation("Applied event pricing to product {ProductId}: " +
+                                                "Rs.{OriginalPrice} -> Rs.{FinalPrice} " +
+                                                "(Event saved: Rs.{EventSavings}) Event: {EventName}",
+                                product.Id, priceInfo.OriginalPrice, priceInfo.EffectivePrice,
+                                priceInfo.EventDiscountAmount, activeEvent.Name);
+                        }
+                    }
+                    else
+                    {
+                        // User has reached event limit for this product - use regular price
+                        _logger.LogInformation("User {UserId} reached event limit for product {ProductId}. Using regular price: Rs.{RegularPrice}",
+                            userId, product.Id, basePrice);
+                        
+                        // Set event info but no discount
+                        ApplyEventInfoToPriceInfo(priceInfo, activeEvent);
+                        priceInfo.EventTagLine = $"Event limit reached for this product ({userProductEventUsage}/{activeEvent.MaxUsagePerUser})";
+                        priceInfo.CanUseEvent = false;
+                        priceInfo.EventLimitReached = true;
+                    }
+
+                    // Set usage information
+                    priceInfo.UserEventUsageCount = userProductEventUsage;
+                    priceInfo.MaxEventUsagePerUser = activeEvent.MaxUsagePerUser;
+                    priceInfo.RemainingEventUsage = remainingEventUsage;
+                    priceInfo.CanUseEvent = canUseEventForThisProduct;
                 }
                 else
                 {
-                    _logger.LogDebug("📭 No active events found for product {ProductId}. Using base price: Rs.{BasePrice}",
+                    _logger.LogDebug("No active events found for product {ProductId}. Using base price: Rs.{BasePrice}",
                         product.Id, basePrice);
                 }
             }
@@ -125,187 +169,118 @@ namespace Infrastructure.Persistence.Services
             return priceInfo;
         }
 
-        // ✅ CORE METHOD 3: Bulk Pricing (OPTIMIZED)
-        public async Task<List<ProductPriceInfoDTO>> GetEffectivePricesAsync(List<int> productIds, int? userId = null, CancellationToken cancellationToken = default)
+        // CORE METHOD 3: Cart-Specific Pricing with Smart Quantity Logic
+        public async Task<ProductPriceInfoDTO> GetCartPriceAsync(int productId, int quantity, int? userId = null, CancellationToken cancellationToken = default)
         {
-            _logger.LogDebug("🚀 Getting effective prices for {Count} products", productIds.Count);
+            _logger.LogDebug("Getting cart price for product {ProductId}, quantity {Quantity}, user {UserId}", 
+                productId, quantity, userId);
 
-            if (!productIds.Any()) return new List<ProductPriceInfoDTO>();
+            var product = await _unitOfWork.Products.GetByIdAsync(productId, cancellationToken);
+            if (product == null)
+            {
+                throw new ArgumentException($"Product with ID {productId} not found");
+            }
 
-            var stopwatch = Stopwatch.StartNew();
+            var basePrice = product.DiscountPrice ?? product.MarketPrice;
+            var totalRegularPrice = basePrice * quantity;
+
+            var priceInfo = new ProductPriceInfoDTO
+            {
+                ProductId = product.Id,
+                ProductName = product.Name,
+                OriginalPrice = product.MarketPrice,
+                BasePrice = basePrice,
+                EffectivePrice = totalRegularPrice,
+                EventDiscountAmount = 0,
+                ProductDiscountAmount = product.DiscountPrice.HasValue ? (product.MarketPrice - basePrice) * quantity : 0,
+                HasProductDiscount = product.DiscountPrice.HasValue && product.DiscountPrice < product.MarketPrice,
+                RequestedQuantity = quantity,
+                CalculatedAt = DateTime.UtcNow
+            };
 
             try
             {
-                // ✅ STEP 1: Bulk cache lookup - Single call instead of N calls
-                var cachedPricing = await _hybridCacheService.GetPricingBulkAsync(productIds, userId, cancellationToken);
-                
-                var priceInfos = new List<ProductPriceInfoDTO>();
-                var missingProductIds = new List<int>();
+                // Get active event
+                var activeEvent = await GetBestActiveEventForProductAsync(productId, userId, cancellationToken);
 
-                foreach (var productId in productIds)
+                if (activeEvent != null && userId.HasValue)
                 {
-                    if (cachedPricing.TryGetValue(productId, out var cachedPrice) && cachedPrice != null)
+                    // SMART QUANTITY PRICING: Split between event price and regular price
+                    var userProductEventUsage = await _eventUsageService.GetUserProductEventUsageCountAsync(
+                        activeEvent.Id, userId.Value, productId);
+                    
+                    var remainingEventSlots = Math.Max(0, activeEvent.MaxUsagePerUser - userProductEventUsage);
+                    var eventEligibleQuantity = Math.Min(quantity, remainingEventSlots);
+                    var regularPriceQuantity = quantity - eventEligibleQuantity;
+
+                    _logger.LogInformation("Cart pricing breakdown for product {ProductId}: " +
+                                         "Requested={Requested}, EventEligible={EventEligible}, Regular={Regular}, " +
+                                         "UserUsage={UserUsage}/{MaxUsage}",
+                                         productId, quantity, eventEligibleQuantity, regularPriceQuantity,
+                                         userProductEventUsage, activeEvent.MaxUsagePerUser);
+
+                    decimal totalEventPrice = 0;
+                    decimal totalRegularPriceAdjusted = regularPriceQuantity * basePrice;
+                    decimal totalEventDiscount = 0;
+
+                    // Calculate event pricing for eligible quantity
+                    if (eventEligibleQuantity > 0)
                     {
-                        priceInfos.Add(cachedPrice);
-                        _logger.LogDebug("🎯 Cache HIT for product {ProductId}", productId);
+                        var discountResult = CalculateDiscount(product, activeEvent);
+                        var eventUnitPrice = discountResult.FinalPrice;
+                        totalEventPrice = eventUnitPrice * eventEligibleQuantity;
+                        totalEventDiscount = discountResult.EventDiscountAmount * eventEligibleQuantity;
+
+                        _logger.LogDebug("Event pricing: {EventQty}x Rs.{EventUnitPrice} = Rs.{EventTotal} " +
+                                       "(Saved Rs.{EventSavings})",
+                                       eventEligibleQuantity, eventUnitPrice, totalEventPrice, totalEventDiscount);
+                    }
+
+                    // Set final pricing
+                    priceInfo.EffectivePrice = totalEventPrice + totalRegularPriceAdjusted;
+                    priceInfo.EventDiscountAmount = totalEventDiscount;
+                    priceInfo.EventEligibleQuantity = eventEligibleQuantity;
+                    priceInfo.RegularPriceQuantity = regularPriceQuantity;
+
+                    // Set event details
+                    if (eventEligibleQuantity > 0)
+                    {
+                        ApplyEventInfoToPriceInfo(priceInfo, activeEvent);
+                        priceInfo.CanUseEvent = true;
                     }
                     else
                     {
-                        missingProductIds.Add(productId);
+                        priceInfo.EventTagLine = $"Event limit reached for this product ({userProductEventUsage}/{activeEvent.MaxUsagePerUser})";
+                        priceInfo.CanUseEvent = false;
+                        priceInfo.EventLimitReached = true;
                     }
+
+                    // Set usage information
+                    priceInfo.UserEventUsageCount = userProductEventUsage;
+                    priceInfo.MaxEventUsagePerUser = activeEvent.MaxUsagePerUser;
+                    priceInfo.RemainingEventUsage = remainingEventSlots;
+
+                    _logger.LogInformation("Final cart price for product {ProductId}: Rs.{FinalPrice} " +
+                                         "(Event: {EventQty}x items, Regular: {RegularQty}x items)",
+                                         productId, priceInfo.EffectivePrice, eventEligibleQuantity, regularPriceQuantity);
                 }
 
-                _logger.LogInformation("📊 Cache stats: {CacheHits} hits, {CacheMisses} misses", 
-                    priceInfos.Count, missingProductIds.Count);
+                // Add stock validation
+                var availableStock = product.StockQuantity - product.ReservedStock;
+                var canReserve = availableStock >= quantity;
+                priceInfo.WithStockInfo(availableStock, canReserve);
 
-                // ✅ STEP 2: Calculate missing prices
-                if (missingProductIds.Any())
-                {
-                    var freshPrices = await CalculateBulkPricingAsync(missingProductIds, userId, cancellationToken);
-                    priceInfos.AddRange(freshPrices);
-
-                    // ✅ STEP 3: Bulk cache fresh results - Single call instead of N calls
-                    if (freshPrices.Any())
-                    {
-                        var pricingDictionary = freshPrices.ToDictionary(p => p.ProductId, p => p);
-                        await _hybridCacheService.SetPricingBulkAsync(pricingDictionary, userId, cancellationToken);
-                    }
-                }
-
-                // ✅ STEP 4: Sort results to match input order
-                var sortedResults = priceInfos.OrderBy(p => productIds.IndexOf(p.ProductId)).ToList();
-
-                stopwatch.Stop();
-                var cacheHitRate = (double)(productIds.Count - missingProductIds.Count) / productIds.Count * 100;
-                
-                _logger.LogInformation("✅ BULK PRICING: {Count} products in {ElapsedMs}ms " +
-                                    "(Cache hit rate: {CacheHitRate:F1}%, Avg: {AvgMs}ms per product)",
-                                    sortedResults.Count, stopwatch.ElapsedMilliseconds, cacheHitRate,
-                                    stopwatch.ElapsedMilliseconds / Math.Max(1, sortedResults.Count));
-
-                return sortedResults;
             }
             catch (Exception ex)
             {
-                stopwatch.Stop();
-                _logger.LogError(ex, "🚨 Error in bulk pricing calculation after {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
-                
-                // Fallback to individual calculations
-                return await GetEffectivePricesAsyncFallback(productIds, userId, cancellationToken);
-            }
-        }
-        // ✅ HELPER METHOD: Bulk calculation without cache
-        private async Task<List<ProductPriceInfoDTO>> CalculateBulkPricingAsync(List<int> productIds, int? userId, CancellationToken cancellationToken)
-        {
-            // ✅ STEP 1: Get ALL products in ONE query
-            var products = await _unitOfWork.Products.GetAllAsync(
-                predicate: p => productIds.Contains(p.Id) && !p.IsDeleted,
-                cancellationToken: cancellationToken);
-
-            var productLookup = products.ToDictionary(p => p.Id, p => p);
-
-            // ✅ STEP 2: Get ALL active events in ONE query
-            var nowUtc = _nepalTimeZoneService.GetUtcCurrentTime();
-            var activeEvents = await _unitOfWork.BannerEventSpecials.GetAllAsync(
-                predicate: e => e.IsActive &&
-                           !e.IsDeleted &&
-                           e.Status == EventStatus.Active &&
-                           e.StartDate <= nowUtc &&
-                           e.EndDate >= nowUtc &&
-                           e.CurrentUsageCount < e.MaxUsageCount,
-                includeProperties: "EventProducts",
-                cancellationToken: cancellationToken);
-
-            // ✅ STEP 3: Build event lookup for products
-            var productEventLookup = BuildProductEventLookup(productIds, activeEvents);
-
-            // ✅ STEP 4: Calculate pricing for all products (in-memory)
-            var priceInfos = new List<ProductPriceInfoDTO>();
-
-            foreach (var productId in productIds)
-            {
-                try
-                {
-                    if (!productLookup.TryGetValue(productId, out var product))
-                    {
-                        _logger.LogWarning("Product not found: {ProductId}", productId);
-                        continue;
-                    }
-
-                    // Get best event for this product (from pre-loaded data)
-                    var bestEvent = productEventLookup.TryGetValue(productId, out var events)
-                        ? events.OrderByDescending(e => e.Priority)
-                                .ThenByDescending(e => e.DiscountValue)
-                                .ThenBy(e => e.CreatedAt)
-                                .FirstOrDefault()
-                        : null;
-
-                    // Calculate pricing (pure in-memory operation)
-                    var priceInfo = CalculateEffectivePriceInMemory(product, bestEvent);
-                    priceInfos.Add(priceInfo);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to calculate price for product {ProductId}", productId);
-                    
-                    // Add fallback price info
-                    if (productLookup.TryGetValue(productId, out var fallbackProduct))
-                    {
-                        priceInfos.Add(CreateFallbackPriceInfo(fallbackProduct));
-                    }
-                }
+                _logger.LogError(ex, "Error calculating cart price for product {ProductId}", productId);
+                // Continue with regular pricing
             }
 
-            return priceInfos;
+            return priceInfo;
         }
 
-        // ✅ HELPER METHOD: Build event lookup (simplified - no complex rules)
-        private Dictionary<int, List<BannerEventSpecial>> BuildProductEventLookup(List<int> productIds, IEnumerable<BannerEventSpecial> activeEvents)
-        {
-            var productEventLookup = new Dictionary<int, List<BannerEventSpecial>>();
-
-            foreach (var eventItem in activeEvents)
-            {
-                try
-                {
-                    List<int> applicableProductIds;
-
-                    if (!eventItem.EventProducts?.Any() == true)
-                    {
-                        // Global event - applies to all products
-                        applicableProductIds = productIds.ToList();
-                        _logger.LogDebug("Global event {EventId} applies to {Count} products", eventItem.Id, applicableProductIds.Count);
-                    }
-                    else
-                    {
-                        // Product-specific events
-                        applicableProductIds = eventItem.EventProducts!
-                            .Where(ep => productIds.Contains(ep.ProductId))
-                            .Select(ep => ep.ProductId)
-                            .ToList();
-                        
-                        _logger.LogDebug("Product-specific event {EventId} applies to {Count} products", eventItem.Id, applicableProductIds.Count);
-                    }
-
-                    // Add to lookup for applicable products
-                    foreach (var productId in applicableProductIds)
-                    {
-                        if (!productEventLookup.ContainsKey(productId))
-                            productEventLookup[productId] = new List<BannerEventSpecial>();
-                        
-                        productEventLookup[productId].Add(eventItem);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Error processing event {EventId}", eventItem.Id);
-                }
-            }
-
-            return productEventLookup;
-        }
-
-        // ✅ CORE METHOD 4: Get Best Event (Simplified)
+        // CORE METHOD 4: Get Best Event (Optimized)
         public async Task<BannerEventSpecial?> GetBestActiveEventForProductAsync(int productId, int? userId = null, CancellationToken cancellationToken = default)
         {
             var nowUtc = _nepalTimeZoneService.GetUtcCurrentTime();
@@ -365,14 +340,14 @@ namespace Infrastructure.Persistence.Services
                                           .ThenBy(e => e.CreatedAt)
                                           .First();
 
-            _logger.LogInformation("✅ Selected best event for product {ProductId}: {EventName} " +
+            _logger.LogInformation("Selected best event for product {ProductId}: {EventName} " +
                                  "(Priority: {Priority}, Discount: {DiscountValue}%)",
                 productId, bestEvent.Name, bestEvent.Priority, bestEvent.DiscountValue);
 
             return bestEvent;
         }
 
-        // ✅ CORE METHOD 5: Calculate Discount (Simplified)
+        // CORE METHOD 5: Calculate Discount
         private DiscountResult CalculateDiscount(Product product, BannerEventSpecial activeEvent)
         {
             _logger.LogDebug("Calculating discount for Product: {ProductId}, Event: {EventId}", product.Id, activeEvent.Id);
@@ -390,12 +365,6 @@ namespace Infrastructure.Persistence.Services
                 EventDiscountAmount = 0,
                 PromotionType = activeEvent.PromotionType
             };
-
-            if (activeEvent == null)
-            {
-                _logger.LogDebug("No active event provided. Using base price: Rs.{BasePrice}", basePrice);
-                return result;
-            }
 
             // Get discount value (specific or general)
             var specificDiscount = activeEvent.EventProducts?.FirstOrDefault(ep => ep.ProductId == product.Id)?.SpecificDiscount;
@@ -464,48 +433,13 @@ namespace Infrastructure.Persistence.Services
             result.TotalDiscountAmount = result.ProductDiscountAmount + eventDiscountAmount;
             result.PromotionDescription = promotionDescription;
 
-            _logger.LogDebug("✅ Discount calculated: Rs.{OriginalPrice} → Rs.{FinalPrice} (Total saved: Rs.{TotalDiscount})",
+            _logger.LogDebug("Discount calculated: Rs.{OriginalPrice} -> Rs.{FinalPrice} (Total saved: Rs.{TotalDiscount})",
                 product.MarketPrice, finalPrice, result.TotalDiscountAmount);
 
             return result;
         }
 
-        // ✅ HELPER METHOD: Pure in-memory pricing calculation
-        private ProductPriceInfoDTO CalculateEffectivePriceInMemory(Product product, BannerEventSpecial? bestEvent)
-        {
-            var basePrice = product.DiscountPrice ?? product.MarketPrice;
-
-            var priceInfo = new ProductPriceInfoDTO
-            {
-                ProductId = product.Id,
-                ProductName = product.Name,
-                OriginalPrice = product.MarketPrice,
-                BasePrice = basePrice,
-                EffectivePrice = basePrice,
-                EventDiscountAmount = 0,
-                ProductDiscountAmount = product.DiscountPrice.HasValue ? product.MarketPrice - basePrice : 0,
-                HasProductDiscount = product.DiscountPrice.HasValue && product.DiscountPrice < product.MarketPrice,
-                CalculatedAt = DateTime.UtcNow
-            };
-
-            // Apply event discount if available
-            if (bestEvent != null)
-            {
-                try
-                {
-                    var discountResult = CalculateDiscount(product, bestEvent);
-                    ApplyDiscountToPriceInfo(priceInfo, discountResult, bestEvent);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Error applying event {EventId} to product {ProductId}", bestEvent.Id, product.Id);
-                }
-            }
-
-            return priceInfo;
-        }
-
-        // ✅ HELPER METHOD: Apply discount result to price info
+        // HELPER METHOD: Apply discount result to price info
         private void ApplyDiscountToPriceInfo(ProductPriceInfoDTO priceInfo, DiscountResult discountResult, BannerEventSpecial activeEvent)
         {
             if (discountResult.HasEventDiscount || discountResult.HasFreeShipping)
@@ -515,159 +449,67 @@ namespace Infrastructure.Persistence.Services
                 priceInfo.HasEventDiscount = discountResult.HasEventDiscount;
                 priceInfo.IsOnSale = discountResult.HasDiscount;
 
-                // Event details
-                priceInfo.AppliedEventId = activeEvent.Id;
-                priceInfo.ActiveEventId = activeEvent.Id;
-                priceInfo.ActiveEventName = activeEvent.Name;
-                priceInfo.AppliedEventName = activeEvent.Name;
-                priceInfo.EventTagLine = activeEvent.TagLine;
-                priceInfo.PromotionType = activeEvent.PromotionType;
-                priceInfo.EventStartDate = activeEvent.StartDate;
-                priceInfo.EventEndDate = activeEvent.EndDate;
-                priceInfo.HasActiveEvent = true;
-                priceInfo.IsEventActive = true;
-
-                // Time calculations
-                var timeRemaining = activeEvent.EndDate - DateTime.UtcNow;
-                priceInfo.EventTimeRemaining = timeRemaining > TimeSpan.Zero ? timeRemaining : null;
-                priceInfo.IsEventExpiringSoon = timeRemaining.TotalHours <= 24 && timeRemaining > TimeSpan.Zero;
-
-                // Display formatting
-                priceInfo.FormattedSavings = priceInfo.TotalDiscountAmount > 0
-                    ? $"Save Rs.{priceInfo.TotalDiscountAmount:F2}"
-                    : "";
-
-                priceInfo.FormattedDiscountBreakdown = GenerateDiscountBreakdown(discountResult);
-                priceInfo.EventStatus = GenerateEventStatus(activeEvent, timeRemaining);
+                ApplyEventInfoToPriceInfo(priceInfo, activeEvent);
 
                 // Free shipping
                 if (discountResult.HasFreeShipping)
                 {
                     priceInfo.HasFreeShipping = true;
-                    priceInfo.FormattedSavings = priceInfo.TotalDiscountAmount > 0
-                        ? $"{priceInfo.FormattedSavings} + Free Shipping"
-                        : "Free Shipping";
                 }
             }
         }
 
-        // ✅ SUPPORTING METHODS
-        public async Task<bool> CanUserUseEventAsync(int eventId, int? userId, CancellationToken cancellationToken = default)
+        // HELPER METHOD: Apply event information
+        private void ApplyEventInfoToPriceInfo(ProductPriceInfoDTO priceInfo, BannerEventSpecial activeEvent)
         {
-            if (!userId.HasValue) return true; // Anonymous users can use events
+            priceInfo.AppliedEventId = activeEvent.Id;
+            priceInfo.ActiveEventId = activeEvent.Id;
+            priceInfo.ActiveEventName = activeEvent.Name;
+            priceInfo.AppliedEventName = activeEvent.Name;
+            priceInfo.EventTagLine = activeEvent.TagLine;
+            priceInfo.PromotionType = activeEvent.PromotionType;
+            priceInfo.EventStartDate = activeEvent.StartDate;
+            priceInfo.EventEndDate = activeEvent.EndDate;
+            priceInfo.HasActiveEvent = true;
+            priceInfo.IsEventActive = true;
 
-            try
-            {
-                var eventItem = await _unitOfWork.BannerEventSpecials.GetAsync(
-                    predicate: e => e.Id == eventId && e.IsActive && !e.IsDeleted,
-                    cancellationToken: cancellationToken);
+            // Time calculations
+            var timeRemaining = activeEvent.EndDate - DateTime.UtcNow;
+            priceInfo.EventTimeRemaining = timeRemaining > TimeSpan.Zero ? timeRemaining : null;
+            priceInfo.IsEventExpiringSoon = timeRemaining.TotalHours <= 24 && timeRemaining > TimeSpan.Zero;
 
-                if (eventItem == null) return false;
-
-                // Basic usage limit check (simplified)
-                if (eventItem.CurrentUsageCount >= eventItem.MaxUsageCount) return false;
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error validating event usage for event {EventId}, user {UserId}", eventId, userId);
-                return false;
-            }
+            priceInfo.EventStatus = GenerateEventStatus(activeEvent, timeRemaining);
         }
 
-        public async Task<List<int>> GetEventHighlightedProductIdsAsync(CancellationToken cancellationToken = default)
+        // BULK AND UTILITY METHODS
+        public async Task<List<ProductPriceInfoDTO>> GetEffectivePricesAsync(List<int> productIds, int? userId = null, CancellationToken cancellationToken = default)
         {
-            var nowUtc = _nepalTimeZoneService.GetUtcCurrentTime();
+            _logger.LogDebug("Getting effective prices for {Count} products", productIds.Count);
 
-            try
+            if (!productIds.Any()) return new List<ProductPriceInfoDTO>();
+
+            var priceInfos = new List<ProductPriceInfoDTO>();
+            
+            foreach (var productId in productIds)
             {
-                var activeEvents = await _unitOfWork.BannerEventSpecials.GetAllAsync(
-                    predicate: e => e.IsActive &&
-                                   !e.IsDeleted &&
-                                   e.Status == EventStatus.Active &&
-                                   e.StartDate <= nowUtc &&
-                                   e.EndDate >= nowUtc,
-                    includeProperties: "EventProducts",
-                    cancellationToken: cancellationToken);
-
-                var productIds = new List<int>();
-
-                foreach (var eventItem in activeEvents)
+                try
                 {
-                    if (eventItem.EventProducts?.Any() == true)
+                    var priceInfo = await GetEffectivePriceAsync(productId, userId, cancellationToken);
+                    priceInfos.Add(priceInfo);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error getting price for product {ProductId}", productId);
+                    
+                    var product = await _unitOfWork.Products.GetByIdAsync(productId, cancellationToken);
+                    if (product != null)
                     {
-                        productIds.AddRange(eventItem.EventProducts.Select(ep => ep.ProductId));
-                    }
-                    else
-                    {
-                        // Global event - get limited product IDs for performance
-                        var allProducts = await _unitOfWork.Products.GetAllAsync(
-                            predicate: p => !p.IsDeleted,
-                            take: 50,
-                            cancellationToken: cancellationToken);
-
-                        productIds.AddRange(allProducts.Select(p => p.Id));
+                        priceInfos.Add(CreateFallbackPriceInfo(product));
                     }
                 }
-
-                return productIds.Distinct().ToList();
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting event highlighted product IDs");
-                return new List<int>();
-            }
-        }
-
-        public async Task<bool> IsProductOnSaleAsync(int productId, CancellationToken cancellationToken = default)
-        {
-            var priceInfo = await GetEffectivePriceAsync(productId, null, cancellationToken);
-            return priceInfo.HasDiscount;
-        }
-
-        // ✅ CACHE METHODS
-        public async Task RefreshPricesForEventAsync(int eventId, CancellationToken cancellationToken = default)
-        {
-            _logger.LogInformation("Refreshing prices for event {EventId}", eventId);
-            await _hybridCacheService.RemoveByPatternAsync("pricing:*", cancellationToken);
-        }
-
-        public async Task InvalidatePriceCacheAsync(int productId)
-        {
-            try
-            {
-                await _hybridCacheService.RemoveByPatternAsync($"pricing:product:{productId}:*");
-                _logger.LogDebug("Invalidated price cache for product {ProductId}", productId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error invalidating price cache for product {ProductId}", productId);
-            }
-        }
-
-        public async Task InvalidateAllPriceCacheAsync()
-        {
-            await _hybridCacheService.RemoveByPatternAsync("pricing:*");
-            _logger.LogInformation("Invalidated ALL price cache");
-        }
-
-        // ✅ CART-SPECIFIC METHODS
-        public async Task<ProductPriceInfoDTO> GetCartPriceAsync(int productId, int quantity, int? userId = null, CancellationToken cancellationToken = default)
-        {
-            var priceInfo = await GetEffectivePriceAsync(productId, userId, cancellationToken);
-
-            // Stock validation for cart
-            var product = await _unitOfWork.Products.GetByIdAsync(productId, cancellationToken);
-            if (product != null)
-            {
-                var availableStock = product.StockQuantity - product.ReservedStock;
-                var canReserve = availableStock >= quantity;
-
-                priceInfo.WithStockInfo(availableStock, canReserve);
-            }
-
-            return priceInfo;
+            
+            return priceInfos;
         }
 
         public async Task<List<ProductPriceInfoDTO>> GetCartPricesAsync(List<CartPriceRequestDTO> requests, int? userId = null, CancellationToken cancellationToken = default)
@@ -721,23 +563,33 @@ namespace Infrastructure.Persistence.Services
             }
         }
 
-        // ✅ HELPER METHODS
-        private string GenerateDiscountBreakdown(DiscountResult result)
+        public async Task<bool> IsProductOnSaleAsync(int productId, CancellationToken cancellationToken = default)
         {
-            var breakdown = new List<string>();
-
-            if (result.ProductDiscountAmount > 0)
-                breakdown.Add($"Product: -Rs.{result.ProductDiscountAmount:F2}");
-
-            if (result.EventDiscountAmount > 0)
-                breakdown.Add($"Event: -Rs.{result.EventDiscountAmount:F2}");
-
-            if (result.HasFreeShipping)
-                breakdown.Add("Free Shipping");
-
-            return string.Join(", ", breakdown);
+            var priceInfo = await GetEffectivePriceAsync(productId, null, cancellationToken);
+            return priceInfo.HasDiscount;
         }
 
+        // CACHE METHODS
+        public async Task RefreshPricesForEventAsync(int eventId, CancellationToken cancellationToken = default)
+        {
+            _logger.LogInformation("Refreshing prices for event {EventId}", eventId);
+            await _hybridCacheService.RemoveByPatternAsync("pricing:*", cancellationToken);
+        }
+
+        public async Task InvalidatePriceCacheAsync(int productId)
+        {
+            try
+            {
+                await _hybridCacheService.RemoveByPatternAsync($"pricing:product:{productId}:*");
+                _logger.LogDebug("Invalidated price cache for product {ProductId}", productId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error invalidating price cache for product {ProductId}", productId);
+            }
+        }
+
+        // HELPER METHODS
         private string GenerateEventStatus(BannerEventSpecial activeEvent, TimeSpan? timeRemaining)
         {
             if (!timeRemaining.HasValue || timeRemaining.Value <= TimeSpan.Zero)
@@ -750,34 +602,6 @@ namespace Infrastructure.Persistence.Services
                 return $"Ends in {Math.Ceiling(timeRemaining.Value.TotalHours)} hours";
 
             return $"Ends in {Math.Ceiling(timeRemaining.Value.TotalMinutes)} minutes";
-        }
-
-        private async Task<List<ProductPriceInfoDTO>> GetEffectivePricesAsyncFallback(List<int> productIds, int? userId, CancellationToken cancellationToken)
-        {
-            _logger.LogWarning("🔄 Using fallback pricing method for {Count} products", productIds.Count);
-            
-            var priceInfos = new List<ProductPriceInfoDTO>();
-            
-            foreach (var productId in productIds.Take(10))
-            {
-                try
-                {
-                    var priceInfo = await GetEffectivePriceAsync(productId, userId, cancellationToken);
-                    priceInfos.Add(priceInfo);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed fallback pricing for product {ProductId}", productId);
-                    
-                    var product = await _unitOfWork.Products.GetByIdAsync(productId, cancellationToken);
-                    if (product != null)
-                    {
-                        priceInfos.Add(CreateFallbackPriceInfo(product));
-                    }
-                }
-            }
-            
-            return priceInfos;
         }
 
         private ProductPriceInfoDTO CreateFallbackPriceInfo(Product product)
@@ -794,9 +618,103 @@ namespace Infrastructure.Persistence.Services
                 IsOnSale = product.DiscountPrice.HasValue && product.DiscountPrice < product.MarketPrice
             };
         }
+
+    
+        public async Task<List<int>> GetEventHighlightedProductIdsAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var nowUtc = _nepalTimeZoneService.GetUtcCurrentTime();
+                
+                _logger.LogDebug("Getting event highlighted products at {UtcTime}", nowUtc);
+                
+                // Get all active events with their associated products
+                var activeEvents = await _unitOfWork.BannerEventSpecials.GetAllAsync(
+                    predicate: e => e.IsActive &&
+                            !e.IsDeleted &&
+                            e.Status == EventStatus.Active &&
+                            e.StartDate <= nowUtc &&
+                            e.EndDate >= nowUtc &&
+                            e.CurrentUsageCount < e.MaxUsageCount,
+                    includeProperties: "EventProducts,EventProducts.Product", // Include Product navigation
+                    cancellationToken: cancellationToken);
+
+                _logger.LogDebug("Found {Count} active events", activeEvents.Count());
+
+                var productIds = new HashSet<int>();
+
+                foreach (var eventItem in activeEvents)
+                {
+                    if (eventItem.EventProducts?.Any() == true)
+                    {
+                        // Product-specific event - add only the specific products that are valid
+                        foreach (var eventProduct in eventItem.EventProducts)
+                        {
+                            // Validate that the product exists and is valid
+                            if (eventProduct.Product != null && 
+                                !eventProduct.Product.IsDeleted && 
+                                eventProduct.Product.StockQuantity > 0)
+                            {
+                                productIds.Add(eventProduct.ProductId);
+                                _logger.LogDebug("Added product {ProductId} from specific event {EventId}", 
+                                    eventProduct.ProductId, eventItem.Id);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Global event - applies to all valid products
+                        _logger.LogDebug("Processing global event {EventId}: {EventName}", eventItem.Id, eventItem.Name);
+                        
+                        // Get all valid products for global events (limited for performance)
+                        var allValidProducts = await _unitOfWork.Products.GetAllAsync(
+                            predicate: p => !p.IsDeleted && 
+                                        p.StockQuantity > 0 && 
+                                        p.MarketPrice > 0, // Only products with valid pricing
+                            orderBy: q => q.OrderByDescending(p => p.Id), // Show newest first
+                            take: 100, // Limit to prevent performance issues
+                            cancellationToken: cancellationToken);
+                        
+                        foreach (var product in allValidProducts)
+                        {
+                            productIds.Add(product.Id);
+                        }
+                        
+                        _logger.LogDebug("Added {Count} products from global event {EventId}", 
+                            allValidProducts.Count(), eventItem.Id);
+                        
+                        // Only process first global event to avoid duplicates
+                        break;
+                    }
+                }
+
+                var finalProductIds = productIds.ToList();
+                _logger.LogInformation("Found {Count} highlighted products for active events", finalProductIds.Count);
+                
+                return finalProductIds;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting event highlighted product IDs");
+                return new List<int>();
+            }
+        }
+                
+        public async Task InvalidateAllPriceCacheAsync()
+        {
+            try
+            {
+                await _hybridCacheService.RemoveByPatternAsync("pricing:*");
+                _logger.LogInformation("Invalidated all price cache entries");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error invalidating all price cache");
+            }
+        }
     }
 
-    // ✅ HELPER CLASS: Discount calculation results
+    // HELPER CLASS: Discount calculation results
     public class DiscountResult
     {
         public decimal OriginalPrice { get; set; }
