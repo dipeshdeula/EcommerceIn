@@ -21,5 +21,9 @@ namespace Application.Dto.OrderDTOs
         public string ShippingAddress { get; set; } = string.Empty;
         public int? EstimatedDeliveryMinutes { get; set; }
         public NotificationResultDTO NotificationResult { get; set; } = new();
+        public string? EventUsageResult { get; set; }
+        public string? OrderStatus { get; set; } 
+        public string? Message { get; set; } 
+
     }
 }

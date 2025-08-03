@@ -27,12 +27,7 @@ namespace Application.Features.PaymentRequestFeat.Module
                 bool IsDelivered = false
                 ) =>
             {
-                // only delivery personnel can access
-                if (currentUserService.Role?.ToLower() != "deliveryboy" 
-                || currentUserService.Role?.ToLower() !="admin"
-                || currentUserService.Role?.ToLower() !="superadmin"
-                )
-                    return Results.Unauthorized();
+                
                 var deliveryPersonId = int.TryParse(currentUserService.UserId, out var id) ? id : 0;
                 if (deliveryPersonId == 0)
                     return Results.BadRequest(new { message = "Invalid delivery person" });
@@ -46,8 +41,7 @@ namespace Application.Features.PaymentRequestFeat.Module
 
 
 
-            })
-                /*//.RequireAuthorization("RequireAdminOrDeliveryBoy")*/
+            })  .RequireAuthorization("RequireAdminOrDeliveryBoy")
                 .WithName("Update Delivery Status")
                 .WithSummary("Update OrderStatus after online payment");
 

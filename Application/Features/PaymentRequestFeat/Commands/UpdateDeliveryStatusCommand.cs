@@ -1,4 +1,5 @@
 ﻿using Application.Common;
+using Application.Features.BillingItemFeat.Commands;
 using Application.Interfaces.Repositories;
 using MediatR;
 
@@ -6,6 +7,7 @@ namespace Application.Features.PaymentRequestFeat.Commands
 {
     public record UpdateDeliveryStatusCommand(
         int PaymentRequestId,
+        int CompanyId,
         bool IsDelivered
         ) : IRequest<Result<string>>;
 
@@ -13,6 +15,7 @@ namespace Application.Features.PaymentRequestFeat.Commands
     {
         private readonly IPaymentRequestRepository _paymentRepository;
         private readonly IOrderRepository _orderRepository;
+        private readonly ICompanyInfoRepository _companyInfoRepository;
         public UpdateDeliveryStatusCommandHandler(
             IPaymentRequestRepository paymentRepository,
             IOrderRepository orderRepository
@@ -40,6 +43,18 @@ namespace Application.Features.PaymentRequestFeat.Commands
             await _orderRepository.UpdateAsync(checkOrder, cancellationToken);
             await _orderRepository.SaveChangesAsync(cancellationToken);
 
+            var companyInfo = await _companyInfoRepository.FindByIdAsync(request.Id);
+            if (companyInfo == null)
+            {
+                return Result<string>.Failure("Company Info not found");
+            }
+
+
+            var generateBill = new CreateBillingItemCommand(checkOrder.UserId, checkOrder.Id, CompanyId);
+            if (generateBill == null)
+            {
+                return Result<string>.Failure("Unable to generate bill");            
+            }
 
             return Result<string>.Success("Order has been delivered");
         }

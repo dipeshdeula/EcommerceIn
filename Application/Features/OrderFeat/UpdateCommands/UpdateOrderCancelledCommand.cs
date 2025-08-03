@@ -4,6 +4,7 @@ using Application.Dto.Shared;
 using Application.Features.OrderFeat.Events;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
+using Domain.Entities;
 using Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -32,6 +33,9 @@ namespace Application.Features.OrderFeat.UpdateCommands
         private readonly IEmailService _emailService;
         private readonly IUserRepository _userRepository;
         private readonly IRabbitMqPublisher _rabbitMqPublisher;
+        private readonly IProductRepository _productRepository;
+        private readonly IProductPricingService _productPricingService;
+        private readonly IEventUsageService _eventUsageService;
         private readonly ILogger<UpdateOrderCancelledCommandHandler> _logger;
         private readonly IMediator _mediator;
 
@@ -41,6 +45,9 @@ namespace Application.Features.OrderFeat.UpdateCommands
             ICurrentUserService currentUserserice,
             IEmailService emailService,
             IRabbitMqPublisher rabbitMqPublisher,
+            IProductRepository productRepository,
+            IProductPricingService productPricingService,
+            IEventUsageService eventUsageService,
             ILogger<UpdateOrderCancelledCommandHandler> logger,
             IMediator mediator
             )
@@ -49,6 +56,9 @@ namespace Application.Features.OrderFeat.UpdateCommands
             _userRepository = userRepository;
             _currentUserService = currentUserserice;
             _emailService = emailService;
+            _productPricingService = productPricingService;
+            _eventUsageService = eventUsageService;
+            _productRepository = productRepository;
             _rabbitMqPublisher = rabbitMqPublisher;
             _logger = logger;
             _mediator = mediator;
@@ -105,13 +115,28 @@ namespace Application.Features.OrderFeat.UpdateCommands
 
                 order.OrderStatus = request.IsCancelled ? "Cancelled" : "Pending";
                 order.IsCancelled = request.IsCancelled;
+                order.ReasonToCancel = request.IsCancelled ? request.ReasonToCancel : null;
+                order.IsConfirmed = false;
                 order.UpdatedAt = DateTime.UtcNow;
 
                 await _orderRepository.UpdateAsync(order, cancellationToken);
-                await _orderRepository.SaveChangesAsync(cancellationToken);
 
                 _logger.LogInformation("Order status updated: OrderId={OrderId}, Status={Status}, IsCancelled={IsCancelled}",
                     order.Id, order.PaymentStatus, order.IsCancelled);
+
+                // restore prodcut stock
+                await RestoreProductStock(order);
+
+                // reverse event usage
+                var eventUsageResult = await _eventUsageService.ReverseEventUsageForOrderAsync(order.Id, order.UserId);
+                _logger.LogInformation("Event usage reversed: OrderId={OrderId}, Result={Result}",
+                    order.Id, eventUsageResult);
+
+                // Invalidate pricing cache
+                await InvalidatePricingCacheForOrder(order);
+
+                await _orderRepository.SaveChangesAsync(cancellationToken);
+
 
 
                 var notificationResult = new NotificationResultDTO { EmailSent = false, RabbitMqSent = false };
@@ -121,19 +146,31 @@ namespace Application.Features.OrderFeat.UpdateCommands
                     notificationResult = await SendOrderCancellationNotificationsAsync(order, user, cancellationToken);
                 }
 
+                // publish events
+                await _mediator.Publish(new OrderCancelledEvents
+                {
+                    Order = order,
+                    User = user,
+
+                }, cancellationToken);
+
 
                 var responseDto = new OrderCancellationRepsonseDTO
                 {
                     OrderId = order.Id,
                     PreviousStatus = previousStatus,
                     NewStatus = order.PaymentStatus,
+                    OrderStatus = order.OrderStatus,
                     PreviousCancelled = previousCancelled,
                     IsCancelled = order.IsCancelled,
+                    ReasonToCancel = order.ReasonToCancel ?? "",
+                    EventUsageResult = eventUsageResult.Succeeded ? eventUsageResult.Data : eventUsageResult.Message,
                     UpdatedAt = order.UpdatedAt.Value,
                     UserEmail = user.Email,
                     UserName = user.Name,
-                    TotalAmount = order.TotalAmount,                                    
-                    NotificationResult = notificationResult
+                    TotalAmount = order.TotalAmount,
+                    NotificationResult = notificationResult,
+                    Message = "Order cancelled successfully"
                 };
 
                 var successMessage = request.IsCancelled
@@ -174,6 +211,53 @@ namespace Application.Features.OrderFeat.UpdateCommands
             return Result<bool>.Success(true);
         }
 
+        private async Task RestoreProductStock(Order order)
+        { 
+            try
+            {
+                if (order.Items?.Any() == true)
+                {
+                    foreach (var item in order.Items)
+                    {
+                        var product = await _productRepository.GetByIdAsync(item.ProductId);
+                        if (product != null)
+                        {
+                            product.StockQuantity += item.Quantity;
+                            await _productRepository.UpdateAsync(product);
+                            
+                            _logger.LogDebug("Restored stock for product {ProductId}: +{Quantity}", 
+                                item.ProductId, item.Quantity);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error restoring product stock for order {OrderId}", order.Id);
+            }
+
+        }
+
+        private async Task InvalidatePricingCacheForOrder(Order order)
+        {
+            try
+            {
+                if (order.Items?.Any() == true)
+                {
+                    foreach (var item in order.Items)
+                    {
+                        await _productPricingService.InvalidatePriceCacheAsync(item.ProductId);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error invalidating pricing cache for order {OrderId}", order.Id);
+            }
+        }
+
+
+
         /// <summary>
         ///  SEND COMPREHENSIVE NOTIFICATIONS 
         /// </summary>
@@ -181,7 +265,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
             Domain.Entities.Order order, Domain.Entities.User user, CancellationToken cancellationToken)
         {
             var result = new NotificationResultDTO();
-            
+
 
             try
             {
@@ -207,7 +291,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
                 {
                     Order = order,
                     User = user,
-                    
+
                 });
                 //_rabbitMqPublisher.Publish("OrderConfirmedQueue", orderCancelledEvent, Guid.NewGuid().ToString(), null);
                 //result.RabbitMqSent = true;

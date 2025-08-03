@@ -14,5 +14,9 @@ namespace Application.Interfaces.Services
         void StoreUserInfo(string email, User user, string password);
         (User user, string password) GetUserInfo(string email);
 
+        void RemoveOtp(string email);
+        void RemoveUserInfo(string email);
+        TimeSpan? GetOtpRemainingTime(string email);
+
     }
 } 

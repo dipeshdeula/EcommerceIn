@@ -66,7 +66,7 @@ namespace Infrastructure.Persistence.Repositories
         {
             return await _context.EventUsages
                 .Where(eu => eu.BannerEventId == eventId && !eu.IsDeleted)
-                .SumAsync(eu => eu.DiscountApplied);
+                .SumAsync(eu => eu.DiscountApplied ?? 0);
         }
 
         public async Task<int> GetUniqueUsersCountByEventAsync(int eventId)

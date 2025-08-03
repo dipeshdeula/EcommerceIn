@@ -16,7 +16,7 @@ namespace Domain.Entities.Common
         public virtual User User { get; set; } = null!;
         public int OrderId { get; set; }
         public virtual Order? Order { get; set; }
-        public decimal DiscountApplied { get; set; }
+        public decimal? DiscountApplied { get; set; } = 0;
         public DateTime UsedAt { get; set; } = DateTime.UtcNow;
         public bool IsDeleted { get; set; }
         public int ProductsCount { get; set; } = 1;

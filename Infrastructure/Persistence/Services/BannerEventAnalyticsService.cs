@@ -41,8 +41,8 @@ namespace Infrastructure.Persistence.Services
                     ReportPeriod = $"{fromUtc:yyyy-MM-dd} to {toUtc:yyyy-MM-dd}",
                     TotalUsages = eventUsages.Count(),
                     UniqueUsers = eventUsages.Select(u => u.UserId).Distinct().Count(),
-                    TotalDiscountGiven = eventUsages.Sum(u => u.DiscountApplied),
-                    AverageDiscountPerUser = eventUsages.Any() ? eventUsages.Average(u => u.DiscountApplied) : 0,
+                    TotalDiscountGiven = eventUsages.Sum(u => u.DiscountApplied ?? 0),
+                    AverageDiscountPerUser = eventUsages.Any() ? eventUsages.Average(u => u.DiscountApplied ?? 0) : 0,
                     ConversionRate = await CalculateConversionRate(eventId, fromUtc, toUtc),
                     DailyBreakdown = GetDailyBreakdown(eventUsages.ToList())
                 };
@@ -82,9 +82,9 @@ namespace Infrastructure.Persistence.Services
                         EventId = g.Key,
                         EventName = g.First().BannerEvent?.Name ?? "Unknown",
                         TotalUsages = g.Count(),
-                        TotalDiscount = g.Sum(u => u.DiscountApplied),
+                        TotalDiscount = g.Sum(u => u.DiscountApplied ?? 0),
                         UniqueUsers = g.Select(u => u.UserId).Distinct().Count(),
-                        AverageDiscount = g.Average(u => u.DiscountApplied)
+                        AverageDiscount = g.Average(u => u.DiscountApplied ?? 0)
                     })
                     .OrderByDescending(s => s.PerformanceScore)
                     .Take(count)
@@ -115,7 +115,7 @@ namespace Infrastructure.Persistence.Services
                 _logger.LogInformation("Total discounts given from {FromDate} to {ToDate}: Rs.{TotalDiscount:F2}",
                     fromDate, toDate, totalDiscount);
 
-                return totalDiscount;
+                return totalDiscount ?? 0;
             }
             catch (Exception ex)
             {
@@ -165,7 +165,7 @@ namespace Infrastructure.Persistence.Services
                     {
                         Date = g.Key,
                         UsageCount = g.Count(),
-                        TotalDiscount = g.Sum(u => u.DiscountApplied),
+                        TotalDiscount = g.Sum(u => u.DiscountApplied ?? 0),
                         UniqueUsers = g.Select(u => u.UserId).Distinct().Count()
                     })
                     .OrderBy(d => d.Date)

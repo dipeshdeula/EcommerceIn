@@ -7,5 +7,8 @@ public class OrderConfirmedEvent : INotification
 {
     public Order Order { get; set; }
     public User User { get; set; }
-    public int EtaMinutes{ get; set; }
+    public int EtaMinutes { get; set; }
+
+    public bool IsConfirmed { get; set; } = false;
+    public string? PreviousStatus { get; set; }
 }

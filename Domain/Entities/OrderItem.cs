@@ -17,6 +17,10 @@ namespace Domain.Entities
         public decimal TotalPrice { get; private set; } // Total price for this order item
         public bool IsDeleted { get; set; }
 
+        public decimal? EventDiscountAmount { get; set; }
+        public decimal? RegularDiscountAmount { get; set; }
+        public int? AppliedEventId { get; set; }
+
         public Order? Order { get; set; } // Navigation property to Order entity
         public Product? Product { get; set; } // Navigation property to Product entity
     }

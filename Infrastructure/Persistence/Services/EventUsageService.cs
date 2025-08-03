@@ -80,7 +80,7 @@ namespace Infrastructure.Persistence.Services
             }
         }
 
-        // Fixed: Product-specific event usage count
+        // Product-specific event usage count
         public async Task<int> GetUserEventUsageCountAsync(int eventId, int userId, int productId)
         {
             return await GetUserProductEventUsageCountAsync(eventId, userId, productId);
@@ -164,7 +164,7 @@ namespace Infrastructure.Persistence.Services
             }
         }
 
-        // Fixed: Product-specific cart validation
+        //  Product-specific cart validation
         public async Task<Result<bool>> CanUserAddQuantityToCartForProductAsync(int eventId, int userId, int productId, int requestedQuantity)
         {
             try
@@ -336,6 +336,120 @@ namespace Infrastructure.Persistence.Services
                 return Result<string>.Failure("Discount applied cannot be negative");
 
             return Result<string>.Success("Validation passed");
+        }
+
+      public async Task<IEnumerable<EventUsage>> GetEventUsagesByOrderIdAsync(int orderId)
+        {
+            try
+            {
+                var eventUsages = await _unitOfWork.EventUsages.GetAllAsync(
+                    predicate: eu => eu.OrderId == orderId && !eu.IsDeleted,cancellationToken:default);
+
+                _logger.LogDebug("Found {Count} event usage records for order {OrderId}", 
+                    eventUsages.Count(), orderId);
+
+                return eventUsages;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting event usages for order {OrderId}", orderId);
+                return Enumerable.Empty<EventUsage>();
+            }
+        }
+
+        public async Task<Result<string>> ReverseEventUsageForOrderAsync(int orderId, int userId)
+        {
+            try
+            {
+                var eventUsages = await _unitOfWork.EventUsages.GetAllAsync(
+                    predicate: eu => eu.OrderId == orderId
+                    && eu.UserId == userId && !eu.IsDeleted,
+                    cancellationToken:default);
+
+                if (!eventUsages.Any())
+                {
+                    return Result<string>.Success("No event usage records found to reverse");
+                }
+
+                var result = await _unitOfWork.ExecuteInTransactionAsync(async () =>
+                {
+                    var reversedCount = 0;
+                    foreach (var eventUsage in eventUsages)
+                    {
+                        // Deactivate the event usage
+                        eventUsage.IsActive = false;
+                        eventUsage.Notes += $" | Reversed on {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} - Order unconfirmed";
+                        await _unitOfWork.EventUsages.UpdateAsync(eventUsage);
+
+                        // Decrease banner event usage count
+                        var bannerEvent = await _unitOfWork.BannerEventSpecials.GetByIdAsync(eventUsage.BannerEventId);
+                        if (bannerEvent != null && bannerEvent.CurrentUsageCount > 0)
+                        {
+                            bannerEvent.CurrentUsageCount--;
+                            bannerEvent.UpdatedAt = DateTime.UtcNow;
+                            await _unitOfWork.BannerEventSpecials.UpdateAsync(bannerEvent);
+                        }
+
+                        reversedCount++;
+                    }
+
+                    await _unitOfWork.SaveChangesAsync();
+                    
+                    _logger.LogInformation("Reversed {Count} event usage records for order {OrderId}", 
+                        reversedCount, orderId);
+
+                    return $"Reversed {reversedCount} event usage records";
+                });
+
+                return Result<string>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error reversing event usage for order {OrderId}", orderId);
+                return Result<string>.Failure($"Failed to reverse event usage: {ex.Message}");
+            }
+        }
+
+        public async Task<Result<string>> MarkEventUsageAsActiveAsync(int orderId, int userId)
+        {
+            try
+            {
+                var eventUsages = await _unitOfWork.EventUsages.GetAllAsync(
+                    predicate: eu => eu.OrderId == orderId &&
+                    eu.UserId == userId && !eu.IsDeleted,
+                    cancellationToken:default);
+
+                if (!eventUsages.Any())
+                {
+                    return Result<string>.Success("No event usage records found to activate");
+                }
+
+                var activatedCount = 0;
+                foreach (var eventUsage in eventUsages)
+                {
+                    if (!eventUsage.IsActive)
+                    {
+                        eventUsage.IsActive = true;
+                        eventUsage.Notes += $" | Activated on {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} - Order confirmed";
+                        await _unitOfWork.EventUsages.UpdateAsync(eventUsage);
+                        activatedCount++;
+                    }
+                }
+
+                if (activatedCount > 0)
+                {
+                    await _unitOfWork.SaveChangesAsync();
+                    _logger.LogInformation("Activated {Count} event usage records for order {OrderId}", 
+                        activatedCount, orderId);
+                }
+
+                return Result<string>.Success($"Activated {activatedCount} event usage records");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error activating event usage for order {OrderId}", orderId);
+                return Result<string>.Failure($"Failed to activate event usage: {ex.Message}");
+            }
         }
     }
 }

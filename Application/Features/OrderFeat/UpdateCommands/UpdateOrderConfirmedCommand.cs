@@ -25,15 +25,19 @@ namespace Application.Features.OrderFeat.UpdateCommands
         private readonly IEmailService _emailService;
         private readonly IUserRepository _userRepository;
         private readonly IRabbitMqPublisher _rabbitMqPublisher;
+        private readonly IProductPricingService _productPricingService;
+        private readonly IEventUsageService _eventUsageService;
         private readonly ILogger<UpdateOrderConfirmedCommandHandler> _logger;
         private readonly IMediator _mediator;
-        
+
         public UpdateOrderConfirmedCommandHandler(
             IOrderRepository orderRepository,
             IUserRepository userRepository,
             IHttpContextAccessor httpContextAccessor,
             IEmailService emailService,
             IRabbitMqPublisher rabbitMqPublisher,
+            IEventUsageService eventUsageService,
+            IProductPricingService productPricingService,
             ILogger<UpdateOrderConfirmedCommandHandler> logger,
             IMediator mediator)
         {
@@ -42,6 +46,8 @@ namespace Application.Features.OrderFeat.UpdateCommands
             _httpContextAccessor = httpContextAccessor;
             _emailService = emailService;
             _rabbitMqPublisher = rabbitMqPublisher;
+            _eventUsageService = eventUsageService;
+            _productPricingService = productPricingService;
             _logger = logger;
             _mediator = mediator;
         }
@@ -64,7 +70,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
                     return Result<OrderConfirmationResponseDTO>.Failure("Order not found or has been deleted.");
                 }
 
-               
+
                 var authResult = ValidateUserAuthorization();
                 if (!authResult.Succeeded)
                 {
@@ -72,7 +78,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
                     return Result<OrderConfirmationResponseDTO>.Failure(authResult.Message);
                 }
 
-  
+
                 if (order.IsConfirmed && request.IsConfirmed)
                 {
                     _logger.LogWarning("Order already confirmed: OrderId={OrderId}", request.OrderId);
@@ -91,7 +97,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
                     return Result<OrderConfirmationResponseDTO>.Failure("User not found for this order.");
                 }
 
-              
+
                 var previousStatus = order.OrderStatus;
                 var previousConfirmed = order.IsConfirmed;
 
@@ -99,29 +105,61 @@ namespace Application.Features.OrderFeat.UpdateCommands
                 order.IsConfirmed = request.IsConfirmed;
                 order.UpdatedAt = DateTime.UtcNow;
 
-                await _orderRepository.UpdateAsync(order, cancellationToken);
 
-               
+                await _orderRepository.UpdateAsync(order, cancellationToken);
                 await _orderRepository.SaveChangesAsync(cancellationToken);
 
                 _logger.LogInformation("Order status updated: OrderId={OrderId}, Status={Status}, IsConfirmed={IsConfirmed}",
                     order.Id, order.PaymentStatus, order.IsConfirmed);
 
-                
-                var notificationResult = new NotificationResultDTO { EmailSent = false, RabbitMqSent = false };
-
+                // Handle event usage based on confirmation status
+                var eventUsageResult = "No event usage to process";
                 if (request.IsConfirmed)
                 {
-                    notificationResult = await SendOrderConfirmationNotificationsAsync(order, user, cancellationToken);
+                    // Active event usage records
+                    eventUsageResult = await ActivateEventUsageForOrder(order.Id, order.UserId);
                 }
 
-               
+                else
+                {
+                    // Deactivate event usage records if previously confirmed
+                    if (previousConfirmed)
+                    {
+                        eventUsageResult = await DeactivateEventUsageForOrder(order.Id, order.UserId);
+                    }
+                }
+
+                await InvalidatePricingCacheForOrder(order);
+
+
+                // var notificationResult = new NotificationResultDTO { EmailSent = false, RabbitMqSent = false };
+
+                // if (request.IsConfirmed)
+                // {
+                //     notificationResult = await SendOrderConfirmationNotificationsAsync(order, user, cancellationToken);
+                // }
+
+                // Send notifications for order confirmation
+                var notificationResult = await SendOrderConfirmationNotificationsAsync(order, user, cancellationToken);
+
+                // publish events
+                await _mediator.Publish(new OrderConfirmedEvent
+                {
+                    Order = order,
+                    User = user,
+                    IsConfirmed = request.IsConfirmed,
+                    PreviousStatus = previousStatus,
+                }, cancellationToken);
+
+
                 var responseDto = new OrderConfirmationResponseDTO
                 {
                     OrderId = order.Id,
                     PreviousStatus = previousStatus,
                     NewStatus = order.PaymentStatus,
                     PreviousConfirmed = previousConfirmed,
+                    OrderStatus = order.OrderStatus,
+                    EventUsageResult = eventUsageResult,
                     IsConfirmed = order.IsConfirmed,
                     UpdatedAt = order.UpdatedAt.Value,
                     UserEmail = user.Email,
@@ -129,7 +167,8 @@ namespace Application.Features.OrderFeat.UpdateCommands
                     TotalAmount = order.TotalAmount,
                     ShippingAddress = order.ShippingAddress,
                     EstimatedDeliveryMinutes = request.IsConfirmed ? 25 : null, // ETA only when confirmed
-                    NotificationResult = notificationResult
+                    NotificationResult = notificationResult,
+                    Message = request.IsConfirmed ? "Order confirmed successfully." : "Order confirmation revoked successfully"
                 };
 
                 var successMessage = request.IsConfirmed
@@ -154,7 +193,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
         private Result<bool> ValidateUserAuthorization()
         {
             var userClaims = _httpContextAccessor.HttpContext?.User;
-            if (userClaims == null || !userClaims.Identity.IsAuthenticated)
+            if (userClaims == null || !userClaims.Identity!.IsAuthenticated)
             {
                 return Result<bool>.Failure("User not authenticated.");
             }
@@ -202,7 +241,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
             }
 
             try
-            {             
+            {
                 await _mediator.Publish(new OrderConfirmedEvent
                 {
                     Order = order,
@@ -310,5 +349,88 @@ namespace Application.Features.OrderFeat.UpdateCommands
 
             await _emailService.SendEmailAsync(user.Email, subject, emailBody);
         }
+        
+        private async Task<string> ActivateEventUsageForOrder(int orderId, int userId)
+        {
+            try
+            {
+                // Get all provisional event usage records for this order
+                var eventUsages = await _eventUsageService.GetEventUsagesByOrderIdAsync(orderId);
+                
+                var activatedCount = 0;
+                foreach (var eventUsage in eventUsages)
+                {
+                    // Record the event usage (this will activate it and update banner event counts)
+                    var result = await _eventUsageService.RecordEventUsageAsync(
+                        eventUsage.BannerEventId, 
+                        userId, 
+                        orderId, 
+                        eventUsage.DiscountApplied ?? 0);
+                    
+                    if (result.Succeeded)
+                    {
+                        activatedCount++;
+                        _logger.LogInformation("Activated event usage: EventId={EventId}, OrderId={OrderId}, Discount={Discount}",
+                            eventUsage.BannerEventId, orderId, eventUsage.DiscountApplied);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Failed to activate event usage: EventId={EventId}, OrderId={OrderId}, Error={Error}",
+                            eventUsage.BannerEventId, orderId, result.Message);
+                    }
+                }
+
+                return $"Activated {activatedCount} event usage records";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error activating event usage for order {OrderId}", orderId);
+                return $"Error activating event usage: {ex.Message}";
+            }
+        }
+
+        private async Task<string> DeactivateEventUsageForOrder(int orderId, int userId)
+        {
+            try
+            {
+                var result = await _eventUsageService.ReverseEventUsageForOrderAsync(orderId, userId);
+                
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation("Deactivated event usage for order {OrderId}", orderId);
+                    return result.Data ?? "Event usage deactivated successfully";
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to deactivate event usage for order {OrderId}: {Error}", orderId, result.Message);
+                    return $"Failed to deactivate event usage: {result.Message}";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deactivating event usage for order {OrderId}", orderId);
+                return $"Error deactivating event usage: {ex.Message}";
+            }
+        }
+
+        private async Task InvalidatePricingCacheForOrder(Order order)
+        {
+            try
+            {
+                if (order.Items?.Any() == true)
+                {
+                    foreach (var item in order.Items)
+                    {
+                        await _productPricingService.InvalidatePriceCacheAsync(item.ProductId);
+                    }
+                    _logger.LogDebug("Invalidated pricing cache for {ProductCount} products", order.Items.Count);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error invalidating pricing cache for order {OrderId}", order.Id);
+            }
+        }
+
     }
 }

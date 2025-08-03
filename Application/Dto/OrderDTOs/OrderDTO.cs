@@ -16,11 +16,13 @@ namespace Application.Dto.OrderDTOs
         public string OrderStatus { get; set; }
         public string PaymentStatus { get; set; }
         public decimal TotalAmount { get; set; }
+        public decimal? EventDiscountAmount { get; set; } 
+        public string? Notes { get; set; } 
         public string ShippingAddress { get; set; }
         public string ShippingCity { get; set; }
 
         public string ReasonToCancel { get; set; }
-
+        public bool IsConfirmed { get; set; } = false;
         public bool IsCancelled { get; set; } = false;
 
         public bool IsDeleted { get; set; } = false;

@@ -27,7 +27,7 @@ namespace Application.Features.CompanyInfoFeat.DeleteCommands
                 return Result<string>.Failure("Company Info Id is not found");
             }
 
-            await _companyInfoRepository.SoftDeleteAsync(companyInfo, cancellationToken);
+            await _companyInfoRepository.UndeleteAsync(companyInfo, cancellationToken);
             await _companyInfoRepository.SaveChangesAsync(cancellationToken);
 
             return Result<string>.Success("company info undeleted successfully");

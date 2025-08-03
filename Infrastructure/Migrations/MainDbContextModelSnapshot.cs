@@ -549,7 +549,8 @@ namespace Infrastructure.Migrations
                     b.Property<int>("BannerEventId")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("DiscountApplied")
+                    b.Property<decimal?>("DiscountApplied")
+                        .IsRequired()
                         .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("IpAddress")
@@ -766,6 +767,9 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<decimal?>("EventDiscountAmount")
+                        .HasColumnType("numeric");
+
                     b.Property<bool>("IsCancelled")
                         .HasColumnType("boolean");
 
@@ -776,6 +780,9 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("timestamp with time zone");
@@ -829,6 +836,12 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("AppliedEventId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("EventDiscountAmount")
+                        .HasColumnType("numeric");
+
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -846,6 +859,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
+
+                    b.Property<decimal?>("RegularDiscountAmount")
+                        .HasColumnType("numeric");
 
                     b.Property<decimal>("TotalPrice")
                         .ValueGeneratedOnAddOrUpdate()

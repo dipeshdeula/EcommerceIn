@@ -63,8 +63,9 @@ namespace Application.Features.BillingItemFeat.Commands
                     return Result<List<BillingItemDTO>>.Failure("UserId is not associated with OrderId");
 
                 // Check Payment status
-                if (order.PaymentStatus != "Confirmed" || order.PaymentStatus != "Paid")
-                    return Result<List<BillingItemDTO>>.Failure("Cannot generate billing items for incomplete Payment.");
+                //if (order.PaymentStatus != "Confirmed" || order.PaymentStatus != "Paid")
+                //    return Result<List<BillingItemDTO>>.Failure("Cannot generate billing items for incomplete Payment.");
+
                 // Check Order status
                 if (order.OrderStatus != "COMPLETED")
                     return Result<List<BillingItemDTO>>.Failure("Cannot generate billing items for incomplete Order.");

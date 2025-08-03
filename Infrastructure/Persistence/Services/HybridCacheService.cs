@@ -486,6 +486,7 @@ namespace Infrastructure.Persistence.Services
                 if (keys.Any())
                 {
                     await RemoveBulkAsync(keys.Select(k => k.ToString()), cancellationToken);
+                    
                     _logger.LogInformation("🗑️ CACHE PATTERN REMOVE: {Count} keys matching '{Pattern}'", keys.Length, pattern);
                 }
             }

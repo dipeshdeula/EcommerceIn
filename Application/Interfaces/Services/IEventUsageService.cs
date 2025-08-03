@@ -20,5 +20,20 @@ namespace Application.Interfaces.Services
             int requestedQuantity,
             int productId
         );
+
+        /// <summary>
+        /// Get all event usage records for a specific order
+        /// </summary>
+        Task<IEnumerable<EventUsage>> GetEventUsagesByOrderIdAsync(int orderId);
+
+        /// <summary>
+        /// Reverse/deactivate event usage for cancelled/unconfirmed orders
+        /// </summary>
+        Task<Result<string>> ReverseEventUsageForOrderAsync(int orderId, int userId);
+
+        /// <summary>
+        /// Mark event usage as active for confirmed orders
+        /// </summary>
+        Task<Result<string>> MarkEventUsageAsActiveAsync(int orderId, int userId);
     }
 }
