@@ -1153,9 +1153,29 @@ public static BannerEventSpecial ToEntity(this BannerEventSpecialDTO dto)
         {
             return new PaymentMethodDTO {
                 Id = paymentMethod.Id,
-                Name = paymentMethod.Name,
+                ProviderName = paymentMethod.ProviderName,
                 Type = paymentMethod.Type,
+                Logo = paymentMethod.Logo ?? "",
+                RequiresRedirect = paymentMethod.RequiresRedirect,
+                SupportedCurrencies = paymentMethod.SupportedCurrencies,
+                IsAvailable = paymentMethod.IsActive,
+                PaymentRequests = paymentMethod.PaymentRequests != null
+            ? paymentMethod.PaymentRequests.Select(pr => pr.ToDTO()).ToList()
+            : new List<PaymentRequestDTO>()
+            };
+        }
+
+        public static PaymentMethodResponseDTO ToDTO(this PaymentMethod paymentMethod,CancellationToken cancellation=default)
+        {
+            return new PaymentMethodResponseDTO
+            {
+                Id = paymentMethod.Id,
+                ProviderName = paymentMethod.ProviderName,
+                Type = paymentMethod.Type.ToString(),
                 Logo = paymentMethod.Logo,
+                RequiresRedirect = paymentMethod.RequiresRedirect,
+                SupportedCurrencies = paymentMethod.SupportedCurrencies!.Select(sc=>sc.ToString()).ToArray(),
+                IsAvailable = paymentMethod.IsActive,
                 PaymentRequests = paymentMethod.PaymentRequests != null
             ? paymentMethod.PaymentRequests.Select(pr => pr.ToDTO()).ToList()
             : new List<PaymentRequestDTO>()
@@ -1181,7 +1201,7 @@ public static BannerEventSpecial ToEntity(this BannerEventSpecialDTO dto)
                 UpdatedAt = paymentRequest.UpdatedAt,
                 IsDeleted = paymentRequest.IsDeleted,
                 UserName = paymentRequest.User?.Name,
-                PaymentMethodName = paymentRequest.PaymentMethod?.Name,
+                PaymentMethodName = paymentRequest.PaymentMethod?.ProviderName,
                 OrderTotal = paymentRequest.Order?.TotalAmount,
 
                 // Computed properties

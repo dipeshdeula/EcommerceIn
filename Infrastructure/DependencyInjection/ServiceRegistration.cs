@@ -447,10 +447,14 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IPaymentGatewayService, PaymentGatewayService>();
             services.AddScoped<IPaymentSecurityService, PaymentSecurityService>();
             // ✅ Register payment providers
-            services.AddScoped<EsewaProvider>();
+            /*services.AddScoped<EsewaProvider>();
             services.AddScoped<KhaltiProvider>();
             services.AddScoped<CODProvider>();
-            services.AddScoped<IEsewaService, EsewaService>();
+            services.AddScoped<IEsewaService, EsewaService>();*/
+
+            services.AddScoped<IPaymentProvider, EsewaProvider>();
+            services.AddScoped<IPaymentProvider, KhaltiProvider>();
+            services.AddScoped<IPaymentProvider, CODProvider>();
         }
     }
 

@@ -32,7 +32,7 @@ namespace Application.Features.PaymentRequestFeat.Validators
 
         private bool BeValidPaymentMethod(int paymentMethodId)
         {
-            return paymentMethodId >= 1 && paymentMethodId <= 3;
+            return paymentMethodId >= 1 && paymentMethodId <= 5;
         }
     }
 }

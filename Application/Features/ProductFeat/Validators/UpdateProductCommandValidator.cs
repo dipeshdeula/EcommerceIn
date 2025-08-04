@@ -23,7 +23,7 @@ namespace Application.Features.ProductFeat.Validators
                 .MaximumLength(100).WithMessage("Name cannot exceed 100 characters.");
                 /*.MustAsync(async (command, name, cancellation) =>
                     !await _productRepository.AnyAsync(p =>
-                        p.Name.ToLower() == name.ToLower() && p.Id != command.ProductId))
+                        p.ProviderName.ToLower() == name.ToLower() && p.Id != command.ProductId))
                 .WithMessage("Another product with the same name already exists.");*/
 
             RuleFor(x => x.updateProductDto.Slug)

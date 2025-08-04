@@ -11,7 +11,7 @@ namespace Application.Provider
     {
         private readonly ILogger<CODProvider> _logger;
 
-        public string ProviderName => "COD";
+        public string ProviderName => "cod";
 
         public CODProvider(ILogger<CODProvider> logger)
         {
@@ -48,7 +48,7 @@ namespace Application.Provider
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ COD payment initiation failed");
+                _logger.LogError(ex, "COD payment initiation failed");
                 return Result<PaymentInitiationResponse>.Failure($"COD initiation failed: {ex.Message}");
             }
         }
@@ -94,7 +94,7 @@ namespace Application.Provider
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ COD verification error");
+                _logger.LogError(ex, "COD verification error");
                 return Result<PaymentVerificationResponse>.Failure($"COD verification error: {ex.Message}");
             }
         }

@@ -368,9 +368,7 @@ namespace Application.Features.PaymentRequestFeat.Modules
                      ISender mediator
                      ) =>
                  {
-                     // Ensure only delivery personnel can access
-                     if (currentUserService.Role?.ToLower() != "deliveryboy")
-                         return Results.Unauthorized();
+                     
 
                      var deliveryPersonId = int.TryParse(currentUserService.UserId, out var id) ? id : 0;
                      if (deliveryPersonId == 0)
@@ -395,7 +393,7 @@ namespace Application.Features.PaymentRequestFeat.Modules
                          Timestamp = DateTime.UtcNow
                      });
                  })
-                 .RequireAuthorization("RequireDeliveryBoy")
+                 .RequireAuthorization("RequireAdminOrDeliveryBoy")
                  .WithName("CollectCODPaymentDelivery")
                  .WithSummary("Update COD payment status after delivery");
         }

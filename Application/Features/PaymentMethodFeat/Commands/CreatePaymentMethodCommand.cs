@@ -46,7 +46,7 @@ namespace Application.Features.PaymentMethodFeat.Commands
 
             var paymentMethod = new PaymentMethod
             {
-                Name = request.Name,
+                ProviderName = request.Name,
                 Type = request.Type,
                 Logo = fileUrl
             };

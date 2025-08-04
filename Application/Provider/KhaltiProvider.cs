@@ -19,7 +19,7 @@ namespace Application.Provider
         private readonly IUnitOfWork _unitOfWork;
         private readonly KhaltiConfig _config;
 
-        public string ProviderName => "Khalti";
+        public string ProviderName => "khalti";
 
         public KhaltiProvider(
             IHttpClientFactory httpClientFactory,

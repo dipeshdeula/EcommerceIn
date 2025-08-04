@@ -32,7 +32,7 @@ namespace Application.Features.PaymentMethodFeat.Commands
             if (payment == null)
                 return Result<PaymentMethodDTO>.Failure("Payment Id is not found");
 
-            payment.Name = request.Name ?? payment.Name;
+            payment.ProviderName = request.Name ?? payment.ProviderName;
             payment.Type = request.Type ?? payment.Type;
 
             if (request.File != null)
@@ -54,9 +54,9 @@ namespace Application.Features.PaymentMethodFeat.Commands
             var paymentDTO = new PaymentMethodDTO
             {
                 Id = payment.Id,
-                Name = payment.Name,
+                ProviderName = payment.ProviderName,
                 Type = payment.Type,
-                Logo = payment.Logo
+                Logo = payment.Logo ?? ""
             };
 
             return Result<PaymentMethodDTO>.Success(paymentDTO,"Payment Updated Successfully");

@@ -19,7 +19,7 @@ namespace Application.Provider
         private readonly ILogger<EsewaProvider> _logger;
         private readonly EsewaConfig _config;
 
-        public string ProviderName => "eSewa";
+        public string ProviderName => "esewa";
 
         public EsewaProvider(
             IHttpClientFactory httpClientFactory,

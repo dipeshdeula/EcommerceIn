@@ -4,6 +4,7 @@ using Domain.Settings;
 using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -15,17 +16,19 @@ public class OtpServiceTests : IDisposable
     private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly Mock<OtpSettings> _mockOtpSettings;
     private readonly OtpService _otpService;
+    private readonly ILogger<OtpService> _logger;
 
     public OtpServiceTests()
     {
         _memoryCache = new MemoryCache(new MemoryCacheOptions());
         _mockConfiguration = new Mock<IConfiguration>();
         _mockOtpSettings = new Mock<OtpSettings>();
+        _logger = Mock.Of<ILogger<OtpService>>();
 
         // Setup default configuration values
         _mockConfiguration.Setup(x => x["OtpSettings:ExpirationMinutes"]).Returns("5");
-        
-        _otpService = new OtpService(_memoryCache, _mockConfiguration.Object, _mockOtpSettings.Object);
+
+        _otpService = new OtpService(_memoryCache, _mockConfiguration.Object, _mockOtpSettings.Object, _logger);
     }
 
     [Fact]

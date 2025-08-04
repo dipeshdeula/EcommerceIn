@@ -29,7 +29,7 @@ namespace Application.Features.CategoryFeat.Validator
                 RuleFor(x => x.Name!)
                     .MaximumLength(100).WithMessage("Name cannot exceed 100 characters.")
                     /*.MustAsync(async (name, cancellation) =>
-                        !await _categoryRepository.AnyAsync(c => c.Name.ToLower() == name.ToLower()))
+                        !await _categoryRepository.AnyAsync(c => c.ProviderName.ToLower() == name.ToLower()))
                     .WithMessage("Category name already exists.")*/
                     .MinimumLength(3).WithMessage("Name must be at least 3 characters long.");
 

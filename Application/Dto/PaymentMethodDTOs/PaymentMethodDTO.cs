@@ -13,10 +13,14 @@ namespace Application.Dto.PaymentMethodDTOs
     {
         public int Id { get; set; }
 
-        public string Name { get; set; }
-        public PaymentMethodType Type { get; set; } // enum : 1 = Esewa, 2 = Khalit , 3 = COD
+        public string ProviderName { get; set; }
+        public PaymentMethodType Type { get; set; } // enum : 1 = DigitalPayments, 2 = Khalit , 3 = COD
 
         public string Logo { get; set; }
+        public string? SupportedCurrencies { get; set; }
+        public bool RequiresRedirect { get; set; }
+
+        public bool IsAvailable { get; set; }
         public ICollection<PaymentRequestDTO> PaymentRequests { get; set; }
     }
 }

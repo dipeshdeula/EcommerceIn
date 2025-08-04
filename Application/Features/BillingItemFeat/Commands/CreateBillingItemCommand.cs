@@ -5,6 +5,7 @@ using Application.Interfaces.Services;
 using Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Features.BillingItemFeat.Commands
 {
@@ -20,23 +21,41 @@ namespace Application.Features.BillingItemFeat.Commands
         private readonly IUnitOfWork _unitOfWork;
         private readonly IOrderItemRepository _orderItemRepository;
         private readonly IPaymentMethodRepository _paymentMethodRepository;
+          private readonly ILogger<CreateBillingItemCommand> _logger;
         public CreateBillingItemCommandHandler(
             IUnitOfWork unitOfWork,
             IOrderItemRepository orderItemRepository,
-            IPaymentMethodRepository paymentMethodRepository
+            IPaymentMethodRepository paymentMethodRepository,
+             ILogger<CreateBillingItemCommand> logger
             )
         {
             _unitOfWork = unitOfWork;
             _orderItemRepository = orderItemRepository;
             _paymentMethodRepository = paymentMethodRepository;
+            _logger = logger;
         }
 
         public async Task<Result<List<BillingItemDTO>>> Handle(CreateBillingItemCommand request, CancellationToken cancellationToken)
         {
             try
             {
+                _logger.LogInformation("Creating billing items for Order: {OrderId}, User: {UserId}, Company: {CompanyId}",
+                    request.OrderId, request.UserId, request.CompanyId);
+
+                //  Check if billing already exists for this order
+                 var existingBilling = await _unitOfWork.Billings.FirstOrDefaultAsync(
+                    b => b.OrderId == request.OrderId && !b.IsDeleted);
+
+                if (existingBilling != null)
+                {
+                    _logger.LogWarning("Billing already exists for Order: {OrderId}", request.OrderId);
+                    return Result<List<BillingItemDTO>>.Failure("Billing already exists for this order");
+                }
+
                 // Fetch user
                 var user = await _unitOfWork.Users.FindByIdAsync(request.UserId);
+                if (user == null)
+                    return Result<List<BillingItemDTO>>.Failure("User id not found");
 
                 // Fetch order with items
                 var order = await _unitOfWork.Orders.GetQueryable()
@@ -44,23 +63,23 @@ namespace Application.Features.BillingItemFeat.Commands
                     .ThenInclude(oi => oi.Product) // If you want product info
                     .FirstOrDefaultAsync(o => o.Id == request.OrderId && !o.IsDeleted, cancellationToken);
 
-                var company = await _unitOfWork.CompanyInfos.FindByIdAsync(request.CompanyId);
-
-                var payment = await _unitOfWork.PaymentRequests.FirstOrDefaultAsync(p => p.OrderId == order.Id);
-
-                if (user == null)
-                    return Result<List<BillingItemDTO>>.Failure("User id not found");
-
                 if (order == null)
                     return Result<List<BillingItemDTO>>.Failure("Order id not found");
+                
+                if (user.Id != order.UserId)
+                    return Result<List<BillingItemDTO>>.Failure("UserId is not associated with OrderId");
+
+                var company = await _unitOfWork.CompanyInfos.FindByIdAsync(request.CompanyId);
 
                 if (company == null)
                     return Result<List<BillingItemDTO>>.Failure("Company Id not found");
+
+                var payment = await _unitOfWork.PaymentRequests.FirstOrDefaultAsync(p => p.OrderId == order.Id && !p.IsDeleted);                
+                
                 if (payment == null)
                     return Result<List<BillingItemDTO>>.Failure("payment method Id not found");
 
-                if (user.Id != order.UserId)
-                    return Result<List<BillingItemDTO>>.Failure("UserId is not associated with OrderId");
+                
 
                 // Check Payment status
                 //if (order.PaymentStatus != "Confirmed" || order.PaymentStatus != "Paid")
@@ -82,7 +101,7 @@ namespace Application.Features.BillingItemFeat.Commands
                     OrderId = order.Id,
                     CompanyInfoId = request.CompanyId,
                     PaymentId = payment.Id,
-                    BillingDate = DateTime.UtcNow,
+                    BillingDate = DateTime.UtcNow,                    
                     User = user,
                     Order = order,
                     CompanyInfo = company
@@ -101,9 +120,10 @@ namespace Application.Features.BillingItemFeat.Commands
                     Quantity = item.Quantity,
                     UnitPrice = item.UnitPrice,
                     TotalPrice = item.UnitPrice * item.Quantity,
-                    DiscountAmount = null,
-                    TaxAmount = null,
+                    DiscountAmount = item.RegularDiscountAmount + item.EventDiscountAmount,
+                    TaxAmount = 0m,
                     Notes = null
+                    
                 }).ToList();
 
                 await _unitOfWork.BillingItems.AddRangeAsync(billingItems, cancellationToken);
@@ -128,7 +148,7 @@ namespace Application.Features.BillingItemFeat.Commands
             }
             catch (Exception ex)
             {
-                return Result<List<BillingItemDTO>>.Failure("Unable to generate bill");
+                return Result<List<BillingItemDTO>>.Failure($"Failed to generate billing items: { ex.Message}");
             }
         }
     }

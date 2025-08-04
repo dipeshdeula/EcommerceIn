@@ -20,11 +20,12 @@ namespace Application.Features.PaymentRequestFeat.Module
         {
             // Managing order status while payment made through online
 
-            app.MapPut("/Delivered", async (
+            app.MapPut("/delivered", async (
                 ISender mediator,
                 ICurrentUserService currentUserService,
                 int PaymentRequestId,
-                bool IsDelivered = false
+                int CompanyInfoId,
+                bool IsDelivered = true
                 ) =>
             {
                 
@@ -32,7 +33,13 @@ namespace Application.Features.PaymentRequestFeat.Module
                 if (deliveryPersonId == 0)
                     return Results.BadRequest(new { message = "Invalid delivery person" });
 
-                var command = new UpdateDeliveryStatusCommand(PaymentRequestId, IsDelivered);
+                if (!IsDelivered)
+                        return Results.BadRequest(new { 
+                            message = "Cannot mark order as not delivered",
+                            success = false 
+                        });
+
+                var command = new UpdateDeliveryStatusCommand(PaymentRequestId, CompanyInfoId, IsDelivered);
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                     return Results.BadRequest(new { result.Message, result.Errors });

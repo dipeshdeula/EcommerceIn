@@ -85,7 +85,7 @@ namespace Application.Features.PaymentRequestFeat.Queries
                     "amount_asc" => query.OrderBy(pr => pr.PaymentAmount),
                     "status" => query.OrderBy(pr => pr.PaymentStatus),
                     "user" => query.OrderBy(pr => pr.User.Name),
-                    "method" => query.OrderBy(pr => pr.PaymentMethod.Name),
+                    "method" => query.OrderBy(pr => pr.PaymentMethod.ProviderName),
                     "updatedat" => query.OrderByDescending(pr => pr.UpdatedAt),
                     "updatedat_asc" => query.OrderBy(pr => pr.UpdatedAt),
                     "createdat_asc" => query.OrderBy(pr => pr.CreatedAt),

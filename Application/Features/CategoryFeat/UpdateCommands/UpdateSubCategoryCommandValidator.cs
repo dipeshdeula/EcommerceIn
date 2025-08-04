@@ -27,7 +27,7 @@ namespace Application.Features.CategoryFeat.UpdateCommands
                 RuleFor(x => x.Name!)
                     .MaximumLength(100).WithMessage("Name cannot exceed 100 characters.");
                     /*.MustAsync(async (command, name, _) =>
-                        !await _subCategoryRepository.AnyAsync(s => s.Name == name && s.Id != command.SubCategoryId))
+                        !await _subCategoryRepository.AnyAsync(s => s.ProviderName == name && s.Id != command.SubCategoryId))
                     .WithMessage("Another subcategory with the same name already exists.");*/
             });
 

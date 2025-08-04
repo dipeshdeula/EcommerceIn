@@ -11,7 +11,7 @@ namespace Application.Dto.CategoryDTOs
     public class CategoryWithProductsDTO
     {
         public int Id { get; set; } // Category ID
-        public string Name { get; set; } // Category Name
+        public string Name { get; set; } // Category ProviderName
 
         public string Slug { get; set; } // Category Slug
         public string Description { get; set; } // Category Description
