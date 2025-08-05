@@ -123,16 +123,19 @@ namespace Application.Dto.BannerEventSpecialDTOs
             _ => "LOW"
         };
 
-        [JsonPropertyName("usagePercentage")]
-        public decimal UsagePercentage => MaxUsageCount > 0
-           ? Math.Round((decimal)CurrentUsageCount / MaxUsageCount * 100, 2)
-           : 0;
+        
 
         [JsonPropertyName("remainingUsage")]
-        public int RemainingUsage => Math.Max(0, MaxUsageCount - CurrentUsageCount);
+        public int RemainingUsage { get; set; }
 
         [JsonPropertyName("isUsageLimitReached")]
-        public bool IsUsageLimitReached => CurrentUsageCount >= MaxUsageCount;
+        public bool IsUsageLimitReached { get; set; }
+
+        [JsonPropertyName("usageSummary")]
+        public EventUsageSummaryDTO? UsageSummary { get; set; }
+
+        [JsonPropertyName("usagePercentage")]
+        public decimal UsagePercentage { get; set; } 
 
 
         // Timezone Info

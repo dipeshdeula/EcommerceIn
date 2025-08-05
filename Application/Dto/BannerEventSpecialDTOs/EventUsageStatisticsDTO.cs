@@ -14,6 +14,6 @@ namespace Application.Dto.BannerEventSpecialDTOs
         public decimal TotalDiscount { get; set; }
         public int UniqueUsers { get; set; }
         public decimal AverageDiscount { get; set; }
-        public decimal PerformanceScore => TotalUsages * 0.4m + UniqueUsers * 0.6m; // Weighted score
+        public decimal PerformanceScore { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Application.Dto.CategoryDTOs;
+﻿using System.Text.Json.Serialization;
+using Application.Dto.CategoryDTOs;
 
 namespace Application.Dto.ProductDTOs
 {
@@ -50,13 +51,30 @@ namespace Application.Dto.ProductDTOs
         public ProductStockDTO? Stock { get; set; }
         // convenience properties:
         public decimal CurrentPrice => Pricing?.EffectivePrice ?? BasePrice;
-        public bool IsOnSale => Pricing?.HasAnyDiscount ?? HasProductDiscount;  
+        public bool IsOnSale => Pricing?.HasAnyDiscount ?? HasProductDiscount;
         public bool CanAddToCart => Stock?.CanAddToCart() ?? (IsInStock && !IsDeleted);
         public string DisplayPrice => $"Rs. {CurrentPrice:F2}";
         public string DisplayStatus => !CanAddToCart ? "Unavailable" : IsOnSale ? "On Sale" : "Available";
 
         public decimal TotalSavingsAmount => Pricing?.TotalDiscountAmount ?? ProductDiscountAmount;
         public string FormattedSavings => TotalSavingsAmount > 0 ? $"Save Rs. {TotalSavingsAmount:F2}" : string.Empty;
+        
+        [JsonPropertyName("deletedAt")]
+        public DateTime? DeletedAt { get; set; }
+
+        [JsonPropertyName("statusBadge")]
+        public string StatusBadge => IsDeleted ? "DELETED" : "ACTIVE";
+
+        [JsonPropertyName("adminNotes")]
+        public string AdminNotes => IsDeleted 
+            ? $"Deleted on {DeletedAt?.ToString("yyyy-MM-dd") ?? "Unknown date"}"
+            : "Active product";
+
+        // ✅ Admin-specific display properties
+        [JsonPropertyName("managementActions")]
+        public List<string> ManagementActions => IsDeleted 
+            ? new List<string> { "Restore", "Permanently Delete" }
+            : new List<string> { "Edit", "Delete", "View Analytics" };
 
     }
 }

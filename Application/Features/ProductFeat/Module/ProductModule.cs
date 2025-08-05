@@ -1,4 +1,5 @@
-﻿using Application.Dto.CategoryDTOs;
+﻿using Application.Common;
+using Application.Dto.CategoryDTOs;
 using Application.Dto.ProductDTOs;
 using Application.Features.CategoryFeat.Queries;
 using Application.Features.ProductFeat.Commands;
@@ -36,14 +37,46 @@ namespace Application.Features.ProductFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             }).RequireAuthorization("RequireAdminOrVendor");
 
+            app.MapGet("/admin/all", async (               
+            [FromServices] ISender mediator,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? searchTerm = null,
+            [FromQuery] bool includeDeleted = true 
+            ) =>
+        {
+            var query = new GetAllProductQuery(
+                PageNumber: pageNumber,
+                PageSize: pageSize,
+                UserId: null, 
+                OnSaleOnly: null,
+                PrioritizeEventProducts: false, 
+                SearchTerm: searchTerm,
+                IncludeDeleted: includeDeleted,
+                IsAdminRequest: true 
+            );
+
+            var result = await mediator.Send(query);
+
+            return result.Succeeded
+                ? Results.Ok(result)
+                : Results.BadRequest(result);
+        })
+        .RequireAuthorization("RequireAdminOrVendor") 
+        .WithName("GetAllProductsForAdmin")
+        .WithSummary("Admin: Get all products including deleted ones")
+        .WithDescription("Retrieve all products with admin privileges, including deleted products for management purposes")
+        .Produces<Result<IEnumerable<ProductDTO>>>(StatusCodes.Status200OK);
+
+
             //  ENHANCED: GetAllProducts with event prioritization
             app.MapGet("/getAllProducts", async ([FromServices] ISender mediator,
                 [FromQuery] int PageNumber =1 ,
                 [FromQuery] int PageSize =10,
-                [FromQuery] int? UserId = 1,
-                [FromQuery] bool? OnSaleOnly = false ,
-                [FromQuery] bool? PrioritizeEventProducts = false, 
-                [FromQuery] string? SearchTerm ="") =>
+                [FromQuery] int? UserId = null,
+                [FromQuery] bool? OnSaleOnly = null ,
+                [FromQuery] bool? PrioritizeEventProducts = null, 
+                [FromQuery] string? SearchTerm =null) =>
             {
                 var result = await mediator.Send(new GetAllProductQuery(
                     PageNumber,
@@ -51,7 +84,12 @@ namespace Application.Features.ProductFeat.Module
                     UserId,
                     OnSaleOnly,
                     PrioritizeEventProducts,
-                    SearchTerm));
+                    SearchTerm,
+                    IncludeDeleted: false, 
+                    IsAdminRequest: false  
+                    ));
+
+                
 
                 if (!result.Succeeded)
                 {

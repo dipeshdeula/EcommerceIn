@@ -33,7 +33,7 @@ namespace Application.Features.ProductStoreFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
                 return Results.Ok(new { result.Message, result.Data });
-            }).RequireAuthorization("RequireAdmin", "RequireVendor");
+            }).RequireAuthorization("RequireAdminOrVendor");
 
             app.MapGet("/getAllProductStore", async (ISender mediator, int PageNumber = 1, int PageSize = 10) =>
             {

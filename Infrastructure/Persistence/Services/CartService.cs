@@ -465,7 +465,7 @@ namespace Infrastructure.Persistence.Services
                 {
                     result.IsValid = false;
                     result.Messages.Add(ruleResult.Message);
-                    result.FailedRules.Add(rule);
+                    result.FailedRules.Add(rule.ToFailedRuleDTO("Invalidate rule"));
                 }
             }
 

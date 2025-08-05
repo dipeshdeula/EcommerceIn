@@ -1,4 +1,5 @@
-﻿using Application.Dto.BannerEventSpecialDTOs;
+﻿using Application.Common;
+using Application.Dto.BannerEventSpecialDTOs;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Domain.Entities.Common;
@@ -30,7 +31,7 @@ namespace Infrastructure.Persistence.Services
                                    u.UsedAt <= toUtc &&
                                    !u.IsDeleted,
                     includeProperties: "User,BannerEvent",
-                    cancellationToken:default);
+                    cancellationToken: default);
 
                 var bannerEvent = await _unitOfWork.BannerEventSpecials.GetByIdAsync(eventId);
 
@@ -64,6 +65,52 @@ namespace Infrastructure.Persistence.Services
             }
         }
 
+        public async Task<Result<EventUsageStatisticsDTO>> GetEventUsageStatisticsAsync(int eventId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var usages = await _unitOfWork.EventUsages.GetAllAsync(
+                    predicate: u => u.BannerEventId == eventId && !u.IsDeleted,
+                    includeProperties: "BannerEvent", // ✅ Include BannerEvent for event name
+                    cancellationToken: cancellationToken);
+
+                if (!usages.Any())
+                {
+                    // ✅ Get event name even when no usages exist
+                    var bannerEvent = await _unitOfWork.BannerEventSpecials.GetByIdAsync(eventId, cancellationToken);
+                    
+                    return Result<EventUsageStatisticsDTO>.Success(new EventUsageStatisticsDTO
+                    {
+                        EventId = eventId,
+                        EventName = bannerEvent?.Name ?? "Unknown",
+                        TotalUsages = 0,
+                        TotalDiscount = 0,
+                        UniqueUsers = 0,
+                        AverageDiscount = 0,
+                        PerformanceScore = 0
+                    });
+                }
+
+                var stats = new EventUsageStatisticsDTO
+                {
+                    EventId = eventId,
+                    EventName = usages.First().BannerEvent?.Name ?? "Unknown",
+                    TotalUsages = usages.Count(),
+                    TotalDiscount = usages.Sum(u => u.DiscountApplied ?? 0),
+                    UniqueUsers = usages.Select(u => u.UserId).Distinct().Count(),
+                    AverageDiscount = usages.Average(u => u.DiscountApplied ?? 0),
+                    PerformanceScore = CalculatePerformanceScore(usages.Count(), usages.Sum(u => u.DiscountApplied ?? 0))
+                };
+
+                return Result<EventUsageStatisticsDTO>.Success(stats);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get usage statistics for event {EventId}", eventId);
+                return Result<EventUsageStatisticsDTO>.Failure($"Failed to get usage statistics: {ex.Message}");
+            }
+        }
+
         public async Task<List<EventUsageStatisticsDTO>> GetTopPerformingEventsAsync(int count = 10)
         {
             try
@@ -73,7 +120,7 @@ namespace Infrastructure.Persistence.Services
                 var eventStats = await _unitOfWork.EventUsages.GetAllAsync(
                     predicate: u => u.UsedAt >= thirtyDaysAgo && !u.IsDeleted,
                     includeProperties: "BannerEvent",
-                    cancellationToken:default);
+                    cancellationToken: default);
 
                 var result = eventStats
                     .GroupBy(u => u.BannerEventId)
@@ -84,7 +131,8 @@ namespace Infrastructure.Persistence.Services
                         TotalUsages = g.Count(),
                         TotalDiscount = g.Sum(u => u.DiscountApplied ?? 0),
                         UniqueUsers = g.Select(u => u.UserId).Distinct().Count(),
-                        AverageDiscount = g.Average(u => u.DiscountApplied ?? 0)
+                        AverageDiscount = g.Average(u => u.DiscountApplied ?? 0),
+                        PerformanceScore = CalculatePerformanceScore(g.Count(), g.Sum(u => u.DiscountApplied ?? 0))
                     })
                     .OrderByDescending(s => s.PerformanceScore)
                     .Take(count)
@@ -108,10 +156,10 @@ namespace Infrastructure.Persistence.Services
                     predicate: u => u.UsedAt >= fromDate &&
                                    u.UsedAt <= toDate &&
                                    !u.IsDeleted,
-                                   cancellationToken:default);
+                    cancellationToken: default);
 
                 var totalDiscount = eventUsages.Sum(u => u.DiscountApplied);
-                
+
                 _logger.LogInformation("Total discounts given from {FromDate} to {ToDate}: Rs.{TotalDiscount:F2}",
                     fromDate, toDate, totalDiscount);
 
@@ -124,13 +172,38 @@ namespace Infrastructure.Persistence.Services
             }
         }
 
+        // ✅ MISSING METHOD: Calculate performance score
+        private decimal CalculatePerformanceScore(int totalUsages, decimal totalDiscount)
+        {
+            try
+            {
+                // ✅ Performance score formula:
+                // - Usage frequency (40% weight)
+                // - Discount efficiency (30% weight) 
+                // - User engagement (30% weight)
+                
+                var usageScore = Math.Min(totalUsages * 0.1m, 10); // Max 10 points for usage
+                var discountScore = Math.Min((totalDiscount / Math.Max(totalUsages, 1)) * 0.01m, 5); // Efficiency score
+                var baseScore = usageScore + discountScore;
+                
+                // ✅ Bonus for high activity
+                if (totalUsages > 50) baseScore += 2;
+                if (totalUsages > 100) baseScore += 3;
+                
+                return Math.Round(baseScore, 2);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error calculating performance score");
+                return 0;
+            }
+        }
+
         // Calculate conversion rate
         private async Task<decimal> CalculateConversionRate(int eventId, DateTime fromDate, DateTime toDate)
         {
             try
             {
-                // Get total event views/impressions (you might want to track this separately)
-                // For now, we'll use a simple metric based on event usage vs active users
                 var eventUsages = await _unitOfWork.EventUsages.CountAsync(
                     predicate: u => u.BannerEventId == eventId &&
                                    u.UsedAt >= fromDate &&
@@ -139,7 +212,6 @@ namespace Infrastructure.Persistence.Services
 
                 if (eventUsages == 0) return 0;
 
-                // Get total orders in the same period (approximate conversion base)
                 var totalOrders = await _unitOfWork.Orders.CountAsync(
                     predicate: o => o.OrderDate >= fromDate && o.OrderDate <= toDate);
 
@@ -154,7 +226,7 @@ namespace Infrastructure.Persistence.Services
             }
         }
 
-        //  Generate daily breakdown
+        // Generate daily breakdown
         private List<DailyUsageBreakdown> GetDailyBreakdown(List<EventUsage> eventUsages)
         {
             try

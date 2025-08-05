@@ -93,7 +93,7 @@ namespace Application.Features.BannerSpecialEvent.Queries
                         BannerEventId = ep.BannerEventId,
                         ProductId = ep.ProductId,
                         ProductName = ep.Product?.Name ?? "Unknown Product",
-                        SpecificDiscount = ep.SpecificDiscount,
+                        SpecificDiscount = ep.SpecificDiscount ?? 0,
                         AddedAt = ep.AddedAt,
                         // Enhanced product information
                         ProductMarketPrice = ep.Product?.MarketPrice ?? 0,

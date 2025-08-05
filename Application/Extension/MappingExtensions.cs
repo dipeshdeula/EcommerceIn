@@ -1002,7 +1002,7 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
                 BannerEventId = eventProduct.BannerEventId, 
                 ProductId = eventProduct.ProductId,
                 ProductName = eventProduct.Product?.Name ?? "Unknown Product",
-                SpecificDiscount = eventProduct.SpecificDiscount,
+                SpecificDiscount = eventProduct.SpecificDiscount ?? 0,
                 ProductImageUrl = eventProduct.Product?.Images?.FirstOrDefault()?.ImageUrl,
                 ProductMarketPrice = eventProduct.Product?.MarketPrice ?? 0,
                 CalculatedDiscountPrice = eventProduct.SpecificDiscount.HasValue

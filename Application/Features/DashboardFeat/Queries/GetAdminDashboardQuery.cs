@@ -42,6 +42,7 @@ namespace Application.Features.DashboardFeat.Queries
 
             // SALES
             var allOrders = await _unitOfWork.Orders.GetAllAsync(
+                includeProperties: "User,User.Addresses, Items",
                 cancellationToken:cancellationToken
                 );
             decimal totalSales = allOrders.Sum(o => o.TotalAmount);
@@ -82,7 +83,7 @@ namespace Application.Features.DashboardFeat.Queries
                     g => g.Sum(x => x.PaymentAmount)
                 );
             var failedPayments = payments.Count(p => p.PaymentStatus == "Failed");
-            var successfulPayments = payments.Count(p => p.PaymentStatus == "Success" || p.PaymentStatus == "Paid");
+            var successfulPayments = payments.Count(p => p.PaymentStatus == "Succeeded" || p.PaymentStatus == "Paid");
 
             // RECENT ORDERS
             var recentOrders = allOrders
@@ -91,7 +92,7 @@ namespace Application.Features.DashboardFeat.Queries
                 .Select(o => new RecentOrderDTO
                 {
                     OrderId = o.Id,
-                    UserName = o.User?.Name ?? "",
+                    UserName = o.User.Name ?? "",
                     Amount = o.TotalAmount,
                     Status = o.OrderStatus,
                     OrderDate = o.OrderDate
