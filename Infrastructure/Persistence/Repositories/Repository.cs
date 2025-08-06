@@ -529,13 +529,26 @@ namespace Infrastructure.Persistence.Repositories
                 return _dbSet.Count(predicate);
         }
 
-        public async Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+      public virtual async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null, CancellationToken cancellationToken = default)
+{
+    try
+    {
+        IQueryable<TEntity> query = _dbContext.Set<TEntity>();
+
+        // ✅ Apply predicate only if not null
+        if (predicate != null)
         {
-            if (predicate == null)
-                return await _dbSet.CountAsync(cancellationToken);
-            else
-                return await _dbSet.CountAsync(predicate, cancellationToken);
+            query = query.Where(predicate);
         }
+
+        return await query.CountAsync(cancellationToken);
+    }
+    catch (Exception ex)
+    {
+        // Log error if logger is available
+        throw new InvalidOperationException($"Error counting entities: {ex.Message}", ex);
+    }
+}
 
         #endregion
 

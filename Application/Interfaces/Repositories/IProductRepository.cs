@@ -35,6 +35,8 @@ namespace Application.Interfaces.Repositories
         Task<IEnumerable<Product>> GetProductsByIdsAsync(IEnumerable<int> productIds,CancellationToken cancellationToken = default);       
         Task<List<int>> GetExistingProductIdsAsync(List<int> productIds, CancellationToken cancellationToken = default);
         Task<bool> AllProductsExistAsync(List<int> productIds, CancellationToken cancellationToken = default);
+        Task<int> CountAsync(Expression<Func<Product, bool>> predicate, CancellationToken cancellationToken = default);
+
 
         // LifeCycle Operation
 

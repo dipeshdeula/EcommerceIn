@@ -1,11 +1,10 @@
 ﻿using System.Text.Json.Serialization;
-using Application.Dto.CategoryDTOs;
 
 namespace Application.Dto.ProductDTOs
 {
     public class ProductDTO
     {
-        //  BASIC PRODUCT DATA 
+        // BASIC PRODUCT DATA
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
@@ -25,40 +24,44 @@ namespace Application.Dto.ProductDTOs
         public int CategoryId { get; set; }
         public int SubSubCategoryId { get; set; }
 
-        //  COMPUTED BASIC PROPERTIES 
+        // COMPUTED BASIC PROPERTIES
         public int AvailableStock => Math.Max(0, StockQuantity - ReservedStock);
         public bool IsInStock => AvailableStock > 0;
+        
+        // These are set by the mapping/service layer, not computed
         public bool HasProductDiscount { get; set; } = false;
         public decimal BasePrice { get; set; } = 0;
         public decimal ProductDiscountAmount { get; set; } = 0;
 
-
-        //  DISPLAY FORMATTING 
+        // DISPLAY FORMATTING
         public string FormattedMarketPrice => $"Rs. {MarketPrice:F2}";
         public string FormattedBasePrice { get; set; } = "";
-
         public string FormattedDiscountAmount { get; set; } = "";
 
         public string StockStatus => AvailableStock <= 0 ? "Out of Stock"
                                    : AvailableStock <= 10 ? "Low Stock"
                                    : "In Stock";
 
-        //  NAVIGATION PROPERTIES 
+        // NAVIGATION PROPERTIES
         public ICollection<ProductImageDTO> Images { get; set; } = new List<ProductImageDTO>();
 
-        //  COMPOSITION PROPERTIES (Set by services) 
+        // COMPOSITION PROPERTIES (Set by services)
         public ProductPricingDTO? Pricing { get; set; }
         public ProductStockDTO? Stock { get; set; }
-        // convenience properties:
+
+        // SAFE CONVENIENCE PROPERTIES
         public decimal CurrentPrice => Pricing?.EffectivePrice ?? BasePrice;
         public bool IsOnSale => Pricing?.HasAnyDiscount ?? HasProductDiscount;
-        public bool CanAddToCart => Stock?.CanAddToCart() ?? (IsInStock && !IsDeleted);
+        public bool CanAddToCart => IsDeleted ? false : (Stock?.CanAddToCart() ?? IsInStock);
         public string DisplayPrice => $"Rs. {CurrentPrice:F2}";
-        public string DisplayStatus => !CanAddToCart ? "Unavailable" : IsOnSale ? "On Sale" : "Available";
+        public string DisplayStatus => IsDeleted ? "Unavailable" : 
+                                     !CanAddToCart ? "Unavailable" : 
+                                     IsOnSale ? "On Sale" : "Available";
 
         public decimal TotalSavingsAmount => Pricing?.TotalDiscountAmount ?? ProductDiscountAmount;
         public string FormattedSavings => TotalSavingsAmount > 0 ? $"Save Rs. {TotalSavingsAmount:F2}" : string.Empty;
-        
+
+        // ADMIN PROPERTIES
         [JsonPropertyName("deletedAt")]
         public DateTime? DeletedAt { get; set; }
 
@@ -70,11 +73,9 @@ namespace Application.Dto.ProductDTOs
             ? $"Deleted on {DeletedAt?.ToString("yyyy-MM-dd") ?? "Unknown date"}"
             : "Active product";
 
-        // ✅ Admin-specific display properties
         [JsonPropertyName("managementActions")]
         public List<string> ManagementActions => IsDeleted 
             ? new List<string> { "Restore", "Permanently Delete" }
             : new List<string> { "Edit", "Delete", "View Analytics" };
-
     }
 }

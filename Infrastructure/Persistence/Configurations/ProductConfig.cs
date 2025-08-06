@@ -108,8 +108,7 @@ namespace Infrastructure.Persistence.Configurations
             // ✅ FIX: Computed column (not mapped)
             builder.Ignore(p => p.AvailableStock);
 
-            // ✅ FIX: Query filter for soft delete
-            builder.HasQueryFilter(p => !p.IsDeleted);
+          
         }
     }
 }

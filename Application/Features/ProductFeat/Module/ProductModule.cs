@@ -20,7 +20,7 @@ namespace Application.Features.ProductFeat.Module
         {
             WithTags("Product");
             IncludeInOpenApi();
-           /* RequireAuthorization();*/
+          
         }
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
@@ -37,97 +37,147 @@ namespace Application.Features.ProductFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             }).RequireAuthorization("RequireAdminOrVendor");
 
-            app.MapGet("/admin/all", async (               
+            app.MapGet("/admin/all", async (
             [FromServices] ISender mediator,
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10,
             [FromQuery] string? searchTerm = null,
-            [FromQuery] bool includeDeleted = true 
-            ) =>
+            [FromQuery] bool includeDeleted = true
+        ) =>
         {
             var query = new GetAllProductQuery(
                 PageNumber: pageNumber,
                 PageSize: pageSize,
-                UserId: null, 
+                UserId: null,
                 OnSaleOnly: null,
-                PrioritizeEventProducts: false, 
+                PrioritizeEventProducts: false,
                 SearchTerm: searchTerm,
                 IncludeDeleted: includeDeleted,
-                IsAdminRequest: true 
+                IsAdminRequest: true
             );
 
             var result = await mediator.Send(query);
 
-            return result.Succeeded
-                ? Results.Ok(result)
-                : Results.BadRequest(result);
+            if (!result.Succeeded)
+            {
+                return Results.BadRequest(new { result.Message, result.Errors });
+            }
+
+            // ✅ Return complete pagination information
+            return Results.Ok(new
+            {
+                result.Message,
+                Data = result.Data,
+                Pagination = new
+                {
+                    result.TotalCount,
+                    result.PageNumber,
+                    result.PageSize,
+                    result.TotalPages,
+                    result.HasNextPage,
+                    result.HasPreviousPage
+                }
+            });
         })
-        .RequireAuthorization("RequireAdminOrVendor") 
+        .RequireAuthorization("RequireAdminOrVendor")
         .WithName("GetAllProductsForAdmin")
         .WithSummary("Admin: Get all products including deleted ones")
         .WithDescription("Retrieve all products with admin privileges, including deleted products for management purposes")
-        .Produces<Result<IEnumerable<ProductDTO>>>(StatusCodes.Status200OK);
+        .WithTags("Products")
+        .Produces<object>(StatusCodes.Status200OK);
 
 
             //  ENHANCED: GetAllProducts with event prioritization
-            app.MapGet("/getAllProducts", async ([FromServices] ISender mediator,
-                [FromQuery] int PageNumber =1 ,
-                [FromQuery] int PageSize =10,
-                [FromQuery] int? UserId = null,
-                [FromQuery] bool? OnSaleOnly = null ,
-                [FromQuery] bool? PrioritizeEventProducts = null, 
-                [FromQuery] string? SearchTerm =null) =>
+            app.MapGet("/getAllProducts", async (
+            [FromServices] ISender mediator,
+            [FromQuery] int PageNumber = 1,
+            [FromQuery] int PageSize = 10,
+            [FromQuery] int? UserId = null,
+            [FromQuery] bool? OnSaleOnly = null,
+            [FromQuery] bool? PrioritizeEventProducts = null,
+            [FromQuery] string? SearchTerm = null) =>
+        {
+            var result = await mediator.Send(new GetAllProductQuery(
+                PageNumber,
+                PageSize,
+                UserId,
+                OnSaleOnly,
+                PrioritizeEventProducts,
+                SearchTerm,
+                IncludeDeleted: false,
+                IsAdminRequest: false
+            ));
+
+            if (!result.Succeeded)
             {
-                var result = await mediator.Send(new GetAllProductQuery(
-                    PageNumber,
-                    PageSize,
-                    UserId,
-                    OnSaleOnly,
-                    PrioritizeEventProducts,
-                    SearchTerm,
-                    IncludeDeleted: false, 
-                    IsAdminRequest: false  
-                    ));
+                return Results.BadRequest(new { result.Message, result.Errors });
+            }
 
-                
-
-                if (!result.Succeeded)
+            // ✅ Return complete pagination information
+            return Results.Ok(new
+            {
+                result.Message,
+                Data = result.Data,
+                Pagination = new
                 {
-                    return Results.BadRequest(new { result.Message, result.Errors });
+                    result.TotalCount,
+                    result.PageNumber,
+                    result.PageSize,
+                    result.TotalPages,
+                    result.HasNextPage,
+                    result.HasPreviousPage
                 }
-                return Results.Ok(new { result.Message, result.Data });
+            });
 
-            }).WithName("GetAllProductsWithDynamicPricing")
-            .WithSummary("Get all products with real-time event-based pricing")
-            .WithDescription("Retrieves products with dynamic pricing. Event products are shown first by default.")
-            .Produces<IEnumerable<ProductDTO>>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status400BadRequest)
-            .WithTags("Products");
+        }).WithName("GetAllProductsWithDynamicPricing")
+        .WithSummary("Get all products with real-time event-based pricing")
+        .WithDescription("Retrieves products with dynamic pricing. Event products are shown first by default.")
+        .Produces<object>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status400BadRequest)
+        .WithTags("Products");
 
             // NEW: Get products currently on sale
-            app.MapGet("/onSale", async ([FromServices] ISender mediator,
-                int PageNumber = 1,
-                int PageSize = 20) =>
+            app.MapGet("/onSale", async (
+            [FromServices] ISender mediator,
+            [FromQuery] int PageNumber = 1,
+            [FromQuery] int PageSize = 20) =>
+        {
+            var result = await mediator.Send(new GetAllProductQuery(
+                PageNumber,
+                PageSize,
+                UserId: null,
+                OnSaleOnly: true,
+                PrioritizeEventProducts: true,
+                SearchTerm: null,
+                IncludeDeleted: false,
+                IsAdminRequest: false));
+
+            if (!result.Succeeded)
             {
-                var result = await mediator.Send(new GetAllProductQuery(
-                    PageNumber,
-                    PageSize,
-                    UserId:null,
-                    OnSaleOnly: true,
-                    PrioritizeEventProducts: true,
-                    SearchTerm:null));
+                return Results.BadRequest(new { result.Message, result.Errors });
+            }
 
-                if (!result.Succeeded)
+            // ✅ Return complete pagination information
+            return Results.Ok(new
+            {
+                result.Message,
+                Data = result.Data,
+                Pagination = new
                 {
-                    return Results.BadRequest(new { result.Message, result.Errors });
+                    result.TotalCount,
+                    result.PageNumber,
+                    result.PageSize,
+                    result.TotalPages,
+                    result.HasNextPage,
+                    result.HasPreviousPage
                 }
-                return Results.Ok(new { result.Message, result.Data });
+            });
 
-            }).WithName("GetProductsOnSale")
-            .WithSummary("Get all products currently on sale")
-            .WithDescription("Retrieves only products with active discounts/events")
-            .Produces<IEnumerable<ProductDTO>>(StatusCodes.Status200OK)
-            .WithTags("Products");
+        }).WithName("GetProductsOnSale")
+        .WithSummary("Get all products currently on sale")
+        .WithDescription("Retrieves only products with active discounts/events")
+        .Produces<object>(StatusCodes.Status200OK)
+        .WithTags("Products");
 
             app.MapGet("/getProductById", async ([FromQuery] int productId, ISender mediator, int PageNumber = 1, int PageSize = 10) =>
             {

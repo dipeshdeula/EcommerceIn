@@ -199,6 +199,11 @@ namespace Infrastructure.Persistence.Repositories
             return existingCount == productIds.Distinct().Count();
         }
 
+        public async Task<int> CountAsync(Expression<Func<Product, bool>> predicate, CancellationToken cancellationToken = default)
+        {
+            return await _context.Products.Where(predicate).CountAsync(cancellationToken);
+        }
+
 
         public async Task SoftDeleteProductAsync(int productId, CancellationToken cancellationToken = default)
         {
@@ -217,6 +222,7 @@ namespace Infrastructure.Persistence.Repositories
             {
                 // FIX: Use repository's soft delete method
                 await SoftDeleteAsync(product, cancellationToken);
+                
             }
         }
         public async Task<bool> UndeleteProductAsync(int productId, CancellationToken cancellationToken = default)

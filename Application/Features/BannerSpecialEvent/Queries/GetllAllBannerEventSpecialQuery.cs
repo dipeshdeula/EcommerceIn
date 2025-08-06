@@ -78,7 +78,7 @@ namespace Application.Features.BannerSpecialEvent.Queries
                     includeProperties: "Images,Rules,EventProducts,EventProducts.Product,EventProducts.Product.Category,EventProducts.Product.Images",
                     includeDeleted: request.IncludeDeleted);
 
-                // ✅ Convert to DTOs with enhanced analytics data
+                // Convert to DTOs with enhanced analytics data
                 var bannerEventDTOs = new List<BannerEventSpecialDTO>();
 
                 foreach (var bannerEvent in bannerEvents)

@@ -31,6 +31,13 @@ namespace Application.Dto.AdminDashboardDTOs
         public int LowStockProducts { get; set; }
         public List<TopProductDTO> TopSellingProducts { get; set; } = new();
 
+           // CATEGORY STATISTICS
+        public int TotalCategories { get; set; }
+        public int TotalSubCategories { get; set; }
+        public int TotalSubSubCategories { get; set; }
+        public int CategoriesWithProducts { get; set; }
+        public int EmptyCategories { get; set; }
+
         // PAYMENTS
         public Dictionary<string, decimal> PaymentMethodTotals { get; set; } = new(); // e.g. { "COD": 10000, "eSewa": 5000 }
         public int FailedPayments { get; set; }

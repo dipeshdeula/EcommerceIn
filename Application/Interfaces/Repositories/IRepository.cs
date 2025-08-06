@@ -101,7 +101,7 @@ namespace Application.Interfaces.Repositories
 
         // Count methods
         int Count(Expression<Func<TEntity, bool>> predicate = null);
-        Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default);
+        Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null, CancellationToken cancellationToken = default);
 
         // Save changes
         int SaveChanges();

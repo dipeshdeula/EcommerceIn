@@ -61,16 +61,34 @@ namespace Application.Features.CategoryFeat.Module
               
            
 
-            app.MapGet("/getCategoryById", async ([FromQuery] int categoryId, ISender mediator, int PageNumber = 1, int PageSize = 10) =>
-            {
-                var result = await mediator.Send(new GetCategoryByIdQuery(categoryId, PageNumber, PageSize));
-                if (!result.Succeeded)
-                {
-                    return Results.BadRequest(new { result.Message, result.Errors });
-                }
-                return Results.Ok(new { result.Message, result.Data });
-            });
+            app.MapGet("/getCategoryById", async (
+            int categoryId,
+            ISender mediator,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] int? userId = null,
+            [FromQuery] bool includeProducts = true,
+            [FromQuery] bool includeDeleted = false) =>
+        {
+            var query = new GetCategoryByIdQuery(
+                CategoryId: categoryId,
+                PageNumber: pageNumber,
+                PageSize: pageSize,
+                UserId: userId,
+                IncludeProducts: includeProducts,
+                IncludeDeleted: includeDeleted
+            );
 
+            var result = await mediator.Send(query);
+
+            if (!result.Succeeded)
+                return Results.NotFound(new { result.Message, result.Errors });
+
+            return Results.Ok(new { result.Message, result.Data });
+        })
+        .WithName("GetCategoryById")
+        .WithSummary("Get category by ID with products and statistics")
+        .WithDescription("Fetches a specific category with its products, subcategories, and calculated statistics like product count, price range, etc.");
             app.MapGet("/getAllProdcutByCategoryById", async ([FromQuery] int categoryId, ISender mediator, int PageNumber = 1, int PageSize = 10, string? sortBy = null) =>
             {
                 var result = await mediator.Send(new GetAllProductsByCategoryId(categoryId, PageNumber, PageSize,SortBy:sortBy));

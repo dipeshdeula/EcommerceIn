@@ -22,7 +22,7 @@ namespace Application.Features.BillingItemFeat.DeleteCommands
             }
 
             await _billingRepository.SoftDeleteAsync(billingItems, cancellationToken);
-            await _billingRepository.SaveChangesAsync(cancellationToken);
+            //await _billingRepository.SaveChangesAsync(cancellationToken);
 
             return Result<string>.Success("Billing Item soft deleted successfully");
         }

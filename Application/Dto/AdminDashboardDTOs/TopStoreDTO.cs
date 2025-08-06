@@ -13,5 +13,8 @@ namespace Application.Dto.AdminDashboardDTOs
         public string OwnerName { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
         public decimal TotalIncome { get; set; }
+
+        public int OrderCount { get; set; }
+        public int ProductCount { get; set; }
     }
 }
