@@ -126,7 +126,7 @@ namespace Application.Features.ProductStoreFeat.Module
         .Produces<object>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest)
         .Produces(StatusCodes.Status403Forbidden)
-        .WithTags("ProductStore", "Transactions");
+        .WithTags("ProductStore");
         }
     }
 }

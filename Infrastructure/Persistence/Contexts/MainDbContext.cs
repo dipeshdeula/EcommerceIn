@@ -38,6 +38,7 @@ namespace Infrastructure.Persistence.Contexts
         public DbSet<BannerImage> BannerImages { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<CompanyInfo> CompanyInfos { get; set; }
+        public DbSet<ServiceArea> ServiceAreas { get; set; }
 
         public DbSet<Wishlist> Wishlists { get; set; }
 
@@ -72,6 +73,7 @@ namespace Infrastructure.Persistence.Contexts
             builder.ApplyConfiguration(new CompanyInfoConfig());
             builder.ApplyConfiguration(new BillingConfig());
             builder.ApplyConfiguration(new WhishlistConfig());
+            builder.ApplyConfiguration(new ServiceAreaConfig());
 
            // builder.Entity<User>().HasQueryFilter(u => !u.IsDeleted);
 

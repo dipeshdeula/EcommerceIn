@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecommerce Location Service Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .location-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #4CAF50;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .coordinates {
+            font-family: 'Courier New', monospace;
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .service-info {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .accuracy-meter {
+            background: #e9ecef;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .accuracy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #dc3545 0%, #ffc107 50%, #28a745 100%);
+            transition: width 0.3s ease;
+        }
+
+        .live-tracking {
+            display: none;
+            background: #e8f5e8;
+            border: 2px dashed #4CAF50;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .live-tracking.active {
+            display: block;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .json-display {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏪 Ecommerce Location Service</h1>
+            <p>Real-time GPS Location Testing</p>
+        </div>
+
+        <div class="content">
+            <!-- Location Permission Status -->
+            <div class="location-card">
+                <h3>📍 Location Permission Status</h3>
+                <div id="permissionStatus" class="status-indicator status-info">
+                    Checking permissions...
+                </div>
+            </div>
+
+            <!-- Control Buttons -->
+            <div style="text-align: center; margin: 30px 0;">
+                <button id="requestLocationBtn" class="btn">
+                    📱 Request Location Access
+                </button>
+                <button id="startTrackingBtn" class="btn" disabled>
+                    🔄 Start Live Tracking
+                </button>
+                <button id="stopTrackingBtn" class="btn btn-secondary" disabled>
+                    ⏹️ Stop Tracking
+                </button>
+            </div>
+
+            <!-- Live Tracking Indicator -->
+            <div id="liveTrackingIndicator" class="live-tracking">
+                <div class="pulse">
+                    <h3>🎯 Live Location Tracking Active</h3>
+                    <p>Continuously monitoring your location for service availability</p>
+                </div>
+            </div>
+
+            <!-- Current Location Info -->
+            <div class="location-card">
+                <h3>🌍 Current Location Details</h3>
+                <div id="locationDisplay">
+                    <p>📡 Waiting for location data...</p>
+                </div>
+                
+                <div id="accuracyInfo" style="display: none;">
+                    <h4>🎯 Location Accuracy</h4>
+                    <div class="accuracy-meter">
+                        <div id="accuracyFill" class="accuracy-fill" style="width: 0%"></div>
+                    </div>
+                    <p id="accuracyText">Accuracy: Unknown</p>
+                </div>
+            </div>
+
+            <!-- Service Availability -->
+            <div id="serviceInfo" class="service-info" style="display: none;">
+                <h3>🏪 Service Availability</h3>
+                <div id="serviceStatus"></div>
+                <div id="serviceDetails"></div>
+            </div>
+
+            <!-- API Response -->
+            <div class="location-card">
+                <h3>🔧 API Response (Debug)</h3>
+                <div id="apiResponse" class="json-display">
+                    No API calls made yet.
+                </div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="location-card">
+                <h3>📝 Activity Log</h3>
+                <div id="activityLog" style="max-height: 200px; overflow-y: auto;">
+                    <p>🕐 Application started</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class LocationTracker {
+            constructor() {
+                this.watchId = null;
+                this.isTracking = false;
+                this.apiBaseUrl = 'https://localhost:7028/location';
+                this.userId = 1; // Test user ID
+                this.lastValidation = null;
+                
+                this.initializeElements();
+                this.checkInitialPermissions();
+                this.setupEventListeners();
+            }
+
+            initializeElements() {
+                this.elements = {
+                    permissionStatus: document.getElementById('permissionStatus'),
+                    requestLocationBtn: document.getElementById('requestLocationBtn'),
+                    startTrackingBtn: document.getElementById('startTrackingBtn'),
+                    stopTrackingBtn: document.getElementById('stopTrackingBtn'),
+                    liveTrackingIndicator: document.getElementById('liveTrackingIndicator'),
+                    locationDisplay: document.getElementById('locationDisplay'),
+                    accuracyInfo: document.getElementById('accuracyInfo'),
+                    accuracyFill: document.getElementById('accuracyFill'),
+                    accuracyText: document.getElementById('accuracyText'),
+                    serviceInfo: document.getElementById('serviceInfo'),
+                    serviceStatus: document.getElementById('serviceStatus'),
+                    serviceDetails: document.getElementById('serviceDetails'),
+                    apiResponse: document.getElementById('apiResponse'),
+                    activityLog: document.getElementById('activityLog')
+                };
+            }
+
+            setupEventListeners() {
+                this.elements.requestLocationBtn.addEventListener('click', () => this.requestLocationPermission());
+                this.elements.startTrackingBtn.addEventListener('click', () => this.startLiveTracking());
+                this.elements.stopTrackingBtn.addEventListener('click', () => this.stopLiveTracking());
+            }
+
+            log(message) {
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('p');
+                logEntry.innerHTML = `🕐 ${timestamp}: ${message}`;
+                this.elements.activityLog.appendChild(logEntry);
+                this.elements.activityLog.scrollTop = this.elements.activityLog.scrollHeight;
+                console.log(`[LocationTracker] ${message}`);
+            }
+
+            async checkInitialPermissions() {
+                try {
+                    const permission = await navigator.permissions.query({name: 'geolocation'});
+                    this.updatePermissionStatus(permission.state);
+                    
+                    permission.addEventListener('change', () => {
+                        this.updatePermissionStatus(permission.state);
+                    });
+                } catch (error) {
+                    this.log('❌ Error checking permissions: ' + error.message);
+                    this.updatePermissionStatus('unknown');
+                }
+            }
+
+            updatePermissionStatus(state) {
+                const statusElement = this.elements.permissionStatus;
+                statusElement.className = 'status-indicator';
+                
+                switch (state) {
+                    case 'granted':
+                        statusElement.classList.add('status-success');
+                        statusElement.textContent = '✅ Location Permission Granted';
+                        this.elements.startTrackingBtn.disabled = false;
+                        this.log('✅ Location permission granted');
+                        break;
+                    case 'denied':
+                        statusElement.classList.add('status-error');
+                        statusElement.textContent = '❌ Location Permission Denied';
+                        this.log('❌ Location permission denied');
+                        break;
+                    case 'prompt':
+                        statusElement.classList.add('status-warning');
+                        statusElement.textContent = '⚠️ Location Permission Required';
+                        this.log('⚠️ Location permission required');
+                        break;
+                    default:
+                        statusElement.classList.add('status-info');
+                        statusElement.textContent = '📡 Checking Location Permission...';
+                }
+            }
+
+            async requestLocationPermission() {
+                this.log('📱 Requesting location permission...');
+                this.elements.requestLocationBtn.innerHTML = '<div class="loading"></div>Requesting...';
+                this.elements.requestLocationBtn.disabled = true;
+
+                try {
+                    const position = await this.getCurrentPosition();
+                    this.log('✅ Location permission granted successfully');
+                    this.updatePermissionStatus('granted');
+                    this.displayLocationInfo(position);
+                    await this.validateLocation(position);
+                } catch (error) {
+                    this.log('❌ Location request failed: ' + error.message);
+                    this.updatePermissionStatus('denied');
+                } finally {
+                    this.elements.requestLocationBtn.innerHTML = '📱 Request Location Access';
+                    this.elements.requestLocationBtn.disabled = false;
+                }
+            }
+
+            getCurrentPosition() {
+                return new Promise((resolve, reject) => {
+                    if (!navigator.geolocation) {
+                        reject(new Error('Geolocation is not supported by this browser'));
+                        return;
+                    }
+
+                    navigator.geolocation.getCurrentPosition(
+                        resolve,
+                        reject,
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 15000,
+                            maximumAge: 60000
+                        }
+                    );
+                });
+            }
+
+            startLiveTracking() {
+                if (this.isTracking) return;
+
+                this.log('🔄 Starting live location tracking...');
+                this.isTracking = true;
+                this.elements.startTrackingBtn.disabled = true;
+                this.elements.stopTrackingBtn.disabled = false;
+                this.elements.liveTrackingIndicator.classList.add('active');
+
+                this.watchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        this.displayLocationInfo(position);
+                        this.validateLocation(position);
+                    },
+                    (error) => {
+                        this.log('❌ Live tracking error: ' + error.message);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 30000
+                    }
+                );
+
+                this.log('✅ Live tracking started');
+            }
+
+            stopLiveTracking() {
+                if (!this.isTracking) return;
+
+                if (this.watchId !== null) {
+                    navigator.geolocation.clearWatch(this.watchId);
+                    this.watchId = null;
+                }
+
+                this.isTracking = false;
+                this.elements.startTrackingBtn.disabled = false;
+                this.elements.stopTrackingBtn.disabled = true;
+                this.elements.liveTrackingIndicator.classList.remove('active');
+
+                this.log('⏹️ Live tracking stopped');
+            }
+
+            displayLocationInfo(position) {
+                const { latitude, longitude, accuracy } = position.coords;
+                const timestamp = new Date(position.timestamp).toLocaleString();
+
+                this.elements.locationDisplay.innerHTML = `
+                    <div class="coordinates">
+                        <strong>📍 Coordinates:</strong><br>
+                        Latitude: ${latitude.toFixed(6)}<br>
+                        Longitude: ${longitude.toFixed(6)}<br>
+                        <strong>🕐 Updated:</strong> ${timestamp}
+                    </div>
+                `;
+
+                // Show accuracy information
+                this.elements.accuracyInfo.style.display = 'block';
+                this.updateAccuracyMeter(accuracy);
+            }
+
+            updateAccuracyMeter(accuracy) {
+                // Convert accuracy to percentage (good accuracy is < 20m)
+                const maxAccuracy = 100; // meters
+                const accuracyPercentage = Math.max(0, Math.min(100, 
+                    ((maxAccuracy - accuracy) / maxAccuracy) * 100
+                ));
+
+                this.elements.accuracyFill.style.width = accuracyPercentage + '%';
+                this.elements.accuracyText.textContent = 
+                    `Accuracy: ±${accuracy.toFixed(1)}m (${this.getAccuracyDescription(accuracy)})`;
+            }
+
+            getAccuracyDescription(accuracy) {
+                if (accuracy <= 5) return 'Excellent';
+                if (accuracy <= 20) return 'Good';
+                if (accuracy <= 50) return 'Fair';
+                return 'Poor';
+            }
+
+            async validateLocation(position) {
+                try {
+                    const { latitude, longitude, accuracy } = position.coords;
+                    
+                    this.log(`📡 Validating location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+
+                    const locationRequest = {
+                        latitude: latitude,
+                        longitude: longitude,
+                        accuracyMeters: accuracy,
+                        useIPLocation: false // We're using GPS, not IP
+                    };
+
+                    const response = await fetch(`${this.apiBaseUrl}/validate?userId=${this.userId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(locationRequest)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    this.displayServiceInfo(result);
+                    this.elements.apiResponse.textContent = JSON.stringify(result, null, 2);
+                    
+                    this.lastValidation = result;
+                    this.log(`✅ Location validation completed: ${result.data.message}`);
+
+                } catch (error) {
+                    this.log('❌ Error validating location: ' + error.message);
+                    this.elements.apiResponse.textContent = 'Error: ' + error.message;
+                    
+                    // Show error in service info
+                    this.elements.serviceInfo.style.display = 'block';
+                    this.elements.serviceStatus.innerHTML = `
+                        <div class="status-indicator status-error">
+                            ❌ Validation Failed
+                        </div>
+                    `;
+                    this.elements.serviceDetails.innerHTML = `
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>Please check your internet connection and try again.</p>
+                    `;
+                }
+            }
+
+            displayServiceInfo(result) {
+                const data = result.data;
+                this.elements.serviceInfo.style.display = 'block';
+
+                // Service status
+                let statusClass = 'status-info';
+                let statusIcon = '📍';
+                let statusText = 'Unknown Status';
+
+                if (data.isServiceAvailable && data.isWithinServiceArea) {
+                    statusClass = 'status-success';
+                    statusIcon = '✅';
+                    statusText = 'Service Available';
+                } else if (data.isComingSoon) {
+                    statusClass = 'status-warning';
+                    statusIcon = '🚧';
+                    statusText = 'Coming Soon';
+                } else {
+                    statusClass = 'status-error';
+                    statusIcon = '❌';
+                    statusText = 'Service Not Available';
+                }
+
+                this.elements.serviceStatus.innerHTML = `
+                    <div class="status-indicator ${statusClass}">
+                        ${statusIcon} ${statusText}
+                    </div>
+                `;
+
+                // Service details
+                this.elements.serviceDetails.innerHTML = `
+                    <p><strong>📍 Location:</strong> ${data.cityName}</p>
+                    <p><strong>🏪 Service Area:</strong> ${data.serviceAreaName || 'None'}</p>
+                    <p><strong>📏 Distance from Center:</strong> ${data.distanceFromCenterKm.toFixed(2)} km</p>
+                    <p><strong>🛒 Can Place Orders:</strong> ${data.canPlaceOrder ? '✅ Yes' : '❌ No'}</p>
+                    <p><strong>👀 Can View Products:</strong> ${data.canViewProducts ? '✅ Yes' : '❌ No'}</p>
+                    <p><strong>💰 Min Order Amount:</strong> ₨${data.minOrderAmount}</p>
+                    <p><strong>🚚 Max Delivery Distance:</strong> ${data.maxDeliveryDistanceKm} km</p>
+                    <p><strong>⏱️ Estimated Delivery:</strong> ${data.estimatedDeliveryDays} days</p>
+                    <p><strong>🏪 Nearby Stores:</strong> ${data.nearbyStores.length}</p>
+                    
+                    <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                        <strong>💬 Message:</strong><br>
+                        ${data.message}
+                    </div>
+                    
+                    ${data.isComingSoon ? `
+                        <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px;">
+                            <strong>🚧 Coming Soon:</strong><br>
+                            ${data.comingSoonMessage}
+                        </div>
+                    ` : ''}
+                `;
+            }
+        }
+
+        // Initialize the location tracker when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.locationTracker = new LocationTracker();
+        });
+    </script>
+</body>
+</html>

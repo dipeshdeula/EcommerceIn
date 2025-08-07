@@ -34,6 +34,7 @@ namespace Infrastructure.Persistence.Services
         private ICompanyInfoRepository _companyInfo;
         private IBillingRepository _billing;
         private IBillingItemRepository? _billingItems;
+        private IServiceAreaRepository? _serviceAreas;
 
         public UnitOfWork(MainDbContext context, ILogger<UnitOfWork> logger) 
         {
@@ -99,18 +100,10 @@ namespace Infrastructure.Persistence.Services
         public IBillingItemRepository BillingItems => _billingItems ??= new BillingItemRepository(_context);
         public IBillingRepository Billings => _billing ??= new BillingRepository(_context);
 
+        public IServiceAreaRepository ServiceAreas => _serviceAreas ??= new ServiceAreaRepository(_context);
 
-        // Transaction management
-        /*   public async Task<IDbContextTransaction> BeginTransactionAsync()
-           {
-               if (_transaction == null)
-               {
-                   _transaction = await _context.Database.BeginTransactionAsync();
-                   _logger.LogInformation("Transaction started");
 
-               }
-               return _transaction;
-           }*/
+       
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {

@@ -33,6 +33,7 @@ namespace Application.Interfaces.Services
         ICompanyInfoRepository CompanyInfos { get; }
         IBillingRepository Billings { get; }
         IBillingItemRepository BillingItems { get; }
+        IServiceAreaRepository ServiceAreas { get; }
 
         // Transaction management
        // Task<IDbContextTransaction> BeginTransactionAsync();

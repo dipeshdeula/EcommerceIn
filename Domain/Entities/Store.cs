@@ -12,9 +12,16 @@ namespace Domain.Entities
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string OwnerName { get; set; } = string.Empty;
-        public string ImageUrl { get; set; }
+        public string ImageUrl { get; set; } = string.Empty;
+
+        public bool IsActive { get; set; } = true;
         public bool IsDeleted { get; set; }
-        public StoreAddress Address { get; set; }
+
+        // location integration
+        public int? ServiceAreaId { get; set; }
+        public bool IsLocationVerified { get; set; } = false;
+        public StoreAddress? Address { get; set; }
+        public ServiceArea? ServiceArea { get; set; }
         public ICollection<ProductStore> ProductStores { get; set; } = new List<ProductStore>();
 
     }

@@ -34,17 +34,38 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("DetectedFromIP")
+                        .HasColumnType("text");
+
+                    b.Property<double?>("DistanceFromNearestStore")
+                        .HasColumnType("double precision");
+
                     b.Property<bool>("IsDefault")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsIPBasedLocation")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsServiceAvailable")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsWithinServiceArea")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Label")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("LastValidated")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<double>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("LocationAccuracy")
                         .HasColumnType("double precision");
 
                     b.Property<double>("Longitude")
@@ -58,6 +79,12 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("ServiceAreaId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ServiceRestrictionMessage")
+                        .HasColumnType("text");
+
                     b.Property<string>("Street")
                         .IsRequired()
                         .HasColumnType("text");
@@ -66,6 +93,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ServiceAreaId");
 
                     b.HasIndex("UserId");
 
@@ -767,8 +796,20 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<double?>("DeliveryLatitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("DeliveryLongitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("DistanceFromStoreKm")
+                        .HasColumnType("double precision");
+
                     b.Property<decimal?>("EventDiscountAmount")
                         .HasColumnType("numeric");
+
+                    b.Property<bool>("HasFreeShipping")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsCancelled")
                         .HasColumnType("boolean");
@@ -780,6 +821,9 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
+
+                    b.Property<bool>("IsDelivered")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Notes")
                         .HasColumnType("text");
@@ -801,6 +845,9 @@ namespace Infrastructure.Migrations
                     b.Property<string>("ReasonToCancel")
                         .HasColumnType("text");
 
+                    b.Property<int?>("ServiceAreaId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("ShippingAddress")
                         .IsRequired()
                         .HasMaxLength(250)
@@ -810,6 +857,12 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<decimal>("ShippingCost")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("ShippingDiscountAmount")
+                        .HasColumnType("numeric");
 
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
@@ -821,6 +874,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ServiceAreaId");
 
                     b.HasIndex("UserId", "OrderDate")
                         .HasDatabaseName("IX_Order_UserId_OrderDate");
@@ -1217,6 +1272,132 @@ namespace Infrastructure.Migrations
                     b.ToTable("RefreshTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.ServiceArea", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("CenterLatitude")
+                        .HasPrecision(10, 8)
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("CenterLongitude")
+                        .HasPrecision(11, 8)
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("CityName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("Nepal");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<TimeSpan>("DeliveryEndTime")
+                        .HasColumnType("interval");
+
+                    b.Property<TimeSpan>("DeliveryStartTime")
+                        .HasColumnType("interval");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int>("EstimatedDeliveryDays")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsComingSoon")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<double>("MaxDeliveryDistanceKm")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("double precision");
+
+                    b.Property<decimal>("MinOrderAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("NotAvailableMessage")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Province")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<double>("RadiusKm")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CityName");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("CenterLatitude", "CenterLongitude");
+
+                    b.ToTable("ServiceAreas", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CenterLatitude = 27.4239,
+                            CenterLongitude = 85.047799999999995,
+                            CityName = "Hetauda",
+                            Country = "Nepal",
+                            CreatedAt = new DateTime(2025, 8, 7, 13, 5, 46, 495, DateTimeKind.Utc).AddTicks(5938),
+                            DeliveryEndTime = new TimeSpan(0, 21, 0, 0, 0),
+                            DeliveryStartTime = new TimeSpan(0, 9, 0, 0, 0),
+                            Description = "Premium delivery service in Hetauda city and surrounding areas",
+                            DisplayName = "Hetauda City",
+                            EstimatedDeliveryDays = 1,
+                            IsActive = true,
+                            IsComingSoon = false,
+                            IsDeleted = false,
+                            MaxDeliveryDistanceKm = 10.0,
+                            MinOrderAmount = 500m,
+                            NotAvailableMessage = "Service not available in your area yet. Coming soon to Hetauda!",
+                            Province = "Bagmati",
+                            RadiusKm = 15.0,
+                            UpdatedAt = new DateTime(2025, 8, 7, 13, 5, 46, 495, DateTimeKind.Utc).AddTicks(5939)
+                        });
+                });
+
             modelBuilder.Entity("Domain.Entities.Store", b =>
                 {
                     b.Property<int>("Id")
@@ -1229,7 +1410,13 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsLocationVerified")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Name")
@@ -1240,7 +1427,12 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("ServiceAreaId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ServiceAreaId");
 
                     b.ToTable("Stores", (string)null);
                 });
@@ -1257,8 +1449,20 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<double>("DeliveryRadiusKm")
+                        .HasColumnType("double precision");
+
+                    b.Property<bool>("IsLocationVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsServiceActive")
+                        .HasColumnType("boolean");
+
                     b.Property<double>("Latitude")
                         .HasColumnType("double precision");
+
+                    b.Property<DateTime?>("LocationVerifiedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<double>("Longitude")
                         .HasColumnType("double precision");
@@ -1270,6 +1474,12 @@ namespace Infrastructure.Migrations
                     b.Property<string>("Province")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<TimeSpan>("ServiceEndTime")
+                        .HasColumnType("interval");
+
+                    b.Property<TimeSpan>("ServiceStartTime")
+                        .HasColumnType("interval");
 
                     b.Property<int>("StoreId")
                         .HasColumnType("integer");
@@ -1475,11 +1685,17 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Address", b =>
                 {
+                    b.HasOne("Domain.Entities.ServiceArea", "ServiceArea")
+                        .WithMany()
+                        .HasForeignKey("ServiceAreaId");
+
                     b.HasOne("Domain.Entities.User", "User")
                         .WithMany("Addresses")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("ServiceArea");
 
                     b.Navigation("User");
                 });
@@ -1644,11 +1860,18 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Order", b =>
                 {
+                    b.HasOne("Domain.Entities.ServiceArea", "ServiceArea")
+                        .WithMany("Orders")
+                        .HasForeignKey("ServiceAreaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("ServiceArea");
 
                     b.Navigation("User");
                 });
@@ -1759,6 +1982,16 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Store", b =>
+                {
+                    b.HasOne("Domain.Entities.ServiceArea", "ServiceArea")
+                        .WithMany("Stores")
+                        .HasForeignKey("ServiceAreaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ServiceArea");
+                });
+
             modelBuilder.Entity("Domain.Entities.StoreAddress", b =>
                 {
                     b.HasOne("Domain.Entities.Store", "Store")
@@ -1855,10 +2088,16 @@ namespace Infrastructure.Migrations
                     b.Navigation("ProductStores");
                 });
 
+            modelBuilder.Entity("Domain.Entities.ServiceArea", b =>
+                {
+                    b.Navigation("Orders");
+
+                    b.Navigation("Stores");
+                });
+
             modelBuilder.Entity("Domain.Entities.Store", b =>
                 {
-                    b.Navigation("Address")
-                        .IsRequired();
+                    b.Navigation("Address");
 
                     b.Navigation("ProductStores");
                 });

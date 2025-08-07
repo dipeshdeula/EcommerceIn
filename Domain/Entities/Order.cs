@@ -11,14 +11,28 @@
         public decimal? EventDiscountAmount { get; set; }
         public string? Notes { get; set; } = null; // Optional notes for the order
         public decimal TotalAmount { get; set; }
+
+        // Shipping fields
         public string ShippingAddress { get; set; } = string.Empty;
         public string ShippingCity { get; set; } = string.Empty;
+        public decimal ShippingCost { get; set; } = 0;
+        public decimal ShippingDiscountAmount { get; set; } = 0;
+        public bool HasFreeShipping { get; set; } = false;
+        public bool IsDelivered { get; set; } = false;
+
+        // Location Properties 
+        public double? DeliveryLatitude { get; set; }
+        public double? DeliveryLongitude { get; set; }
+        public int? ServiceAreaId { get; set; }
+        public double? DistanceFromStoreKm { get; set; }
+
         public bool IsConfirmed { get; set; } = false;
         public bool IsCancelled { get; set; } = false;
         public string? ReasonToCancel { get; set; }
 
         public bool IsDeleted { get; set; } = false;    
         public User User { get; set; }
+        public ServiceArea? ServiceArea { get; set; }
         public ICollection<OrderItem> Items { get; set; }
         public ICollection<Notification> Notifications { get; set; } = 
         new List<Notification>();

@@ -4,9 +4,11 @@ using Application.Provider;
 using Carter;
 using Infrastructure.DependencyInjection;
 using Infrastructure.Hubs;
+using Infrastructure.Middleware.Security;
 using Infrastructure.Persistence.Configurations;
 using Infrastructure.Persistence.Contexts;
 using Infrastructure.Persistence.Services;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using StackExchange.Redis;
@@ -14,6 +16,20 @@ using System.Text.Json.Serialization;
 
 EnvProvider.LoadEnv();
 var builder = WebApplication.CreateBuilder(args);
+
+
+
+
+//  Validate Google Maps API Key
+var googleMapsApiKey = builder.Configuration["LocationSettings:GoogleMapsApiKey"];
+if (string.IsNullOrEmpty(googleMapsApiKey))
+{
+    Console.WriteLine(" Google Maps API Key not configured - some location features will be limited");
+}
+else
+{
+    Console.WriteLine("Google Maps API Key configured");
+}
 
 // Configure HybridCache options
 builder.Services.Configure<HybridCacheOptions>(
@@ -53,9 +69,8 @@ if (!string.IsNullOrEmpty(redisConnectionString))
 }
 else
 {
-    // ✅ FALLBACK: Create a mock service if Redis not available
-    // builder.Services.AddSingleton<IHybridCacheService, MockHybridCacheService>();
-    Console.WriteLine("⚠️ Redis not configured - using mock cache service");
+   
+    Console.WriteLine(" Redis not configured - using mock cache service");
 }
 
 // Add services
@@ -95,11 +110,16 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
+
 builder.Services.AddAuthenticationExtension(builder.Configuration);
 builder.Services.AddCarterExtension();
 builder.Services.AddCorsExtension();
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
+
+//  Register Location Services
+new LocationServiceRegistration().AddServices(builder.Services, builder.Configuration);
 
 // Configure JSON serializer to handle reference loops and increase maximum depth
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -161,6 +181,21 @@ builder.Services.AddHttpClient("EsewaClient", client =>
 {
     client.BaseAddress = new Uri(esewaBaseUrl!);
 });
+
+
+//  basic rate limiting for API endpoints
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    
+    // Basic global rate limit (CloudFlare handles the heavy lifting)
+    options.AddFixedWindowLimiter("api", opt =>
+    {
+        opt.PermitLimit = 100; // 100 requests per minute per IP
+        opt.Window = TimeSpan.FromMinutes(1);
+    });
+});
+
 
 
 
@@ -289,27 +324,34 @@ app.UseAuthorization();
 app.Use(async (context, next) =>
 {
     // ✅ Special handling for payment callback routes
-   
-        if (context.Request.Path.StartsWithSegments("/payment/callback"))
-        {
-            context.Response.Headers["Access-Control-Allow-Origin"] = "*";
-            context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS";
-            context.Response.Headers["Access-Control-Allow-Headers"] = "*";
 
-            if (context.Request.Method == "OPTIONS")
-            {
-                context.Response.StatusCode = 200;
-                return;
-            }
+    if (context.Request.Path.StartsWithSegments("/payment/callback"))
+    {
+        context.Response.Headers["Access-Control-Allow-Origin"] = "*";
+        context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS";
+        context.Response.Headers["Access-Control-Allow-Headers"] = "*";
+
+        if (context.Request.Method == "OPTIONS")
+        {
+            context.Response.StatusCode = 200;
+            return;
         }
-    
+    }
+
 
     await next();
 });
 
+// lightweight middleware for security
+app.UseMiddleware<BusinessSecurityMiddleware>();
+app.UseRateLimiter();
 app.MapCarter();
 app.MapHub<AdminNotificationHub>("/adminNotifications");
 app.MapHub<UserNotificationHub>("/userNotifications");
+
+
+
+
 app.MapGet("/dbinfo", async (MainDbContext db) =>
 {
     try

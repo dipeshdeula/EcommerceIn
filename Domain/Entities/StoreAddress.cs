@@ -17,6 +17,16 @@ namespace Domain.Entities
         public double Latitude { get; set; }
         public double Longitude { get; set; }
 
+        // Service configuration
+        public double DeliveryRadiusKm { get; set; } = 5.0;
+        public bool IsServiceActive { get; set; } = true;
+        public TimeSpan ServiceStartTime { get; set; } = new TimeSpan(9, 0, 0);
+        public TimeSpan ServiceEndTime { get; set; } = new TimeSpan(21, 0, 0);
+
+        //  Location verification
+        public bool IsLocationVerified { get; set; } = false;
+        public DateTime? LocationVerifiedAt { get; set; }
+
         public Store Store { get; set; }
 
     }
