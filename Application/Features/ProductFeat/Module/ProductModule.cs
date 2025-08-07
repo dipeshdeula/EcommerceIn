@@ -5,6 +5,7 @@ using Application.Features.CategoryFeat.Queries;
 using Application.Features.ProductFeat.Commands;
 using Application.Features.ProductFeat.DeleteCommands;
 using Application.Features.ProductFeat.Queries;
+using Application.Interfaces.Services;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -37,170 +38,214 @@ namespace Application.Features.ProductFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             }).RequireAuthorization("RequireAdminOrVendor");
 
-            app.MapGet("/admin/all", async (
+            app.MapGet("/getAllProducts", async (
+                [FromServices] ISender mediator,
+                [FromServices] ICurrentUserService currentUserService,
+                [FromQuery] int pageNumber = 1,
+                [FromQuery] int pageSize = 10,
+                [FromQuery] string? searchTerm = null,
+                [FromQuery] bool includeDeleted = false,
+                [FromQuery] bool? onSaleOnly = null,
+                [FromQuery] bool? prioritizeEventProducts = null) =>
+            {
+                //  Security: Use CurrentUserService for permission checking
+                var isAdmin = currentUserService.IsAdmin;
+                var userId = currentUserService.GetUserIdAsInt();
+
+                //  Security: Only admin can see deleted products
+                var allowDeleted = isAdmin && includeDeleted;
+
+                var query = new GetAllProductQuery(
+                    PageNumber: pageNumber,
+                    PageSize: pageSize,
+                    UserId: userId,
+                    OnSaleOnly: onSaleOnly,
+                    PrioritizeEventProducts: prioritizeEventProducts,
+                    SearchTerm: searchTerm,
+                    IncludeDeleted: allowDeleted,
+                    IsAdminRequest: isAdmin
+                );
+
+                var result = await mediator.Send(query);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+
+               
+                return Results.Ok(new
+                {
+                    result.Message,
+                    Data = result.Data,
+                    Pagination = new
+                    {
+                        result.TotalCount,
+                        result.PageNumber,
+                        result.PageSize,
+                        result.TotalPages,
+                        result.HasNextPage,
+                        result.HasPreviousPage
+                    },
+                    Context = new
+                    {
+                        IsAdmin = isAdmin,
+                        IncludesDeleted = allowDeleted,
+                        UserId = userId,
+                        CanManage = currentUserService.CanManageProducts,
+                        Timestamp = DateTime.UtcNow
+                    }
+                });
+            })
+            .WithName("GetAllProductsUnified")
+            .WithSummary("Get all products (unified endpoint)")
+            .WithDescription("Unified endpoint that shows appropriate products based on user permissions. Admin can see deleted products with includeDeleted=true, regular users see only active products.")
+            .Produces<object>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .WithTags("Products");
+
+           
+
+           //  FEATURED PRODUCTS - Always active products only
+            app.MapGet("/featured", async (
+                [FromServices] ISender mediator,
+                [FromServices] ICurrentUserService currentUserService,
+                [FromQuery] int pageNumber = 1,
+                [FromQuery] int pageSize = 20) =>
+            {
+                var query = new GetAllProductQuery(
+                    PageNumber: pageNumber,
+                    PageSize: pageSize,
+                    UserId: currentUserService.GetUserIdAsInt(),
+                    OnSaleOnly: true,
+                    PrioritizeEventProducts: true,
+                    SearchTerm: null,
+                    IncludeDeleted: false, // Always false for featured
+                    IsAdminRequest: false
+                );
+
+                var result = await mediator.Send(query);
+
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+
+                return Results.Ok(new
+                {
+                    result.Message,
+                    Data = result.Data,
+                    Pagination = new
+                    {
+                        result.TotalCount,
+                        result.PageNumber,
+                        result.PageSize,
+                        result.TotalPages,
+                        result.HasNextPage,
+                        result.HasPreviousPage
+                    }
+                });
+            })
+            .WithName("GetFeaturedProducts")
+            .WithSummary("Get featured products on sale")
+            .WithDescription("Retrieves only active products with discounts/events")
+            .WithTags("Products");
+
+            app.MapGet("/getProductById", async (
+            [FromQuery] int productId, 
             [FromServices] ISender mediator,
-            [FromQuery] int pageNumber = 1,
+            [FromServices] ICurrentUserService currentUserService,
+            [FromQuery] int pageNumber = 1, 
             [FromQuery] int pageSize = 10,
-            [FromQuery] string? searchTerm = null,
-            [FromQuery] bool includeDeleted = true
-        ) =>
+            [FromQuery] bool includeDeleted = false) =>  
         {
-            var query = new GetAllProductQuery(
-                PageNumber: pageNumber,
-                PageSize: pageSize,
-                UserId: null,
-                OnSaleOnly: null,
-                PrioritizeEventProducts: false,
-                SearchTerm: searchTerm,
-                IncludeDeleted: includeDeleted,
-                IsAdminRequest: true
-            );
+            //  Use CurrentUserService for permission checking
+            var isAdmin = currentUserService.IsAdmin;
+            var userId = currentUserService.GetUserIdAsInt();
+            
+            // Only admin can see deleted products
+            var allowDeleted = isAdmin && includeDeleted;
+
+            var query = new GetProductByIdQuery(productId, pageNumber, pageSize)
+            {
+                UserId = userId,
+                IsAdminRequest = isAdmin,
+                IncludeDeleted = allowDeleted
+            };
 
             var result = await mediator.Send(query);
 
             if (!result.Succeeded)
-            {
-                return Results.BadRequest(new { result.Message, result.Errors });
-            }
+                return Results.NotFound(new { result.Message, result.Errors });
 
-            // ✅ Return complete pagination information
-            return Results.Ok(new
-            {
-                result.Message,
-                Data = result.Data,
-                Pagination = new
-                {
-                    result.TotalCount,
-                    result.PageNumber,
-                    result.PageSize,
-                    result.TotalPages,
-                    result.HasNextPage,
-                    result.HasPreviousPage
+            return Results.Ok(new 
+            { 
+                result.Message, 
+                result.Data,
+                Context = new 
+                { 
+                    IsAdmin = isAdmin, 
+                    UserId = userId,
+                    CanManage = currentUserService.CanManageProducts,
+                    IncludesDeleted = allowDeleted,
+                    RequestedDeleted = includeDeleted,
+                    Timestamp = DateTime.UtcNow
                 }
             });
         })
-        .RequireAuthorization("RequireAdminOrVendor")
-        .WithName("GetAllProductsForAdmin")
-        .WithSummary("Admin: Get all products including deleted ones")
-        .WithDescription("Retrieve all products with admin privileges, including deleted products for management purposes")
-        .WithTags("Products")
-        .Produces<object>(StatusCodes.Status200OK);
+        .WithName("GetProductById")
+        .WithSummary("Get product by ID")
+        .WithDescription("Get a specific product. Admin can see deleted products with includeDeleted=true.")
+        .Produces<object>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status404NotFound)
+        .WithTags("Products");
 
-
-            //  ENHANCED: GetAllProducts with event prioritization
-            app.MapGet("/getAllProducts", async (
+           app.MapGet("/getAllProductBySubSubCategoryId", async (
+            [FromQuery] int SubSubCategoryId,
             [FromServices] ISender mediator,
+            [FromServices] ICurrentUserService currentUserService,
             [FromQuery] int PageNumber = 1,
             [FromQuery] int PageSize = 10,
-            [FromQuery] int? UserId = null,
-            [FromQuery] bool? OnSaleOnly = null,
-            [FromQuery] bool? PrioritizeEventProducts = null,
-            [FromQuery] string? SearchTerm = null) =>
+            [FromQuery] bool includeDeleted = false) =>
         {
-            var result = await mediator.Send(new GetAllProductQuery(
-                PageNumber,
-                PageSize,
-                UserId,
-                OnSaleOnly,
-                PrioritizeEventProducts,
-                SearchTerm,
-                IncludeDeleted: false,
-                IsAdminRequest: false
-            ));
+            // Use CurrentUserService for permission checking
+            var isAdmin = currentUserService.IsAdmin;
+            var userId = currentUserService.GetUserIdAsInt();
+            
+            //  Security: Only admin can see deleted products
+            var allowDeleted = isAdmin && includeDeleted;
 
+            var query = new GetAllProductsBySubSubCategoryIdQuery(
+                SubSubCategoryId, 
+                PageNumber, 
+                PageSize, 
+                userId, 
+                allowDeleted, 
+                isAdmin);
+
+            var result = await mediator.Send(query);
+            
             if (!result.Succeeded)
-            {
                 return Results.BadRequest(new { result.Message, result.Errors });
-            }
 
-            // ✅ Return complete pagination information
-            return Results.Ok(new
-            {
-                result.Message,
-                Data = result.Data,
-                Pagination = new
+            return Results.Ok(new 
+            { 
+                result.Message, 
+                result.Data,
+                Context = new
                 {
-                    result.TotalCount,
-                    result.PageNumber,
-                    result.PageSize,
-                    result.TotalPages,
-                    result.HasNextPage,
-                    result.HasPreviousPage
+                    IsAdmin = isAdmin,
+                    IncludesDeleted = allowDeleted,
+                    UserId = userId,
+                    CanManage = currentUserService.CanManageProducts,
+                    Timestamp = DateTime.UtcNow
                 }
             });
-
-        }).WithName("GetAllProductsWithDynamicPricing")
-        .WithSummary("Get all products with real-time event-based pricing")
-        .WithDescription("Retrieves products with dynamic pricing. Event products are shown first by default.")
+        })
+        .WithName("GetProductsBySubSubCategory")
+        .WithSummary("Get products by sub-sub category")
+        .WithDescription("Get products in a specific sub-sub category. Admin can see deleted products with includeDeleted=true.")
         .Produces<object>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest)
         .WithTags("Products");
-
-            // NEW: Get products currently on sale
-            app.MapGet("/onSale", async (
-            [FromServices] ISender mediator,
-            [FromQuery] int PageNumber = 1,
-            [FromQuery] int PageSize = 20) =>
-        {
-            var result = await mediator.Send(new GetAllProductQuery(
-                PageNumber,
-                PageSize,
-                UserId: null,
-                OnSaleOnly: true,
-                PrioritizeEventProducts: true,
-                SearchTerm: null,
-                IncludeDeleted: false,
-                IsAdminRequest: false));
-
-            if (!result.Succeeded)
-            {
-                return Results.BadRequest(new { result.Message, result.Errors });
-            }
-
-            // ✅ Return complete pagination information
-            return Results.Ok(new
-            {
-                result.Message,
-                Data = result.Data,
-                Pagination = new
-                {
-                    result.TotalCount,
-                    result.PageNumber,
-                    result.PageSize,
-                    result.TotalPages,
-                    result.HasNextPage,
-                    result.HasPreviousPage
-                }
-            });
-
-        }).WithName("GetProductsOnSale")
-        .WithSummary("Get all products currently on sale")
-        .WithDescription("Retrieves only products with active discounts/events")
-        .Produces<object>(StatusCodes.Status200OK)
-        .WithTags("Products");
-
-            app.MapGet("/getProductById", async ([FromQuery] int productId, ISender mediator, int PageNumber = 1, int PageSize = 10) =>
-            {
-                var result = await mediator.Send(new GetProductByIdQuery(productId, PageNumber, PageSize));
-                if (!result.Succeeded)
-                {
-                    return Results.BadRequest(new { result.Message, result.Errors });
-                }
-                return Results.Ok(new { result.Message, result.Data });
-            });
-
-            app.MapGet("/getAllProductBySubSubCategoryId", async ([FromQuery] int SubSubCategoryId, ISender mediator, int PageNumber = 1, int PageSize = 10) =>
-            {
-                var result = await mediator.Send(new GetAllProductsBySubSubCategoryIdQuery(SubSubCategoryId, PageNumber, PageSize));
-                if (!result.Succeeded)
-                {
-                    return Results.BadRequest(new { result.Message, result.Errors });
-                }
-                return Results.Ok(new { result.Message, result.Data });
-            }).WithName("Brand")
-            .Produces<IEnumerable<CategoryWithProductsDTO>>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status400BadRequest)
-            .WithTags("Products");
 
             app.MapPost("/UploadProductImages", async (ISender mediator, [FromForm] int productId, [FromForm] IFormFileCollection files) =>
             {

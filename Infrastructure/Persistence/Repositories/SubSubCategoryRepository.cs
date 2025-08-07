@@ -23,7 +23,8 @@ namespace Infrastructure.Persistence.Repositories
                 .FirstOrDefaultAsync(ssc => ssc.Id == id);
         }
 
-        public async Task<IEnumerable<Product>> GetProductsBySubSubCategoryIdAsync(int subSubCategoryId, int skip, int take)
+        public async Task<IEnumerable<Product>> GetProductsBySubSubCategoryIdAsync(int subSubCategoryId, int skip, int take, bool onlyActive = true,
+            CancellationToken cancellationToken = default)
         {
             return await _context.Products
                 .AsNoTracking() // Read-only query

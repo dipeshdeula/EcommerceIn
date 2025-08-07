@@ -16,9 +16,14 @@ namespace Application.Interfaces.Repositories
         int categoryId,
         int skip,
         int take,
+        bool onlyActive = true,
+        CancellationToken cancellationToken = default,
         string orderBy = "Id");
 
-        
+        Task<int> CountProductsByCategoryIdAsync(
+        int categoryId,
+        bool onlyActive = true,
+        CancellationToken cancellationToken = default);
 
         Task SoftDeleteCategoryAsync(int categoryId, CancellationToken cancellationToken);
         Task HardDeleteCategoryAsync(int categoryId, CancellationToken cancellationToken);

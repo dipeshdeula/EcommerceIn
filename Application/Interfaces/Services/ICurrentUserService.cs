@@ -17,5 +17,10 @@ namespace Application.Interfaces.Services
 
         public string? Role { get; }
 
+        bool IsAdmin { get; }
+        bool IsVendor { get; }
+        bool CanManageProducts { get; }
+        int? GetUserIdAsInt();
+
     }
 }

@@ -45,58 +45,141 @@ namespace Application.Features.ProductFeat.Queries
         {
             try
             {
-                // 1. Build the main predicate
-                var predicate = BuildMainPredicate(request);
+                var productDTOs = new List<ProductDTO>();
+                int totalCount = 0;
 
-                // 2. Get total count using same predicate
-                var totalCount = await _productRepository.CountAsync(predicate, cancellationToken);
+                // ✅ FIX: Get total count FIRST for proper pagination
+                var countPredicate = BuildProductPredicate(
+                    includeDeleted: request.IncludeDeleted,
+                    searchTerm: request.SearchTerm);
 
-                if (totalCount == 0)
+                totalCount = await _productRepository.CountAsync(countPredicate, cancellationToken);
+
+                // 1. Get event-highlighted products first (if prioritization enabled and not admin request)
+                if (request.PrioritizeEventProducts == true && !request.IsAdminRequest)
                 {
-                    return Result<IEnumerable<ProductDTO>>.Success(
-                        new List<ProductDTO>(),
-                        "No products found matching the criteria.",
-                        0,
-                        request.PageNumber,
-                        request.PageSize);
+                    var eventProductIds = await _pricingService.GetEventHighlightedProductIdsAsync(cancellationToken);
+
+                    if (eventProductIds.Any())
+                    {
+                        var eventPredicate = BuildProductPredicate(
+                            includeDeleted: request.IncludeDeleted,
+                            searchTerm: request.SearchTerm,
+                            productIds: eventProductIds);
+
+                        var eventProducts = await _productRepository.GetAllAsync(
+                            predicate: eventPredicate,
+                            orderBy: query => query.OrderByDescending(p => p.Id),
+                            take: Math.Min(request.PageSize, eventProductIds.Count),
+                            includeProperties: "Images",
+                            includeDeleted: request.IncludeDeleted,
+                            cancellationToken: cancellationToken);
+
+                        var eventProductDTOs = eventProducts.Select(p => p.ToDTO()).ToList();
+                        
+                        // Apply pricing to active products
+                        var activeEventProducts = eventProductDTOs.Where(p => !p.IsDeleted).ToList();
+                        if (activeEventProducts.Any())
+                        {
+                            await activeEventProducts.ApplyPricingAsync(_pricingService, _cacheService, request.UserId, cancellationToken);
+                        }
+
+                        // Filter by sale status if requested
+                        if (request.OnSaleOnly == true)
+                        {
+                            eventProductDTOs = eventProductDTOs.Where(p => p.IsOnSale || (request.IsAdminRequest && p.IsDeleted)).ToList();
+                        }
+
+                        productDTOs.AddRange(eventProductDTOs);
+                    }
                 }
 
-                // 3. Get products with pagination
-                var products = await _productRepository.GetAllAsync(
-                    predicate: predicate,
-                    orderBy: GetOrderByExpression(request),
-                    skip: (request.PageNumber - 1) * request.PageSize,
-                    take: request.PageSize,
-                    includeProperties: "Images",
-                    cancellationToken: cancellationToken);
-
-                var productDTOs = products.Select(p => p.ToDTO()).ToList();
-
-                // 4. Apply pricing only to active products
-                var activeProducts = productDTOs.Where(p => !p.IsDeleted).ToList();
-                if (activeProducts.Any())
+                // 2. Fill remaining slots with regular products
+                var remainingSlots = request.PageSize - productDTOs.Count;
+                if (remainingSlots > 0)
                 {
-                    await activeProducts.ApplyPricingAsync(_pricingService, _cacheService, request.UserId, cancellationToken);
+                    var existingProductIds = productDTOs.Select(p => p.Id).ToList();
+                    var skip = request.IsAdminRequest ? (request.PageNumber - 1) * request.PageSize : 0;
+
+                    var regularPredicate = BuildProductPredicate(
+                        includeDeleted: request.IncludeDeleted,
+                        searchTerm: request.SearchTerm,
+                        excludeProductIds: existingProductIds);
+
+                    var regularProducts = await _productRepository.GetAllAsync(
+                        predicate: regularPredicate,
+                        orderBy: query => request.IsAdminRequest 
+                            ? query.OrderBy(p => p.IsDeleted).ThenByDescending(p => p.Id)  // Active first, then deleted
+                            : query.OrderByDescending(p => p.Id),
+                        skip: skip,
+                        take: remainingSlots,
+                        includeProperties: "Images",
+                        includeDeleted: request.IncludeDeleted,
+                        cancellationToken: cancellationToken);
+
+                    var regularProductDTOs = regularProducts.Select(p => p.ToDTO()).ToList();
+
+                    // Apply pricing to active products
+                    var activeRegularProducts = regularProductDTOs.Where(p => !p.IsDeleted).ToList();
+                    if (activeRegularProducts.Any())
+                    {
+                        await activeRegularProducts.ApplyPricingAsync(_pricingService, _cacheService, request.UserId, cancellationToken);
+                    }
+
+                    // Filter by sale status if requested
+                    if (request.OnSaleOnly == true)
+                    {
+                        regularProductDTOs = regularProductDTOs.Where(p => p.IsOnSale || (request.IsAdminRequest && p.IsDeleted)).ToList();
+                    }
+
+                    productDTOs.AddRange(regularProductDTOs);
                 }
 
-                // 5. Handle deleted products
-                HandleDeletedProducts(productDTOs);
-
-                // 6. Apply OnSaleOnly filter after pricing
-                if (request.OnSaleOnly == true)
+                // 3. Final sorting
+                if (request.IsAdminRequest)
                 {
-                    productDTOs = productDTOs.Where(p => p.IsOnSale).ToList();
-                    // Recalculate total count for OnSale filter
-                    totalCount = productDTOs.Count;
+                    productDTOs = productDTOs
+                        .OrderBy(p => p.IsDeleted)
+                        .ThenByDescending(p => p.Id)
+                        .ThenByDescending(p => p.Pricing?.HasActiveEvent ?? false)
+                        .Take(request.PageSize)
+                        .ToList();
+                }
+                else if (request.PrioritizeEventProducts ?? false)
+                {
+                    productDTOs = productDTOs
+                        .OrderByDescending(p => p.Pricing?.HasActiveEvent ?? false)
+                        .ThenByDescending(p => p.Pricing?.TotalDiscountPercentage ?? 0)
+                        .ThenByDescending(p => p.Id)
+                        .Take(request.PageSize)
+                        .ToList();
                 }
 
-                // 7. Calculate statistics and create response
-                var stats = CalculateStatistics(productDTOs);
-                LogResults(request, stats, totalCount);
-                var message = CreateSuccessMessage(request, stats, totalCount);
+                // Calculate statistics
+                var onSaleCount = productDTOs.Count(p => p.IsOnSale);
+                var eventProductCount = productDTOs.Count(p => p.Pricing?.HasActiveEvent ?? false);
+                var deletedCount = productDTOs.Count(p => p.IsDeleted);
+                var activeCount = productDTOs.Count(p => !p.IsDeleted);
 
+                // Enhanced logging
+                if (request.IsAdminRequest)
+                {
+                    _logger.LogInformation("Admin retrieved {Count} products (Active: {ActiveCount}, Deleted: {DeletedCount}, OnSale: {OnSaleCount}, Event: {EventCount}) for user {UserId}",
+                        productDTOs.Count, activeCount, deletedCount, onSaleCount, eventProductCount, request.UserId);
+                }
+                else
+                {
+                    _logger.LogInformation("Retrieved {Count} products with dynamic pricing for user {UserId}. {OnSaleCount} items on sale, {EventCount} event products",
+                        productDTOs.Count, request.UserId, onSaleCount, eventProductCount);
+                }
+
+                var message = request.IsAdminRequest 
+                    ? $"Products retrieved successfully for admin. Active: {activeCount}, Deleted: {deletedCount}, On Sale: {onSaleCount}"
+                    : $"Products retrieved successfully. {onSaleCount} items on sale.";
+
+                //  Return with proper pagination information
                 return Result<IEnumerable<ProductDTO>>.Success(
-                    productDTOs,
+                    productDTOs, 
                     message,
                     totalCount,
                     request.PageNumber,
@@ -104,100 +187,51 @@ namespace Application.Features.ProductFeat.Queries
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving products: Admin={IsAdmin}, IncludeDeleted={IncludeDeleted}",
+                _logger.LogError(ex, "Error retrieving products with dynamic pricing (Admin: {IsAdmin}, IncludeDeleted: {IncludeDeleted})", 
                     request.IsAdminRequest, request.IncludeDeleted);
                 return Result<IEnumerable<ProductDTO>>.Failure($"Failed to retrieve products: {ex.Message}");
             }
         }
 
-        // Build the main predicate based on request parameters
-        private static Expression<Func<Product, bool>> BuildMainPredicate(GetAllProductQuery request)
+        private static Expression<Func<Product, bool>> BuildProductPredicate(
+            bool includeDeleted,
+            string? searchTerm = null,
+            List<int>? productIds = null,
+            List<int>? excludeProductIds = null)
         {
             Expression<Func<Product, bool>> predicate = p => true;
 
-            // Apply deletion filter based on user type and request
-            if (request.IsAdminRequest && request.IncludeDeleted)
+            // Apply deletion filter
+            if (!includeDeleted)
             {
-                // Admin wants to see all products (including deleted)
-                // No additional filter needed
-            }
-            else
-            {
-                // Customer or admin wanting only active products
                 predicate = CombinePredicates(predicate, p => !p.IsDeleted);
             }
 
-            // Apply search filter
-            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+            // Apply search term filter
+            if (!string.IsNullOrEmpty(searchTerm))
             {
-                var searchTerm = request.SearchTerm.ToLower();
+                var searchLower = searchTerm.ToLower();
                 predicate = CombinePredicates(predicate, p => 
-                    p.Name.ToLower().Contains(searchTerm) ||
-                    p.Description.ToLower().Contains(searchTerm) ||
-                    p.Sku.ToLower().Contains(searchTerm));
+                    p.Name.ToLower().Contains(searchLower) ||
+                    p.Description.ToLower().Contains(searchLower) ||
+                    p.Sku.ToLower().Contains(searchLower));
+            }
+
+            // Apply product IDs filter
+            if (productIds?.Any() == true)
+            {
+                predicate = CombinePredicates(predicate, p => productIds.Contains(p.Id));
+            }
+
+            // Apply exclude product IDs filter
+            if (excludeProductIds?.Any() == true)
+            {
+                predicate = CombinePredicates(predicate, p => !excludeProductIds.Contains(p.Id));
             }
 
             return predicate;
         }
 
-        // Get ordering expression
-        private static Func<IQueryable<Product>, IOrderedQueryable<Product>> GetOrderByExpression(GetAllProductQuery request)
-        {
-            if (request.IsAdminRequest)
-            {
-                // Admin: Show active products first, then by newest
-                return query => query
-                    .OrderBy(p => p.IsDeleted)
-                    .ThenByDescending(p => p.Id);
-            }
-            else
-            {
-                // Customer: Show newest first
-                return query => query.OrderByDescending(p => p.Id);
-            }
-        }
-
-        // Handle deleted products (set appropriate values)
-        private static void HandleDeletedProducts(List<ProductDTO> productDTOs)
-        {
-            var deletedProducts = productDTOs.Where(p => p.IsDeleted).ToList();
-            foreach (var deletedProduct in deletedProducts)
-            {
-                // Set pricing info for deleted products
-                deletedProduct.Pricing = new ProductPricingDTO
-                {
-                    ProductId = deletedProduct.Id,
-                    ProductName = deletedProduct.Name,
-                    OriginalPrice = deletedProduct.MarketPrice,
-                    BasePrice = 0,
-                    EffectivePrice = 0,
-                    ProductDiscountAmount = 0,
-                    EventDiscountAmount = 0,
-                    TotalDiscountAmount = 0,
-                    TotalDiscountPercentage = 0,
-                    HasProductDiscount = false,
-                    HasEventDiscount = false,
-                    HasAnyDiscount = false,
-                    IsOnSale = false,
-                    HasActiveEvent = false,
-                    IsEventActive = false,
-                    FormattedOriginalPrice = $"Rs.{deletedProduct.MarketPrice:F2}",
-                    FormattedEffectivePrice = "Rs.0.00",
-                    FormattedSavings = "",
-                    IsPriceStable = false,
-                    CalculatedAt = DateTime.UtcNow
-                };
-
-                // Override computed properties for deleted products
-                deletedProduct.BasePrice = 0;
-                deletedProduct.ProductDiscountAmount = 0;
-                deletedProduct.HasProductDiscount = false;
-                deletedProduct.FormattedBasePrice = "Rs.0.00";
-                deletedProduct.FormattedDiscountAmount = "Rs.0.00";
-            }
-        }
-
-        // Combine two predicates with AND logic
         private static Expression<Func<Product, bool>> CombinePredicates(
             Expression<Func<Product, bool>> first,
             Expression<Func<Product, bool>> second)
@@ -212,64 +246,11 @@ namespace Application.Features.ProductFeat.Queries
             return Expression.Lambda<Func<Product, bool>>(combinedBody, parameter);
         }
 
-        // Helper to replace parameter in expression
         private static Expression ReplaceParameter(Expression expression, ParameterExpression oldParameter, ParameterExpression newParameter)
         {
             return new ParameterReplacer(oldParameter, newParameter).Visit(expression);
         }
 
-        // Calculate statistics for logging
-        private static ProductStatistics CalculateStatistics(List<ProductDTO> productDTOs)
-        {
-            return new ProductStatistics
-            {
-                TotalProducts = productDTOs.Count,
-                OnSaleCount = productDTOs.Count(p => p.IsOnSale),
-                EventProductCount = productDTOs.Count(p => p.Pricing?.HasActiveEvent ?? false),
-                DeletedCount = productDTOs.Count(p => p.IsDeleted),
-                ActiveCount = productDTOs.Count(p => !p.IsDeleted)
-            };
-        }
-
-        // Log results
-        private void LogResults(GetAllProductQuery request, ProductStatistics stats, int totalCount)
-        {
-            if (request.IsAdminRequest)
-            {
-                _logger.LogInformation("Admin retrieved {Count}/{TotalCount} products (Active: {ActiveCount}, Deleted: {DeletedCount}, OnSale: {OnSaleCount}) - Page {PageNumber}",
-                    stats.TotalProducts, totalCount, stats.ActiveCount, stats.DeletedCount, stats.OnSaleCount, request.PageNumber);
-            }
-            else
-            {
-                _logger.LogInformation("Customer retrieved {Count}/{TotalCount} products - Page {PageNumber}. {OnSaleCount} items on sale",
-                    stats.TotalProducts, totalCount, request.PageNumber, stats.OnSaleCount);
-            }
-        }
-
-        // Create success message
-        private static string CreateSuccessMessage(GetAllProductQuery request, ProductStatistics stats, int totalCount)
-        {
-            var totalPages = (int)Math.Ceiling((double)totalCount / request.PageSize);
-            
-            if (request.IsAdminRequest)
-            {
-                return $"Products retrieved successfully for admin. Page {request.PageNumber} of {totalPages}. Active: {stats.ActiveCount}, Deleted: {stats.DeletedCount}, On Sale: {stats.OnSaleCount}";
-            }
-
-            return $"Products retrieved successfully. Page {request.PageNumber} of {totalPages}. {stats.OnSaleCount} items on sale.";
-        }
-
-        // Helper classes
-        private class ProductStatistics
-        {
-            public int TotalProducts { get; set; }
-            public int OnSaleCount { get; set; }
-            public int EventProductCount { get; set; }
-            public int DeletedCount { get; set; }
-            public int ActiveCount { get; set; }
-        }
-
-        // Parameter replacer for expression trees
         private class ParameterReplacer : ExpressionVisitor
         {
             private readonly ParameterExpression _oldParameter;

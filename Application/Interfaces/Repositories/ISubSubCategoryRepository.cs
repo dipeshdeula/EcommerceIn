@@ -13,8 +13,10 @@ namespace Application.Interfaces.Repositories
         Task<IEnumerable<Product>> GetProductsBySubSubCategoryIdAsync(
             int subSubCategoryId,           
             int skip,
-            int take          
-            );
+            int take ,
+            bool onlyActive = true,
+            CancellationToken cancellationToken = default);       
+            
 
         Task SoftDeleteSubSubCategoryAsync(int subSubcategoryId, CancellationToken cancellationToken);
         Task HardDeleteSubSubCategoryAsync(int subSubcategoryId, CancellationToken cancellationToken);

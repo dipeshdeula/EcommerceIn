@@ -232,6 +232,8 @@ namespace Application.Features.ProductFeat.Queries
                         product.DiscountPercentage = 0;
                         product.HasActiveEvent = false;
                         product.ActiveEventName = null;
+                        product.HasDiscount = false;
+                        product.DiscountPrice = product.MarketPrice;
                     }
                 }
 
@@ -240,6 +242,17 @@ namespace Application.Features.ProductFeat.Queries
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Failed to apply dynamic pricing to nearby products. Using fallback pricing.");
+                foreach (var product in products)
+                {
+                    product.CurrentPrice = product.MarketPrice;
+                    product.EffectivePrice = product.MarketPrice;
+                    product.DiscountAmount = 0;
+                    product.DiscountPercentage = 0;
+                    product.HasActiveEvent = false;
+                    product.ActiveEventName = null;
+                    product.HasDiscount = false;
+                    product.DiscountPrice = product.MarketPrice;
+                }
                 return products; // Return products without dynamic pricing
             }
         }

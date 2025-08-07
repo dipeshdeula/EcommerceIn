@@ -121,17 +121,52 @@ namespace Infrastructure.Persistence.Repositories
 
         public async Task<IEnumerable<Product>> GetProductsByCategoryIdAsync(
             int categoryId,
-            int skip, int take,
+            int skip,
+            int take,
+            bool onlyActive = true,
+            CancellationToken cancellationToken = default,
             string orderBy = "Id")
         {
-            return await _context.Products
-        .Where(p => p.CategoryId == categoryId)
-        .Include(p=>p.Images)
-        .OrderBy(p => EF.Property<object>(p, orderBy)) // Sort by ProductId
-        .Skip(skip)
-        .Take(take)
-        .ToListAsync();
+            IQueryable<Product> query = _context.Products
+                .AsNoTracking()
+                .Where(p => p.CategoryId == categoryId)
+                .Include(p => p.Images);
+
+            //  Apply deletion filter
+            if (onlyActive)
+            {
+                query = query.Where(p => !p.IsDeleted);
+            }
+
+            //  Apply ordering
+            query = orderBy?.ToLower() switch
+            {
+                "name" => query.OrderBy(p => p.Name),
+                "price" => query.OrderBy(p => p.MarketPrice)                ,
+                _ => query.OrderByDescending(p => p.Id)
+            };
+
+            return await query
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync(cancellationToken);
         }
+
+        public async Task<int> CountProductsByCategoryIdAsync(
+            int categoryId,
+            bool onlyActive = true,
+            CancellationToken cancellationToken = default)
+        {
+            var query = _context.Products.Where(p => p.CategoryId == categoryId);
+
+            if (onlyActive)
+            {
+                query = query.Where(p => !p.IsDeleted);
+            }
+
+            return await query.CountAsync(cancellationToken);
+        }
+
 
         public async Task SoftDeleteCategoryAsync(int categoryId, CancellationToken cancellationToken)
         {
