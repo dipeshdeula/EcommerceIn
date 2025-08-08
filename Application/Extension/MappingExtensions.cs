@@ -11,7 +11,9 @@ using Application.Dto.OrderDTOs;
 using Application.Dto.PaymentDTOs;
 using Application.Dto.PaymentMethodDTOs;
 using Application.Dto.ProductDTOs;
+using Application.Dto.PromoCodeDTOs;
 using Application.Dto.Shared;
+using Application.Dto.ShippingDTOs;
 using Application.Dto.StoreDTOs;
 using Application.Dto.UserDTOs;
 using Application.Dto.WhishListDTOs;
@@ -77,7 +79,7 @@ namespace Application.Extension
                 WebsiteUrl = companyInfo.WebsiteUrl,
                 LogoUrl = companyInfo.LogoUrl,
                 IsDeleted = companyInfo.IsDeleted,
-                
+
             };
         }
 
@@ -204,7 +206,7 @@ namespace Application.Extension
 
 
 
-                 //  MAP FORMATTED STRINGS
+                //  MAP FORMATTED STRINGS
                 FormattedOriginalPrice = priceInfo.FormattedOriginalPrice,
                 FormattedEffectivePrice = priceInfo.FormattedEffectivePrice,
                 FormattedSavings = priceInfo.FormattedSavings,
@@ -228,7 +230,7 @@ namespace Application.Extension
                 ReservedStock = product.ReservedStock,
                 CanReserve = product.CanReserve(1),
                 IsAvailableForSale = !product.IsDeleted && product.IsInStock,
-                MaxOrderQuantity = Math.Min(product.AvailableStock, 10) 
+                MaxOrderQuantity = Math.Min(product.AvailableStock, 10)
             };
         }
 
@@ -265,7 +267,7 @@ namespace Application.Extension
             productDTO.BasePrice = priceInfo.BasePrice;
 
             productDTO.FormattedBasePrice = $"Rs. {priceInfo.BasePrice:F2}";
-        productDTO.FormattedDiscountAmount = $"Rs. {priceInfo.TotalDiscountAmount:F2}";
+            productDTO.FormattedDiscountAmount = $"Rs. {priceInfo.TotalDiscountAmount:F2}";
 
 
             return productDTO;
@@ -275,7 +277,7 @@ namespace Application.Extension
         public static async Task<List<ProductDTO>> ApplyPricingAsync(
             this List<ProductDTO> productDTOs,
             IProductPricingService pricingService,
-            IHybridCacheService? cacheService = null, 
+            IHybridCacheService? cacheService = null,
             int? userId = null,
             CancellationToken cancellationToken = default)
         {
@@ -366,8 +368,8 @@ namespace Application.Extension
                 }
 
                 stopwatch.Stop();
-                var cacheHitRate = productIds.Count > 0 
-                    ? (double)(productIds.Count - missingProductIds.Count) / productIds.Count * 100 
+                var cacheHitRate = productIds.Count > 0
+                    ? (double)(productIds.Count - missingProductIds.Count) / productIds.Count * 100
                     : 0;
 
                 Console.WriteLine($" PRICING APPLIED: {productDTOs.Count} products in {stopwatch.ElapsedMilliseconds}ms " +
@@ -378,7 +380,7 @@ namespace Application.Extension
             catch (Exception ex)
             {
                 Console.WriteLine($"CRITICAL PRICING ERROR: {ex.Message}");
-                
+
                 // FINAL FALLBACK: Apply default pricing to all products
                 foreach (var productDTO in productDTOs)
                 {
@@ -401,69 +403,69 @@ namespace Application.Extension
         }
 
         //  VERSION 2: Without Cache (Fallback method)
-       public static async Task<List<ProductDTO>> ApplyPricingDirectAsync(
-    this List<ProductDTO> productDTOs,
-    IProductPricingService pricingService,
-    int? userId = null,
-    CancellationToken cancellationToken = default)
-    {
-        if (productDTOs == null || !productDTOs.Any()) 
-            return productDTOs ?? new List<ProductDTO>();
-
-        try
+        public static async Task<List<ProductDTO>> ApplyPricingDirectAsync(
+     this List<ProductDTO> productDTOs,
+     IProductPricingService pricingService,
+     int? userId = null,
+     CancellationToken cancellationToken = default)
         {
-            var stopwatch = Stopwatch.StartNew();
-            var productIds = productDTOs.Select(p => p.Id).ToList();
+            if (productDTOs == null || !productDTOs.Any())
+                return productDTOs ?? new List<ProductDTO>();
 
-            // DIRECT SERVICE CALL (No caching) with null safety
-            var priceInfos = await pricingService.GetEffectivePricesAsync(productIds, userId, cancellationToken);
-            var pricingLookup = priceInfos?.ToDictionary(p => p.ProductId, p => p) ?? new Dictionary<int, ProductPriceInfoDTO>();
-
-            //  Apply pricing to all products with null safety
-            foreach (var productDTO in productDTOs)
+            try
             {
-                if (productDTO != null)
+                var stopwatch = Stopwatch.StartNew();
+                var productIds = productDTOs.Select(p => p.Id).ToList();
+
+                // DIRECT SERVICE CALL (No caching) with null safety
+                var priceInfos = await pricingService.GetEffectivePricesAsync(productIds, userId, cancellationToken);
+                var pricingLookup = priceInfos?.ToDictionary(p => p.ProductId, p => p) ?? new Dictionary<int, ProductPriceInfoDTO>();
+
+                //  Apply pricing to all products with null safety
+                foreach (var productDTO in productDTOs)
                 {
-                    if (pricingLookup.TryGetValue(productDTO.Id, out var priceInfo))
+                    if (productDTO != null)
                     {
-                        productDTO.ApplyPricing(priceInfo);
-                    }
-                    else
-                    {
-                        productDTO.ApplyPricing(null);
+                        if (pricingLookup.TryGetValue(productDTO.Id, out var priceInfo))
+                        {
+                            productDTO.ApplyPricing(priceInfo);
+                        }
+                        else
+                        {
+                            productDTO.ApplyPricing(null);
+                        }
                     }
                 }
+
+                stopwatch.Stop();
+                Console.WriteLine($" DIRECT PRICING: {productDTOs.Count} products in {stopwatch.ElapsedMilliseconds}ms (No Cache)");
+
+                return productDTOs;
             }
-
-            stopwatch.Stop();
-            Console.WriteLine($" DIRECT PRICING: {productDTOs.Count} products in {stopwatch.ElapsedMilliseconds}ms (No Cache)");
-
-            return productDTOs;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($" PRICING ERROR: {ex.Message}");
-            
-            // FINAL FALLBACK: Apply default pricing with null safety
-            foreach (var productDTO in productDTOs)
+            catch (Exception ex)
             {
-                if (productDTO != null)
+                Console.WriteLine($" PRICING ERROR: {ex.Message}");
+
+                // FINAL FALLBACK: Apply default pricing with null safety
+                foreach (var productDTO in productDTOs)
                 {
-                    try
+                    if (productDTO != null)
                     {
-                        productDTO.ApplyPricing(null);
-                    }
-                    catch (Exception fallbackEx)
-                    {
-                        Console.WriteLine($" FALLBACK ERROR for product {productDTO.Id}: {fallbackEx.Message}");
-                        // Set minimal default values
-                        productDTO.Pricing = CreateMinimalDefaultPricing(productDTO);
+                        try
+                        {
+                            productDTO.ApplyPricing(null);
+                        }
+                        catch (Exception fallbackEx)
+                        {
+                            Console.WriteLine($" FALLBACK ERROR for product {productDTO.Id}: {fallbackEx.Message}");
+                            // Set minimal default values
+                            productDTO.Pricing = CreateMinimalDefaultPricing(productDTO);
+                        }
                     }
                 }
+                return productDTOs;
             }
-            return productDTOs;
         }
-    }
 
         // Minimal default pricing creation method
         private static ProductPricingDTO CreateMinimalDefaultPricing(ProductDTO productDTO)
@@ -534,8 +536,8 @@ namespace Application.Extension
                 CalculatedAt = DateTime.UtcNow
             };
         }
-  
-        
+
+
         public static StoreDTO ToDTO(this Store store)
         {
             return new StoreDTO
@@ -565,7 +567,7 @@ namespace Application.Extension
             };
         }
 
-        public static ProductStoreDTO ToDTO (this ProductStore productStore)
+        public static ProductStoreDTO ToDTO(this ProductStore productStore)
         {
             return new ProductStoreDTO
             {
@@ -601,7 +603,7 @@ namespace Application.Extension
                 Category = cartItem.Product?.Category != null ? cartItem.Product.Category.ToDTO() : null,
                 Product = cartItem.Product?.ToDTO(),
                 User = cartItem.User?.ToDTO(),
-                
+
             };
         }
 
@@ -686,14 +688,14 @@ namespace Application.Extension
             return estimatedOriginal > 0 ? estimatedOriginal : cartItem.ReservedPrice;
         }
 
-       
+
 
         public static OrderDTO ToDTO(this Order order)
         {
             return new OrderDTO
             {
                 Id = order.Id,
-                UserId = order.UserId,                
+                UserId = order.UserId,
                 OrderDate = order.OrderDate,
                 OrderStatus = order.OrderStatus,
                 PaymentStatus = order.PaymentStatus,
@@ -719,8 +721,8 @@ namespace Application.Extension
                 Quantity = orderItem.Quantity,
                 UnitPrice = orderItem.UnitPrice,
                 TotalPrice = orderItem.Quantity * orderItem.UnitPrice,
-               /* Product = orderItem.Product?.ToDTO(), // Map Product to ProductDTO
-                Order = null // Avoid circular reference*/
+                /* Product = orderItem.Product?.ToDTO(), // Map Product to ProductDTO
+                 Order = null // Avoid circular reference*/
             };
         }
 
@@ -751,7 +753,7 @@ namespace Application.Extension
                 ActiveEventName = null,
                 ProductDTO = productStore.Product?.ToDTO()
             };
-        }      
+        }
 
         public static EventRule ToEntity(this EventRuleDTO dto, int bannerEventId)
         {
@@ -784,147 +786,147 @@ namespace Application.Extension
                 Priority = dto.Priority,
             };
         }
-         // ENHANCED: Updated BannerEventSpecial to DTO mapping WITH Nepal timezone support
+        // ENHANCED: Updated BannerEventSpecial to DTO mapping WITH Nepal timezone support
         // Replace the ToDTO method (around line 187) with this safer version:
 
-public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpecial, INepalTimeZoneService? nepalTimeService = null)
-{
-    if (bannerEventSpecial == null) throw new ArgumentNullException(nameof(bannerEventSpecial));
-
-    var currentUtcTime = DateTime.UtcNow;
-
-    // SAFE: Handle timezone service gracefully
-    DateTime startDateNepal;
-    DateTime endDateNepal;
-    DateTime currentNepalTime;
-    string timeStatus;
-    bool isCurrentlyActive;
-    TimeZoneDisplayInfo timeZoneInfo;
-
-    if (nepalTimeService != null)
-    {
-        try
+        public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpecial, INepalTimeZoneService? nepalTimeService = null)
         {
-            // Convert UTC dates to Nepal time for display
-            startDateNepal = nepalTimeService.ConvertFromUtcToNepal(bannerEventSpecial.StartDate);
-            endDateNepal = nepalTimeService.ConvertFromUtcToNepal(bannerEventSpecial.EndDate);
-            currentNepalTime = nepalTimeService.GetNepalCurrentTime();
-            timeStatus = nepalTimeService.GetEventTimeStatus(bannerEventSpecial.StartDate, bannerEventSpecial.EndDate);
-            isCurrentlyActive = nepalTimeService.IsEventActiveNow(bannerEventSpecial.StartDate, bannerEventSpecial.EndDate);
-            
-            timeZoneInfo = new TimeZoneDisplayInfo
+            if (bannerEventSpecial == null) throw new ArgumentNullException(nameof(bannerEventSpecial));
+
+            var currentUtcTime = DateTime.UtcNow;
+
+            // SAFE: Handle timezone service gracefully
+            DateTime startDateNepal;
+            DateTime endDateNepal;
+            DateTime currentNepalTime;
+            string timeStatus;
+            bool isCurrentlyActive;
+            TimeZoneDisplayInfo timeZoneInfo;
+
+            if (nepalTimeService != null)
             {
-                DisplayTimeZone = "Nepal Standard Time",
-                OffsetString = "UTC+05:45",
-                CurrentNepalTime = currentNepalTime.ToString("yyyy-MM-dd HH:mm:ss"),
-                CurrentUtcTime = currentUtcTime.ToString("yyyy-MM-dd HH:mm:ss"),
-                TimeZoneAbbreviation = "NPT",
-                IsDaylightSavingTime = false
-            };
-        }
-        catch (Exception )
-        {
-            // FALLBACK: Use UTC if timezone service fails
-            startDateNepal = bannerEventSpecial.StartDate;
-            endDateNepal = bannerEventSpecial.EndDate;
-            currentNepalTime = currentUtcTime;
-            timeStatus = "Timezone conversion failed - using UTC";
-            isCurrentlyActive = bannerEventSpecial.IsActive && 
-                              bannerEventSpecial.StartDate <= currentUtcTime && 
-                              bannerEventSpecial.EndDate >= currentUtcTime;
-            
-            timeZoneInfo = new TimeZoneDisplayInfo
+                try
+                {
+                    // Convert UTC dates to Nepal time for display
+                    startDateNepal = nepalTimeService.ConvertFromUtcToNepal(bannerEventSpecial.StartDate);
+                    endDateNepal = nepalTimeService.ConvertFromUtcToNepal(bannerEventSpecial.EndDate);
+                    currentNepalTime = nepalTimeService.GetNepalCurrentTime();
+                    timeStatus = nepalTimeService.GetEventTimeStatus(bannerEventSpecial.StartDate, bannerEventSpecial.EndDate);
+                    isCurrentlyActive = nepalTimeService.IsEventActiveNow(bannerEventSpecial.StartDate, bannerEventSpecial.EndDate);
+
+                    timeZoneInfo = new TimeZoneDisplayInfo
+                    {
+                        DisplayTimeZone = "Nepal Standard Time",
+                        OffsetString = "UTC+05:45",
+                        CurrentNepalTime = currentNepalTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                        CurrentUtcTime = currentUtcTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                        TimeZoneAbbreviation = "NPT",
+                        IsDaylightSavingTime = false
+                    };
+                }
+                catch (Exception)
+                {
+                    // FALLBACK: Use UTC if timezone service fails
+                    startDateNepal = bannerEventSpecial.StartDate;
+                    endDateNepal = bannerEventSpecial.EndDate;
+                    currentNepalTime = currentUtcTime;
+                    timeStatus = "Timezone conversion failed - using UTC";
+                    isCurrentlyActive = bannerEventSpecial.IsActive &&
+                                      bannerEventSpecial.StartDate <= currentUtcTime &&
+                                      bannerEventSpecial.EndDate >= currentUtcTime;
+
+                    timeZoneInfo = new TimeZoneDisplayInfo
+                    {
+                        DisplayTimeZone = "UTC (Fallback)",
+                        OffsetString = "UTC+00:00",
+                        CurrentNepalTime = "Service Error",
+                        CurrentUtcTime = currentUtcTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                        TimeZoneAbbreviation = "UTC",
+                        IsDaylightSavingTime = false
+                    };
+                }
+            }
+            else
             {
-                DisplayTimeZone = "UTC (Fallback)",
-                OffsetString = "UTC+00:00",
-                CurrentNepalTime = "Service Error",
-                CurrentUtcTime = currentUtcTime.ToString("yyyy-MM-dd HH:mm:ss"),
-                TimeZoneAbbreviation = "UTC",
-                IsDaylightSavingTime = false
+                // FALLBACK: Use UTC when no timezone service
+                startDateNepal = bannerEventSpecial.StartDate;
+                endDateNepal = bannerEventSpecial.EndDate;
+                currentNepalTime = currentUtcTime;
+                timeStatus = "Nepal timezone service not available - using UTC";
+                isCurrentlyActive = bannerEventSpecial.IsActive &&
+                                  bannerEventSpecial.StartDate <= currentUtcTime &&
+                                  bannerEventSpecial.EndDate >= currentUtcTime;
+
+                timeZoneInfo = new TimeZoneDisplayInfo
+                {
+                    DisplayTimeZone = "UTC (No Service)",
+                    OffsetString = "UTC+00:00",
+                    CurrentNepalTime = "Service Not Available",
+                    CurrentUtcTime = currentUtcTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                    TimeZoneAbbreviation = "UTC",
+                    IsDaylightSavingTime = false
+                };
+            }
+
+            var dto = new BannerEventSpecialDTO
+            {
+                // SYSTEM FIELDS
+                Id = bannerEventSpecial.Id,
+                CreatedAt = bannerEventSpecial.CreatedAt,
+                UpdatedAt = bannerEventSpecial.UpdatedAt ?? bannerEventSpecial.CreatedAt,
+                CurrentUsageCount = bannerEventSpecial.CurrentUsageCount,
+                IsDeleted = bannerEventSpecial.IsDeleted,
+
+                // BASIC EVENT INFO
+                Name = bannerEventSpecial.Name ?? string.Empty,
+                Description = bannerEventSpecial.Description ?? string.Empty,
+                TagLine = bannerEventSpecial.TagLine,
+                EventType = bannerEventSpecial.EventType,
+                PromotionType = bannerEventSpecial.PromotionType,
+                DiscountValue = bannerEventSpecial.DiscountValue,
+                MaxDiscountAmount = bannerEventSpecial.MaxDiscountAmount,
+                MinOrderValue = bannerEventSpecial.MinOrderValue,
+
+                //  UTC DATES (Database storage - always UTC)
+                StartDate = DateTime.SpecifyKind(bannerEventSpecial.StartDate, DateTimeKind.Utc),
+                EndDate = DateTime.SpecifyKind(bannerEventSpecial.EndDate, DateTimeKind.Utc),
+
+                //  NEPAL DATES (Display - converted for UI)
+                StartDateNepal = startDateNepal,
+                EndDateNepal = endDateNepal,
+
+                // CONFIGURATION
+                ActiveTimeSlot = bannerEventSpecial.ActiveTimeSlot,
+                MaxUsageCount = bannerEventSpecial.MaxUsageCount,
+                MaxUsagePerUser = bannerEventSpecial.MaxUsagePerUser,
+                Priority = bannerEventSpecial.Priority,
+                IsActive = bannerEventSpecial.IsActive,
+                Status = bannerEventSpecial.Status,
+
+                // RELATED DATA
+                ProductIds = bannerEventSpecial.EventProducts?.Select(ep => ep.ProductId).ToList() ?? new List<int>(),
+                TotalProductsCount = bannerEventSpecial.EventProducts?.Count ?? 0,
+                TotalRulesCount = bannerEventSpecial.Rules?.Count ?? 0,
+
+                // COMPUTED PROPERTIES (Using safe logic)
+                IsCurrentlyActive = isCurrentlyActive,
+                IsExpired = endDateNepal < currentNepalTime,
+                TimeStatus = timeStatus,
+
+                //  SAFE TIMEZONE INFO
+                TimeZoneInfo = timeZoneInfo,
+
+                // NESTED ENTITIES
+                Images = bannerEventSpecial.Images?.Select(i => i.ToDTO()).ToList() ?? new List<BannerImageDTO>(),
+                Rules = bannerEventSpecial.Rules?.Select(r => r.ToDTO()).ToList() ?? new List<EventRuleDTO>(),
+                EventProducts = bannerEventSpecial.EventProducts?.Select(ep => ep.ToDTO()).ToList() ?? new List<EventProductDTO>()
             };
+
+            //  CALCULATE DAYS REMAINING SAFELY
+            dto.DaysRemaining = dto.IsExpired ? 0 : (int)Math.Ceiling((endDateNepal - currentNepalTime).TotalDays);
+
+            return dto;
         }
-    }
-    else
-    {
-        // FALLBACK: Use UTC when no timezone service
-        startDateNepal = bannerEventSpecial.StartDate;
-        endDateNepal = bannerEventSpecial.EndDate;
-        currentNepalTime = currentUtcTime;
-        timeStatus = "Nepal timezone service not available - using UTC";
-        isCurrentlyActive = bannerEventSpecial.IsActive && 
-                          bannerEventSpecial.StartDate <= currentUtcTime && 
-                          bannerEventSpecial.EndDate >= currentUtcTime;
-        
-        timeZoneInfo = new TimeZoneDisplayInfo
-        {
-            DisplayTimeZone = "UTC (No Service)",
-            OffsetString = "UTC+00:00",
-            CurrentNepalTime = "Service Not Available",
-            CurrentUtcTime = currentUtcTime.ToString("yyyy-MM-dd HH:mm:ss"),
-            TimeZoneAbbreviation = "UTC",
-            IsDaylightSavingTime = false
-        };
-    }
-
-    var dto = new BannerEventSpecialDTO
-    {
-        // SYSTEM FIELDS
-        Id = bannerEventSpecial.Id,
-        CreatedAt = bannerEventSpecial.CreatedAt,
-        UpdatedAt = bannerEventSpecial.UpdatedAt ?? bannerEventSpecial.CreatedAt,
-        CurrentUsageCount = bannerEventSpecial.CurrentUsageCount,
-        IsDeleted = bannerEventSpecial.IsDeleted,
-
-        // BASIC EVENT INFO
-        Name = bannerEventSpecial.Name ?? string.Empty,
-        Description = bannerEventSpecial.Description ?? string.Empty,
-        TagLine = bannerEventSpecial.TagLine,
-        EventType = bannerEventSpecial.EventType,
-        PromotionType = bannerEventSpecial.PromotionType,
-        DiscountValue = bannerEventSpecial.DiscountValue,
-        MaxDiscountAmount = bannerEventSpecial.MaxDiscountAmount,
-        MinOrderValue = bannerEventSpecial.MinOrderValue,
-
-        //  UTC DATES (Database storage - always UTC)
-        StartDate = DateTime.SpecifyKind(bannerEventSpecial.StartDate, DateTimeKind.Utc),
-        EndDate = DateTime.SpecifyKind(bannerEventSpecial.EndDate, DateTimeKind.Utc),
-
-        //  NEPAL DATES (Display - converted for UI)
-        StartDateNepal = startDateNepal,
-        EndDateNepal = endDateNepal,
-
-        // CONFIGURATION
-        ActiveTimeSlot = bannerEventSpecial.ActiveTimeSlot,
-        MaxUsageCount = bannerEventSpecial.MaxUsageCount,
-        MaxUsagePerUser = bannerEventSpecial.MaxUsagePerUser,
-        Priority = bannerEventSpecial.Priority,
-        IsActive = bannerEventSpecial.IsActive,
-        Status = bannerEventSpecial.Status,
-
-        // RELATED DATA
-        ProductIds = bannerEventSpecial.EventProducts?.Select(ep => ep.ProductId).ToList() ?? new List<int>(),
-        TotalProductsCount = bannerEventSpecial.EventProducts?.Count ?? 0,
-        TotalRulesCount = bannerEventSpecial.Rules?.Count ?? 0,
-
-        // COMPUTED PROPERTIES (Using safe logic)
-        IsCurrentlyActive = isCurrentlyActive,
-        IsExpired = endDateNepal < currentNepalTime,
-        TimeStatus = timeStatus,
-
-        //  SAFE TIMEZONE INFO
-        TimeZoneInfo = timeZoneInfo,
-
-        // NESTED ENTITIES
-        Images = bannerEventSpecial.Images?.Select(i => i.ToDTO()).ToList() ?? new List<BannerImageDTO>(),
-        Rules = bannerEventSpecial.Rules?.Select(r => r.ToDTO()).ToList() ?? new List<EventRuleDTO>(),
-        EventProducts = bannerEventSpecial.EventProducts?.Select(ep => ep.ToDTO()).ToList() ?? new List<EventProductDTO>()
-    };
-
-    //  CALCULATE DAYS REMAINING SAFELY
-    dto.DaysRemaining = dto.IsExpired ? 0 : (int)Math.Ceiling((endDateNepal - currentNepalTime).TotalDays);
-
-    return dto;
-}
 
         /// <summary>
         /// FALLBACK METHOD (without timezone service)
@@ -944,15 +946,15 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
                 DiscountValue = entity.DiscountValue,
                 MaxDiscountAmount = entity.MaxDiscountAmount,
                 MinOrderValue = entity.MinOrderValue,
-                
+
                 // UTC DATES
                 StartDate = entity.StartDate,
                 EndDate = entity.EndDate,
-                
+
                 //  FALLBACK: Assume UTC = Nepal (incorrect but safe)
                 StartDateNepal = entity.StartDate,
                 EndDateNepal = entity.EndDate,
-                
+
                 ActiveTimeSlot = entity.ActiveTimeSlot,
                 MaxUsageCount = entity.MaxUsageCount,
                 CurrentUsageCount = entity.CurrentUsageCount,
@@ -1010,14 +1012,14 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
                 DiscountValue = dto.DiscountValue,
                 MaxDiscountAmount = dto.MaxDiscountAmount,
                 MinOrderValue = dto.MinOrderValue,
-                
+
                 // USE PRE-CONVERTED UTC DATES FROM SERVICE
                 StartDate = startDateUtc,
                 EndDate = endDateUtc,
-                
+
                 // PARSE TIMESPAN FROM STRING
                 ActiveTimeSlot = dto.ActiveTimeSlotParsed,
-                
+
                 MaxUsageCount = dto.MaxUsageCount ?? int.MaxValue,
                 CurrentUsageCount = 0,
                 MaxUsagePerUser = dto.MaxUsagePerUser ?? int.MaxValue,
@@ -1029,7 +1031,7 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
                 UpdatedAt = DateTime.UtcNow
             };
         }
-        
+
         // ENHANCED: EventRule to DTO mapping
         public static EventRuleDTO ToDTO(this EventRule eventRule)
         {
@@ -1053,7 +1055,7 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
             return new EventProductDTO
             {
                 Id = eventProduct.Id,
-                BannerEventId = eventProduct.BannerEventId, 
+                BannerEventId = eventProduct.BannerEventId,
                 ProductId = eventProduct.ProductId,
                 ProductName = eventProduct.Product?.Name ?? "Unknown Product",
                 SpecificDiscount = eventProduct.SpecificDiscount ?? 0,
@@ -1064,7 +1066,7 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
                     : eventProduct.Product?.MarketPrice ?? 0
             };
         }
-        
+
         /// <summary>
         /// Convert BannerEventSpecialDTO back to Entity for rule engine processing
         /// </summary>
@@ -1083,11 +1085,11 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
                 DiscountValue = dto.DiscountValue,
                 MaxDiscountAmount = dto.MaxDiscountAmount,
                 MinOrderValue = dto.MinOrderValue,
-                
+
                 // USE UTC DATES (stored dates)
                 StartDate = dto.StartDate,
                 EndDate = dto.EndDate,
-                
+
                 ActiveTimeSlot = dto.ActiveTimeSlot,
                 MaxUsageCount = dto.MaxUsageCount,
                 CurrentUsageCount = dto.CurrentUsageCount,
@@ -1117,7 +1119,7 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
             {
                 Id = dto.Id,
                 BannerEventId = 0, // Will be set by parent
-                Type = dto.Type,                
+                Type = dto.Type,
                 TargetValue = dto.TargetValue,
                 Conditions = dto.Conditions,
                 DiscountType = dto.DiscountType,
@@ -1178,7 +1180,7 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
         }
 
         /// <summary>
-        /// ✅ ENHANCED: Convert RuleTestRequestDTO to EvaluationContextDTO
+        ///  ENHANCED: Convert RuleTestRequestDTO to EvaluationContextDTO
         /// </summary>
         public static EvaluationContextDTO ToEvaluationContext(this RuleTestRequestDTO request)
         {
@@ -1205,7 +1207,8 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
         }
         public static PaymentMethodDTO ToDTO(this PaymentMethod paymentMethod)
         {
-            return new PaymentMethodDTO {
+            return new PaymentMethodDTO
+            {
                 Id = paymentMethod.Id,
                 ProviderName = paymentMethod.ProviderName,
                 Type = paymentMethod.Type,
@@ -1219,7 +1222,7 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
             };
         }
 
-        public static PaymentMethodResponseDTO ToDTO(this PaymentMethod paymentMethod,CancellationToken cancellation=default)
+        public static PaymentMethodResponseDTO ToDTO(this PaymentMethod paymentMethod, CancellationToken cancellation = default)
         {
             return new PaymentMethodResponseDTO
             {
@@ -1228,7 +1231,7 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
                 Type = paymentMethod.Type.ToString(),
                 Logo = paymentMethod.Logo,
                 RequiresRedirect = paymentMethod.RequiresRedirect,
-                SupportedCurrencies = paymentMethod.SupportedCurrencies!.Select(sc=>sc.ToString()).ToArray(),
+                SupportedCurrencies = paymentMethod.SupportedCurrencies!.Select(sc => sc.ToString()).ToArray(),
                 IsAvailable = paymentMethod.IsActive,
                 PaymentRequests = paymentMethod.PaymentRequests != null
             ? paymentMethod.PaymentRequests.Select(pr => pr.ToDTO()).ToList()
@@ -1336,7 +1339,7 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
                 IsDeleted = item.IsDeleted,
 
             };
-           
+
         }
 
         public static WishlistDTO ToDTO(this Wishlist whishlist)
@@ -1351,6 +1354,270 @@ public static BannerEventSpecialDTO ToDTO(this BannerEventSpecial bannerEventSpe
                 IsDeleted = whishlist.IsDeleted,
                 UserDto = whishlist.User.ToDTO(),
                 ProductDto = whishlist.Product.ToDTO(),
+            };
+        }
+
+        public static ShippingDTO ToShippingDTO(this Shipping config)
+        {
+            return new ShippingDTO
+            {
+                Id = config.Id,
+                ConfigurationName = config.Name,
+                IsActive = config.IsActive,
+                IsDefault = config.IsDefault,
+                LowOrderThreshold = config.LowOrderThreshold,
+                LowOrderShippingCost = config.LowOrderShippingCost,
+                HighOrderShippingCost = config.HighOrderShippingCost,
+                FreeShippingThreshold = config.FreeShippingThreshold,
+                EstimatedDeliveryDays = config.EstimatedDeliveryDays,
+                MaxDeliveryDistanceKm = config.MaxDeliveryDistanceKm,
+                EnableFreeShippingEvents = config.EnableFreeShippingEvents,
+                IsFreeShippingActive = config.IsFreeShippingActive,
+                FreeShippingStartDate = config.FreeShippingStartDate,
+                FreeShippingEndDate = config.FreeShippingEndDate,
+                FreeShippingDescription = config.FreeShippingDescription,
+                WeekendSurcharge = config.WeekendSurcharge,
+                HolidaySurcharge = config.HolidaySurcharge,
+                RushDeliverySurcharge = config.RushDeliverySurcharge,
+                CustomerMessage = config.CustomerMessage,
+                AdminNotes = config.AdminNotes,
+                CreatedByUserName = config.CreatedByUser?.Name ?? "System",
+                CreatedAt = config.CreatedAt,
+                LastModifiedByUserName = config.LastModifiedByUser?.Name,
+                LastModifiedAt = config.UpdatedAt
+            };
+        }
+
+        public static PromoCodeDTO ToPromoCodeDTO(this PromoCode promoCode, INepalTimeZoneService? nepalTimeService = null)
+        {
+            if (promoCode == null) throw new ArgumentNullException(nameof(promoCode));
+
+            var currentUtcTime = DateTime.UtcNow;
+
+            // SAFE: Handle timezone service gracefully
+            DateTime startDateNepal;
+            DateTime endDateNepal;
+            DateTime currentNepalTime;
+            string timeStatus;
+            bool isCurrentlyActive;
+            bool isExpired;
+            TimeZoneDisplayInfo timeZoneInfo;
+
+            if (nepalTimeService != null)
+            {
+                try
+                {
+                    // Use extension methods instead of direct interface calls
+                    startDateNepal = nepalTimeService.ConvertFromUtcToNepal(promoCode.StartDate);
+                    endDateNepal = nepalTimeService.ConvertFromUtcToNepal(promoCode.EndDate);
+                    currentNepalTime = nepalTimeService.GetNepalCurrentTime();
+                    timeStatus = promoCode.GetStatusInNepalTime(nepalTimeService); // Extension method
+                    isCurrentlyActive = promoCode.IsCurrentlyActive(nepalTimeService); // Extension method
+                    isExpired = promoCode.IsExpiredNow(nepalTimeService); // Extension method
+
+                    timeZoneInfo = new TimeZoneDisplayInfo
+                    {
+                        DisplayTimeZone = "Nepal Standard Time",
+                        OffsetString = "UTC+05:45",
+                        CurrentNepalTime = currentNepalTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                        CurrentUtcTime = currentUtcTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                        TimeZoneAbbreviation = "NPT",
+                        IsDaylightSavingTime = false
+                    };
+                }
+                catch (Exception)
+                {
+                    // FALLBACK: Use pure domain methods
+                    startDateNepal = promoCode.StartDate;
+                    endDateNepal = promoCode.EndDate;
+                    currentNepalTime = currentUtcTime;                   
+                    isCurrentlyActive = promoCode.IsValidAtTime(currentUtcTime); // Pure domain method
+                    isExpired = promoCode.IsExpiredAtTime(currentUtcTime); // Pure domain method
+
+                    timeZoneInfo = new TimeZoneDisplayInfo
+                    {
+                        DisplayTimeZone = "UTC (Fallback)",
+                        OffsetString = "UTC+00:00",
+                        CurrentNepalTime = "Service Error",
+                        CurrentUtcTime = currentUtcTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                        TimeZoneAbbreviation = "UTC",
+                        IsDaylightSavingTime = false
+                    };
+                }
+            }
+            else
+            {
+                // FALLBACK: Use pure domain methods when no timezone service
+                startDateNepal = promoCode.StartDate;
+                endDateNepal = promoCode.EndDate;
+                currentNepalTime = currentUtcTime;               
+                isCurrentlyActive = promoCode.IsValidAtTime(currentUtcTime); // Pure domain method
+                isExpired = promoCode.IsExpiredAtTime(currentUtcTime); // Pure domain method
+
+                timeZoneInfo = new TimeZoneDisplayInfo
+                {
+                    DisplayTimeZone = "UTC (No Service)",
+                    OffsetString = "UTC+00:00",
+                    CurrentNepalTime = "Service Not Available",
+                    CurrentUtcTime = currentUtcTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                    TimeZoneAbbreviation = "UTC",
+                    IsDaylightSavingTime = false
+                };
+            }
+
+            var dto = new PromoCodeDTO
+            {
+                // BASIC FIELDS
+                Id = promoCode.Id,
+                Code = promoCode.Code,
+                Name = promoCode.Name,
+                Description = promoCode.Description,
+                Type = promoCode.Type,
+                DiscountValue = promoCode.DiscountValue,
+                MaxDiscountAmount = promoCode.MaxDiscountAmount,
+                MinOrderAmount = promoCode.MinOrderAmount,
+                MaxTotalUsage = promoCode.MaxTotalUsage,
+                MaxUsagePerUser = promoCode.MaxUsagePerUser,
+                CurrentUsageCount = promoCode.CurrentUsageCount,
+                
+                // UTC DATES (Database storage - always UTC)
+                StartDate = DateTime.SpecifyKind(promoCode.StartDate, DateTimeKind.Utc),
+                EndDate = DateTime.SpecifyKind(promoCode.EndDate, DateTimeKind.Utc),
+                
+                // NEPAL DATES (Display - converted for UI)
+                StartDateNepal = startDateNepal,
+                EndDateNepal = endDateNepal,
+                
+                // STATUS FIELDS
+                IsActive = promoCode.IsActive,
+                IsDeleted = promoCode.IsDeleted,
+                ApplyToShipping = promoCode.ApplyToShipping,
+                StackableWithEvents = promoCode.StackableWithEvents,
+                CustomerTier = promoCode.CustomerTier,
+                AdminNotes = promoCode.AdminNotes,
+                
+                // AUDIT FIELDS
+                CreatedByUserName = promoCode.CreatedByUser?.Name ?? "System",
+                CreatedAt = promoCode.CreatedAt,
+                LastModifiedByUserName = promoCode.LastModifiedByUser?.Name,
+                LastModifiedAt = promoCode.UpdatedAt,
+                
+                // COMPUTED PROPERTIES (Using safe logic)
+                IsCurrentlyActive = isCurrentlyActive,
+                IsExpired = isExpired,
+                //TimeStatus = timeStatus,
+                
+                // SAFE TIMEZONE INFO
+               
+            };
+
+            // CALCULATE DAYS REMAINING SAFELY
+            if (nepalTimeService != null)
+            {
+                dto.DaysRemaining = promoCode.GetDaysRemaining(nepalTimeService); // Extension method
+            }
+            else
+            {
+                var timeUntilEnd = promoCode.GetTimeUntilEnd(currentUtcTime); // Pure domain method
+                dto.DaysRemaining = timeUntilEnd > TimeSpan.Zero ? (int)Math.Ceiling(timeUntilEnd.TotalDays) : 0;
+            }
+
+            return dto;
+        }
+
+        /// <summary>
+        /// FALLBACK METHOD (without timezone service)
+        /// </summary>
+        public static PromoCodeDTO ToPromoCodeDTO(this PromoCode promoCode)
+        {
+            return promoCode.ToPromoCodeDTO(null);
+        }
+
+        /// <summary>
+        /// Convert AddPromoCodeDTO to Entity with proper timezone handling
+        /// </summary>
+        public static PromoCode ToEntity(this AddPromoCodeDTO dto, DateTime startDateUtc, DateTime endDateUtc, int createdByUserId)
+        {
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            return new PromoCode
+            {
+                Code = dto.Code?.Trim() ?? throw new ArgumentException("Code is required"),
+                Name = dto.Name?.Trim() ?? throw new ArgumentException("Name is required"),
+                Description = dto.Description?.Trim(),
+                Type = dto.Type,
+                DiscountValue = dto.DiscountValue,
+                MaxDiscountAmount = dto.MaxDiscountAmount,
+                MinOrderAmount = dto.MinOrderAmount,
+                MaxTotalUsage = dto.MaxTotalUsage,
+                MaxUsagePerUser = dto.MaxUsagePerUser,
+                
+                // USE PRE-CONVERTED UTC DATES FROM SERVICE
+                StartDate = startDateUtc,
+                EndDate = endDateUtc,
+                
+                ApplyToShipping = dto.ApplyToShipping,
+                StackableWithEvents = dto.StackableWithEvents,
+                CustomerTier = dto.CustomerTier,
+                AdminNotes = dto.AdminNotes,
+                
+                // AUDIT FIELDS
+                CreatedByUserId = createdByUserId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                IsActive = false, // Start inactive, admin must activate
+                IsDeleted = false,
+                CurrentUsageCount = 0
+            };
+        }
+
+        /// <summary>
+        /// Convert CreatePromoCodeDTO to Entity (uses standard DateTime)
+        /// </summary>
+        public static PromoCode ToEntity(this AddPromoCodeDTO dto, int createdByUserId)
+        {
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+
+            return new PromoCode
+            {
+                Code = dto.Code?.Trim() ?? throw new ArgumentException("Code is required"),
+                Name = dto.Name?.Trim() ?? throw new ArgumentException("Name is required"),
+                Description = dto.Description?.Trim(),
+                Type = dto.Type,
+                DiscountValue = dto.DiscountValue,
+                MaxDiscountAmount = dto.MaxDiscountAmount,
+                MinOrderAmount = dto.MinOrderAmount,
+                MaxTotalUsage = dto.MaxTotalUsage,
+                MaxUsagePerUser = dto.MaxUsagePerUser,
+                StartDate = DateTime.SpecifyKind(DateTime.Parse(dto.StartDateNepal), DateTimeKind.Utc),
+                EndDate = DateTime.SpecifyKind(DateTime.Parse(dto.EndDateNepal), DateTimeKind.Utc),
+                ApplyToShipping = dto.ApplyToShipping,
+                StackableWithEvents = dto.StackableWithEvents,
+                CustomerTier = dto.CustomerTier,
+                AdminNotes = dto.AdminNotes,
+                
+                // AUDIT FIELDS
+                CreatedByUserId = createdByUserId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,                
+                IsDeleted = false,
+                CurrentUsageCount = 0
+            };
+        }
+
+        // EXISTING METHOD - Keep as is
+        public static PromoCodeUsageDTO ToPromoCodeUsageDTO(this PromoCodeUsage usage)
+        {
+            return new PromoCodeUsageDTO
+            {
+                Id = usage.Id,
+                Code = usage.PromoCode?.Code ?? "",
+                UserEmail = usage.UserEmail ?? "",
+                OrderId = usage.OrderId,
+                OrderTotal = usage.OrderTotal,
+                DiscountApplied = usage.DiscountAmount,
+                UsedAt = usage.UsedAt,
+                PaymentMethod = usage.PaymentMethod
             };
         }
     }

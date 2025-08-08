@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Domain.Entities
 {
@@ -7,49 +8,70 @@ namespace Domain.Entities
         public int Id { get; set; }
         public int UserId { get; set; }
         public int ProductId { get; set; }
-        public int Quantity { get; set; } 
+        public int Quantity { get; set; }
 
-        // Event Integration
+        //  PRICING WITH PROMO CODE SUPPORT
+        public decimal OriginalPrice { get; set; } // Original product price (backup)
+        public decimal ReservedPrice { get; set; } // Current effective price (after all discounts)
+        public decimal RegularDiscountAmount { get; set; } // Product's regular discount
+        
+        //  EVENT INTEGRATION (Existing)
         public int? AppliedEventId { get; set; }
-        public decimal ReservedPrice { get; set; } // Final Effective Price (what Customer Pays)
-        public decimal RegularDiscountAmount { get; set; }
         public decimal? EventDiscountAmount { get; set; }
         public decimal? EventDiscountPercentage { get; set; }
-
-        // Pricing snapshot fields
-
+        
+        //  PROMO CODE INTEGRATION (New)
+        public int? AppliedPromoCodeId { get; set; }
+        public decimal? PromoCodeDiscountAmount { get; set; } // Per unit promo discount
+        public string? AppliedPromoCode { get; set; } // Store code for reference
+        
+        //  TIMESTAMPS
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? LastActivityAt { get; set; }
 
-
-        // Cart Expiration
+        //  CART EXPIRATION
         public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddMinutes(30);
         public bool IsStockReserved { get; set; } = false;
         public string? ReservationToken { get; set; }
-        public bool IsDeleted { get; set; }
+        public bool IsDeleted { get; set; } = false;
+        public bool IsExpired => ExpiresAt < DateTime.UtcNow;
 
-        // Computed Properties
-        [NotMapped]
-        public bool IsExpired => ExpiresAt <= DateTime.UtcNow;
-
-        [NotMapped]
-        public bool IsActive => !IsDeleted && !IsExpired && IsStockReserved;
-
-        [NotMapped]
-        public decimal FinalItemPrice => ReservedPrice * Quantity;
-
-        [NotMapped]
-        public TimeSpan TimeRemaining => ExpiresAt > DateTime.UtcNow ? ExpiresAt - DateTime.UtcNow : TimeSpan.Zero;
-
-
-
-        /// <summary>
-        /// Navigation Properties
-        /// </summary>
-        public User User { get; set; } //Navigation property to User entity
-        public Product Product { get; set; } // Navigation property to Product entity
-        public BannerEventSpecial? AppliedEvent { get; set; }
-
+        //  NAVIGATION PROPERTIES
+        public virtual User User { get; set; } = null!;
+        public virtual Product Product { get; set; } = null!;
+        public virtual BannerEventSpecial? AppliedEvent { get; set; }
+        public virtual PromoCode? AppliedPromoCode_Navigation { get; set; } // Avoid naming conflict
+        
+        //  COMPUTED PROPERTIES
+        public decimal TotalPrice => ReservedPrice * Quantity;
+        public decimal TotalSavings => (OriginalPrice - ReservedPrice) * Quantity;
+        public bool HasPromoDiscount => AppliedPromoCodeId.HasValue && PromoCodeDiscountAmount > 0;
+        public bool HasEventDiscount => AppliedEventId.HasValue && EventDiscountAmount > 0;
+        
+        //  HELPER METHODS
+        public void ApplyPromoCode(PromoCode promoCode, decimal discountPerUnit)
+        {
+            if (OriginalPrice == 0) OriginalPrice = ReservedPrice; // Backup current price
+            
+            AppliedPromoCodeId = promoCode.Id;
+            AppliedPromoCode = promoCode.Code;
+            PromoCodeDiscountAmount = discountPerUnit;
+            ReservedPrice = Math.Max(0, ReservedPrice - discountPerUnit); // Don't go below 0
+            UpdatedAt = DateTime.UtcNow;
+        }
+        
+        public void RemovePromoCode()
+        {
+            if (OriginalPrice > 0)
+            {
+                ReservedPrice = OriginalPrice; // Restore original price
+            }
+            
+            AppliedPromoCodeId = null;
+            AppliedPromoCode = null;
+            PromoCodeDiscountAmount = null;
+            UpdatedAt = DateTime.UtcNow;
+        }
     }
 }

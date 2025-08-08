@@ -181,7 +181,7 @@ namespace Infrastructure.DependencyInjection
                 }
             });
 
-            // ✅ Configure HTTP clients for payment gateways
+            //  Configure HTTP clients for payment gateways
             services.AddHttpClient("EsewaClient", client =>
             {
                 client.Timeout = TimeSpan.FromSeconds(30);
@@ -198,7 +198,7 @@ namespace Infrastructure.DependencyInjection
 
         }
 
-        // ✅ Retry policy for HTTP clients
+        //  Retry policy for HTTP clients
         private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
         {
             return HttpPolicyExtensions
@@ -257,6 +257,9 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IAuthorizationHandler, PermissionRequirementCommandHandler>();
 
             services.AddScoped<IWishlistRepository, WishlistRepository>();
+            services.AddScoped<IShippingRepository, ShippingRepository>();
+            services.AddScoped<IPromoCodeRepository, PromoCodeRepository>();
+            services.AddScoped<IPromocodeUsageRepository,PromoCodeUsageRepository>();
 
 
             // Register CQRS handlers with scoped lifetime
@@ -400,6 +403,7 @@ namespace Infrastructure.DependencyInjection
             services.AddSingleton<IRabbitMqConsumer, RabbitMQConsumer>();
             services.AddSingleton<IRabbitMqPublisher, RabbitMQPublisher>();
             services.AddScoped<RabbitMqConsumerService>();
+            services.AddScoped<IShippingService, ShippingService>();
 
             //for notif
             services.AddSingleton<IServiceTokenService, ServiceTokenService>();
@@ -446,7 +450,9 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IBusinessConfigService, BusinessConfigService>();
             services.AddScoped<IPaymentGatewayService, PaymentGatewayService>();
             services.AddScoped<IPaymentSecurityService, PaymentSecurityService>();
-            // ✅ Register payment providers
+
+            // Promocode services
+            //  Register payment providers
             /*services.AddScoped<EsewaProvider>();
             services.AddScoped<KhaltiProvider>();
             services.AddScoped<CODProvider>();

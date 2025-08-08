@@ -34,9 +34,11 @@ namespace Application.Interfaces.Services
         IBillingRepository Billings { get; }
         IBillingItemRepository BillingItems { get; }
         IServiceAreaRepository ServiceAreas { get; }
+        IPromoCodeRepository PromoCodes { get; }
+   
 
         // Transaction management
-       // Task<IDbContextTransaction> BeginTransactionAsync();
+        // Task<IDbContextTransaction> BeginTransactionAsync();
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
         //Task CommitTransactionAsync();
         //Task RollbackTransactionAsync();

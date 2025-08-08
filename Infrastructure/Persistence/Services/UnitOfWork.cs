@@ -35,8 +35,10 @@ namespace Infrastructure.Persistence.Services
         private IBillingRepository _billing;
         private IBillingItemRepository? _billingItems;
         private IServiceAreaRepository? _serviceAreas;
+        private IShippingRepository? _shippings;
+        private IPromoCodeRepository? _promoCodes;
 
-        public UnitOfWork(MainDbContext context, ILogger<UnitOfWork> logger) 
+        public UnitOfWork(MainDbContext context, ILogger<UnitOfWork> logger)
         {
             _context = context;
             _logger = logger;
@@ -101,6 +103,10 @@ namespace Infrastructure.Persistence.Services
         public IBillingRepository Billings => _billing ??= new BillingRepository(_context);
 
         public IServiceAreaRepository ServiceAreas => _serviceAreas ??= new ServiceAreaRepository(_context);
+
+        public IShippingRepository Shippings => _shippings ??= new ShippingRepository(_context);
+
+        public IPromoCodeRepository PromoCodes => _promoCodes ??= new PromoCodeRepository(_context);
 
 
        

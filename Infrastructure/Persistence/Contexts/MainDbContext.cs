@@ -39,8 +39,11 @@ namespace Infrastructure.Persistence.Contexts
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<CompanyInfo> CompanyInfos { get; set; }
         public DbSet<ServiceArea> ServiceAreas { get; set; }
+        public DbSet<Shipping> Shippings { get; set; }
 
         public DbSet<Wishlist> Wishlists { get; set; }
+        public DbSet<PromoCode> PromoCodes { get; set; }
+        public DbSet<PromoCodeUsage> PromoCodeUsages { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -74,6 +77,8 @@ namespace Infrastructure.Persistence.Contexts
             builder.ApplyConfiguration(new BillingConfig());
             builder.ApplyConfiguration(new WhishlistConfig());
             builder.ApplyConfiguration(new ServiceAreaConfig());
+            builder.ApplyConfiguration(new ShippingConfig());
+            builder.ApplyConfiguration(new PromoCodeConfig());
 
            // builder.Entity<User>().HasQueryFilter(u => !u.IsDeleted);
 
