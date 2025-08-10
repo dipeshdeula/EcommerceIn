@@ -299,7 +299,7 @@ namespace Application.Features.BannerSpecialEvent.Queries
                 _ => $"Custom requirement: {rule.TargetValue}"
             };
 
-            // ✅ Smart detection for price range patterns
+            //  Smart detection for price range patterns
             if (rule.TargetValue?.Contains('-') == true && 
                 rule.TargetValue.Split('-').Length == 2 &&
                 decimal.TryParse(rule.TargetValue.Split('-')[0], out _) &&
@@ -308,7 +308,7 @@ namespace Application.Features.BannerSpecialEvent.Queries
                 baseDescription = $"Order total must be within: Rs.{rule.TargetValue}";
             }
 
-            // ✅ Add minimum order value info if present
+            //  Add minimum order value info if present
             if (rule.MinOrderValue.HasValue && rule.MinOrderValue > 0)
             {
                 baseDescription += $" (Min order: Rs.{rule.MinOrderValue:F2})";

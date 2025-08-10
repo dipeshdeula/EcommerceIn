@@ -37,7 +37,7 @@ namespace Infrastructure.Persistence.Services
 
             try
             {
-                // ✅ Handle case when no rules exist
+                //  Handle case when no rules exist
                 if (bannerEvent.Rules?.Any() != true)
                 {
                     result.IsValid = true;
@@ -45,7 +45,7 @@ namespace Infrastructure.Persistence.Services
                     result.Messages.Add("No restrictions - applies to all products");
                     result.RulesEvaluated = 0;
                     
-                    // ✅ Calculate event-based discount
+                    //  Calculate event-based discount
                     result.CalculatedDiscount = CalculateEventDiscount(bannerEvent, context.OrderTotal ?? 0);
                     result.FinalDiscount = Math.Min(result.CalculatedDiscount, bannerEvent.MaxDiscountAmount ?? result.CalculatedDiscount);
                     result.FormattedDiscount = FormatDiscount(bannerEvent.PromotionType, result.FinalDiscount);
@@ -61,7 +61,7 @@ namespace Infrastructure.Persistence.Services
                 result.RulesEvaluated = bannerEvent.Rules.Count;
                 bool allRulesPassed = true;
 
-                // ✅ Evaluate all rules - sort by priority (lowest number = highest priority)
+                //  Evaluate all rules - sort by priority (lowest number = highest priority)
                 var sortedRules = bannerEvent.Rules.OrderBy(r => r.Priority).ToList();
 
                 foreach (var rule in sortedRules)
@@ -73,23 +73,23 @@ namespace Infrastructure.Persistence.Services
                         allRulesPassed = false;
                         result.Messages.Add(ruleResult.Message);
                         
-                        // ✅ Add to failed rules with proper DTO
+                        //  Add to failed rules with proper DTO
                         result.FailedRules.Add(rule.ToFailedRuleDTO(ruleResult.Message));
                     }
                     else
                     {
                         result.Messages.Add(ruleResult.Message);
                         
-                        // ✅ Add to applied rules with proper DTO
+                        //  Add to applied rules with proper DTO
                         result.AppliedRules.Add(rule.ToAppliedRuleDTO());
                     }
                 }
 
-                // ✅ Set final eligibility
+                //  Set final eligibility
                 result.IsValid = allRulesPassed;
                 result.IsEligible = allRulesPassed;
 
-                // ✅ Calculate discount based on rules
+                //  Calculate discount based on rules
                 if (allRulesPassed)
                 {
                     // Find the highest priority rule (lowest priority number) that applies
@@ -170,7 +170,7 @@ namespace Infrastructure.Persistence.Services
                 };
 
                 var result = await EvaluateAllRulesAsync(bannerEvent, context);
-                return result.IsEligible; // ✅ Use IsEligible instead of IsValid
+                return result.IsEligible; //  Use IsEligible instead of IsValid
             }
             catch (Exception ex)
             {
@@ -183,7 +183,7 @@ namespace Infrastructure.Persistence.Services
         {
             try
             {
-                // ✅ Check minimum order value first (applies to all rule types)
+                //  Check minimum order value first (applies to all rule types)
                 if (rule.MinOrderValue.HasValue && (context.OrderTotal ?? 0) < rule.MinOrderValue.Value)
                 {
                     return new SingleRuleResultDTO 
@@ -218,7 +218,7 @@ namespace Infrastructure.Persistence.Services
             }
         }
 
-        // ✅ Rule validation methods remain the same but with improved error messages
+        //  Rule validation methods remain the same but with improved error messages
         private async Task<SingleRuleResultDTO> ValidateCategoryRule(EventRule rule, EvaluationContextDTO context)
         {
             try
@@ -234,7 +234,7 @@ namespace Infrastructure.Persistence.Services
                     return new SingleRuleResultDTO
                     {
                         IsValid = true,
-                        Message = $"✅ Cart contains products from allowed categories: {string.Join(", ", categoryNames)}"
+                        Message = $" Cart contains products from allowed categories: {string.Join(", ", categoryNames)}"
                     };
                 }
 
@@ -264,7 +264,7 @@ namespace Infrastructure.Persistence.Services
                 .ToList();
 
             return await Task.FromResult(matchingItems.Any())
-                ? new SingleRuleResultDTO { IsValid = true, Message = "✅ Cart contains products from allowed subcategories" }
+                ? new SingleRuleResultDTO { IsValid = true, Message = " Cart contains products from allowed subcategories" }
                 : new SingleRuleResultDTO { IsValid = false, Message = "❌ Cart must contain products from required subcategories" };
         }
 
@@ -276,7 +276,7 @@ namespace Infrastructure.Persistence.Services
                 .ToList();
 
             return await Task.FromResult(matchingItems.Any())
-                ? new SingleRuleResultDTO { IsValid = true, Message = "✅ Cart contains products from allowed sub-subcategories" }
+                ? new SingleRuleResultDTO { IsValid = true, Message = " Cart contains products from allowed sub-subcategories" }
                 : new SingleRuleResultDTO { IsValid = false, Message = "❌ Cart must contain products from required sub-subcategories" };
         }
 
@@ -288,7 +288,7 @@ namespace Infrastructure.Persistence.Services
                 .ToList();
 
             return matchingItems.Any()
-                ? new SingleRuleResultDTO { IsValid = true, Message = "✅ Cart contains required products" }
+                ? new SingleRuleResultDTO { IsValid = true, Message = " Cart contains required products" }
                 : new SingleRuleResultDTO { IsValid = false, Message = $"❌ Cart must contain specific products (IDs: {rule.TargetValue})" };
         }
 
@@ -304,7 +304,7 @@ namespace Infrastructure.Persistence.Services
             var cartTotal = context.OrderTotal ?? context.CartItems.Sum(item => item.ReservedPrice * item.Quantity);
 
             return cartTotal >= minPrice && cartTotal <= maxPrice
-                ? new SingleRuleResultDTO { IsValid = true, Message = $"✅ Cart total Rs.{cartTotal:F2} is within range Rs.{minPrice:F2}-{maxPrice:F2}" }
+                ? new SingleRuleResultDTO { IsValid = true, Message = $" Cart total Rs.{cartTotal:F2} is within range Rs.{minPrice:F2}-{maxPrice:F2}" }
                 : new SingleRuleResultDTO { IsValid = false, Message = $"❌ Cart total Rs.{cartTotal:F2} must be between Rs.{minPrice:F2}-{maxPrice:F2}" };
         }
 
@@ -319,7 +319,7 @@ namespace Infrastructure.Persistence.Services
             }
 
             return allowedCities.Contains(userCity, StringComparer.OrdinalIgnoreCase)
-                ? new SingleRuleResultDTO { IsValid = true, Message = $"✅ Available in {userCity}" }
+                ? new SingleRuleResultDTO { IsValid = true, Message = $" Available in {userCity}" }
                 : new SingleRuleResultDTO { IsValid = false, Message = $"❌ Not available in {userCity}. Available in: {string.Join(", ", allowedCities)}" };
         }
 
@@ -333,11 +333,11 @@ namespace Infrastructure.Persistence.Services
             var allowedMethods = rule.TargetValue.Split(',').Select(m => m.Trim()).ToList();
 
             return allowedMethods.Contains(context.PaymentMethod, StringComparer.OrdinalIgnoreCase)
-                ? new SingleRuleResultDTO { IsValid = true, Message = $"✅ Payment method {context.PaymentMethod} is supported" }
+                ? new SingleRuleResultDTO { IsValid = true, Message = $" Payment method {context.PaymentMethod} is supported" }
                 : new SingleRuleResultDTO { IsValid = false, Message = $"❌ Payment method {context.PaymentMethod} not supported. Use: {string.Join(", ", allowedMethods)}" };
         }
 
-        // ✅ Helper methods for discount calculation
+        //  Helper methods for discount calculation
         private decimal CalculateEventDiscount(BannerEventSpecial bannerEvent, decimal orderAmount)
         {
             return bannerEvent.PromotionType switch
@@ -370,7 +370,7 @@ namespace Infrastructure.Persistence.Services
             };
         }
 
-        // ✅ Get category names for better user messages
+        //  Get category names for better user messages
         private async Task<List<string>> GetCategoryNames(List<int> categoryIds)
         {
             try
@@ -388,7 +388,7 @@ namespace Infrastructure.Persistence.Services
         }
     }
 
-    // ✅ Supporting DTO for single rule evaluation
+    //  Supporting DTO for single rule evaluation
     public class SingleRuleResultDTO
     {
         public bool IsValid { get; set; }

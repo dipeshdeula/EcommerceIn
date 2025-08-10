@@ -100,7 +100,7 @@ namespace Infrastructure.Persistence.Services
      </html>";
          }*/
         /// <summary>
-        /// ✅ BUILD GETINSTANTMART BRANDED EMAIL TEMPLATE
+        ///  BUILD GETINSTANTMART BRANDED EMAIL TEMPLATE
         /// </summary>
         private static string BuildGetInstantMartEmailBody(string bodyContent, string companyName, string tagline, string supportEmail, string supportPhone)
         {

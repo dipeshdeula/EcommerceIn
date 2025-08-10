@@ -1,6 +1,7 @@
 ﻿using Application.Common;
 using Application.Dto.CartItemDTOs;
 using Application.Dto.PromoCodeDTOs;
+using Application.Dto.ShippingDTOs;
 using Application.Extension.Cache;
 using Application.Features.CartItemFeat.Commands;
 using Application.Features.CartItemFeat.Queries;
@@ -30,23 +31,72 @@ namespace Application.Features.CartItemFeat.Module
         {
             app = app.MapGroup("CartItem");
 
-            app.MapPost("/create-cart", async (ISender mediator, CreateCartItemCommand command) =>
+            app.MapPost("/create-cart", async (
+                [FromBody] CreateCartItemRequest request,
+                [FromServices] IUserRepository userRepository,
+                [FromServices] ICurrentUserService currentUserService,
+                [FromServices] ISender mediator) =>
             {
+                var UserId = Convert.ToInt32(currentUserService.UserId);                
+
+                var command = new CreateCartItemCommand(
+                    UserId: UserId,
+                    ProductId: request.ProductId,
+                    Quantity: request.Quantity,
+                    ShippingRequest: request.ShippingRequest
+                );
 
                 var result = await mediator.Send(command);
 
-                /*  if (result == null)
-                  {
-                      return Results.BadRequest(new { message = "No response from the consumer." });
-                  }*/
-
-                if (result == null || !result.Succeeded)
+                 if (result == null || !result.Succeeded)
                 {
                     return Results.BadRequest(new { message = result?.Message ?? "An error occurred." });
                 }
+                
+                return Results.Ok(new { 
+                    message = result.Message, 
+                    data = result.Data,
+                    shippingInfo = new {
+                        cost = result.Data.ShippingCost,
+                        message = result.Data.ShippingCost == 0 ? "🚚 Free shipping applied!" : $"🚚 Shipping: Rs.{result.Data.ShippingCost:F2}"
+                    }
+                });
+            })
+            .RequireAuthorization()
+            .WithName("CreateCartItem")
+            .WithSummary("Add a product to cart with automatic shipping calculation")
+            .WithDescription("Automatically calculates shipping cost based on user location and active promotions");
 
-                return Results.Ok(result.Data);
-            });
+             app.MapPost("/calculate-shipping", async (
+                [FromBody] CalculateShippingForCartRequest request,
+                [FromServices] IShippingService shippingService,
+                [FromServices] ICurrentUserService currentUserService,
+                [FromServices] IUserRepository userRepository) =>
+            {
+                var userId = currentUserService.GetUserIdAsInt();
+                if (userId == 0) return Results.Unauthorized();
+
+                var userInfo = await userRepository.FindByIdAsync(userId);
+                if (userInfo == null) return Results.NotFound();
+
+                var shippingRequest = new ShippingRequestDTO
+                {
+                    UserId = userInfo.Id,
+                    OrderTotal = request.OrderTotal,
+                    DeliveryLatitude = request.DeliveryLatitude,
+                    DeliveryLongitude = request.DeliveryLongitude,
+                    RequestRushDelivery = request.RequestRushDelivery
+                };
+
+                var result = await shippingService.CalculateShippingAsync(shippingRequest);
+                
+                return result.Succeeded 
+                    ? Results.Ok(result) 
+                    : Results.BadRequest(result);
+            })
+            .RequireAuthorization()
+            .WithName("CalculateShipping")
+            .WithSummary("Calculate shipping cost for given order total and location");
 
             app.MapGet("/getAllCartItem", async ([FromServices] ISender mediator, int PageNumber = 1, int PageSize = 10) =>
             {
@@ -58,7 +108,11 @@ namespace Application.Features.CartItemFeat.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapGet("/getCartItemByUserId", async (ISender mediator, [FromQuery] int userId, int PageNumber = 1, int PageSize = 10) =>
+             app.MapGet("/getCartItemByUserId", async (
+                [FromServices] ISender mediator, 
+                [FromQuery] int userId, 
+                [FromQuery] int PageNumber = 1, 
+                [FromQuery] int PageSize = 10) =>
             {
                 var result = await mediator.Send(new GetCartByUserIdQuery(userId, PageNumber, PageSize));
                 if (result == null || !result.Succeeded)
@@ -66,8 +120,24 @@ namespace Application.Features.CartItemFeat.Module
                     return Results.BadRequest(new { message = result?.Message ?? "An error occurred.", data = result?.Data });
                 }
 
-                return Results.Ok(new { message = result.Message, data = result.Data });
-            });
+                // Calculate total shipping for summary
+                var cartItems = result.Data ?? new List<CartItemDTO>();
+                var totalShipping = cartItems.Sum(c => c.ShippingCost);
+                var hasAnyFreeShipping = cartItems.Any(c => c.ShippingCost == 0);
+
+                return Results.Ok(new { 
+                    message = result.Message, 
+                    data = result.Data,
+                    summary = new {
+                        totalItems = cartItems.Count(),
+                        totalShipping = totalShipping,
+                        hasFreeShipping = hasAnyFreeShipping,
+                        shippingMessage = hasAnyFreeShipping ? "🚚 Free shipping on some items!" : $"🚚 Total shipping: Rs.{totalShipping:F2}"
+                    }
+                });
+            })
+            .WithName("GetCartItemsByUserId")
+            .WithSummary("Get cart items for a specific user with shipping summary");
 
             app.MapPut("/updateCartItem", async (
                 int Id, int UserId, int? ProductId, int? Quantity, ISender mediator) =>
@@ -96,14 +166,8 @@ namespace Application.Features.CartItemFeat.Module
                 
                 var command = new ApplyPromoCodeToCartCommand(
                     Code: request.Code,
-                    UserId: userInfo.Id,
-                    CartItemIds: request.CartItemIds,
-                    OrderTotal: request.OrderTotal,
-                    ShippingCost: request.ShippingCost,
-                    CustomerTier: request.CustomerTier,
-                    DeliveryAddress: request.DeliveryAddress,
-                    IsCheckout: request.IsCheckout,
-                    UpdateCartPrices: true // Always true for apply
+                    UserId: userInfo.Id
+                    
                 );
                 
                 var result = await mediator.Send(command);
@@ -132,15 +196,7 @@ namespace Application.Features.CartItemFeat.Module
                 
                 var command = new ApplyPromoCodeToCartCommand(
                     Code: request.Code,
-                    UserId: userInfo.Id,
-                    CartItemIds: request.CartItemIds,
-                    OrderTotal: request.OrderTotal,
-                    ShippingCost: request.ShippingCost,
-                    CustomerTier: request.CustomerTier,
-                    DeliveryAddress: request.DeliveryAddress,
-                    IsCheckout: request.IsCheckout,
-                    UpdateCartPrices: false // Only validate, don't update
-                );
+                    UserId: userInfo.Id);
                 
                 var result = await mediator.Send(command);
                 
@@ -321,14 +377,12 @@ namespace Application.Features.CartItemFeat.Module
         }
     }
     
+    
     public record ApplyPromoCodeToCartRequest(
-        string Code,
-        List<int>? CartItemIds = null,
-        decimal? OrderTotal = null,
-        decimal? ShippingCost = null,
-        string? CustomerTier = null,
-        string? DeliveryAddress = null,
-        bool IsCheckout = false
+        int UserId,
+        string Code
+       
+        
     );
     
     public record CheckoutPricingRequest(

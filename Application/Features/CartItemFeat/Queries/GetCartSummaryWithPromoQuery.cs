@@ -29,7 +29,7 @@ namespace Application.Features.CartItemFeat.Queries
         {
             try
             {
-                // ✅ Get all user's cart items with related data
+                //  Get all user's cart items with related data
                 var cartItems = await _unitOfWork.CartItems.GetAllAsync(
                     predicate: c => c.UserId == request.UserId && !c.IsDeleted && c.ExpiresAt > DateTime.UtcNow,
                     includeProperties: "Product,AppliedEvent,AppliedPromoCode_Navigation",
@@ -47,13 +47,13 @@ namespace Application.Features.CartItemFeat.Queries
                     });
                 }
                 
-                // ✅ Calculate totals
+                //  Calculate totals
                 var originalSubtotal = cartItems.Sum(c => (c.OriginalPrice > 0 ? c.OriginalPrice : c.ReservedPrice) * c.Quantity);
                 var finalSubtotal = cartItems.Sum(c => c.ReservedPrice * c.Quantity);
                 var promoCodeDiscounts = cartItems.Sum(c => (c.PromoCodeDiscountAmount ?? 0) * c.Quantity);
                 var eventDiscounts = cartItems.Sum(c => (c.EventDiscountAmount ?? 0) * c.Quantity);
                 
-                // ✅ Group applied promo codes
+                //  Group applied promo codes
                 var appliedPromoCodes = cartItems
                     .Where(c => c.AppliedPromoCodeId.HasValue)
                     .GroupBy(c => new { c.AppliedPromoCodeId, c.AppliedPromoCode })
@@ -76,7 +76,7 @@ namespace Application.Features.CartItemFeat.Queries
                     })
                     .ToList();
                 
-                // ✅ Convert cart items to DTOs
+                //  Convert cart items to DTOs
                 var cartItemDTOs = cartItems.Select(c => new CartItemWithPromoDTO
                 {
                     Id = c.Id,

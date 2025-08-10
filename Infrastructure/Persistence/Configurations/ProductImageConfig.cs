@@ -30,7 +30,7 @@ namespace Infrastructure.Persistence.Configurations
                    .HasForeignKey(pi => pi.ProductId)
                    .OnDelete(DeleteBehavior.Cascade);
 
-            // ✅ PostgreSQL-compatible filtered unique index
+            //  PostgreSQL-compatible filtered unique index
             builder.HasIndex(pi => new { pi.ProductId, pi.IsMain })
                    .IsUnique()
                    .HasFilter("\"IsMain\" = TRUE"); // ← PostgreSQL uses double-quotes for identifiers

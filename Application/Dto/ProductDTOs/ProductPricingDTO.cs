@@ -51,7 +51,7 @@ namespace Application.Dto.ProductDTOs
         
          public bool HasFreeShipping { get; set; }
 
-        // ✅ METADATA
+        //  METADATA
         public bool IsPriceStable { get; set; }
         public DateTime CalculatedAt { get; set; }
                

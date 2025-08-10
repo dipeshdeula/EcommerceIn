@@ -19,20 +19,20 @@ public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions
     public const string DefaultUserName = "Test User";
 
     public TestAuthHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
-        ILoggerFactory logger, UrlEncoder encoder) // ✅ Fixed: Removed ISystemClock (deprecated in .NET 8)
+        ILoggerFactory logger, UrlEncoder encoder) //  Fixed: Removed ISystemClock (deprecated in .NET 8)
         : base(options, logger, encoder)
     {
     }
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        // ✅ Check if authentication should be bypassed
+        //  Check if authentication should be bypassed
         if (Context.Request.Headers.ContainsKey("X-Skip-Auth"))
         {
             return Task.FromResult(AuthenticateResult.NoResult());
         }
 
-        // ✅ Create test claims with realistic data
+        //  Create test claims with realistic data
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, DefaultUserId),

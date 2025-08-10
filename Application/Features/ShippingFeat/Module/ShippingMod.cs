@@ -23,7 +23,7 @@ namespace Application.Features.ShippingFeat.Module
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
             // Customer endpoints
-            app.MapPost("/calculate", async (
+            /*app.MapPost("/calculate", async (
                 [FromBody] CalculateShippingCommand command,
                 [FromServices] ISender mediator) =>
             {
@@ -38,7 +38,7 @@ namespace Application.Features.ShippingFeat.Module
             .WithSummary("Calculate shipping cost for order")
             .WithDescription("Calculate shipping cost based on order total and delivery location")
             .Produces<ShippingCalculationDetailDTO>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status400BadRequest);
+            .Produces(StatusCodes.Status400BadRequest);*/
 
             app.MapGet("/info", async ([FromServices] ISender mediator) =>
             {

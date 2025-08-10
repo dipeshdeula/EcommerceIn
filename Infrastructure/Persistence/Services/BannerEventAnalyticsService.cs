@@ -71,12 +71,12 @@ namespace Infrastructure.Persistence.Services
             {
                 var usages = await _unitOfWork.EventUsages.GetAllAsync(
                     predicate: u => u.BannerEventId == eventId && !u.IsDeleted,
-                    includeProperties: "BannerEvent", // ✅ Include BannerEvent for event name
+                    includeProperties: "BannerEvent", //  Include BannerEvent for event name
                     cancellationToken: cancellationToken);
 
                 if (!usages.Any())
                 {
-                    // ✅ Get event name even when no usages exist
+                    //  Get event name even when no usages exist
                     var bannerEvent = await _unitOfWork.BannerEventSpecials.GetByIdAsync(eventId, cancellationToken);
                     
                     return Result<EventUsageStatisticsDTO>.Success(new EventUsageStatisticsDTO
@@ -172,12 +172,12 @@ namespace Infrastructure.Persistence.Services
             }
         }
 
-        // ✅ MISSING METHOD: Calculate performance score
+        //  MISSING METHOD: Calculate performance score
         private decimal CalculatePerformanceScore(int totalUsages, decimal totalDiscount)
         {
             try
             {
-                // ✅ Performance score formula:
+                //  Performance score formula:
                 // - Usage frequency (40% weight)
                 // - Discount efficiency (30% weight) 
                 // - User engagement (30% weight)
@@ -186,7 +186,7 @@ namespace Infrastructure.Persistence.Services
                 var discountScore = Math.Min((totalDiscount / Math.Max(totalUsages, 1)) * 0.01m, 5); // Efficiency score
                 var baseScore = usageScore + discountScore;
                 
-                // ✅ Bonus for high activity
+                //  Bonus for high activity
                 if (totalUsages > 50) baseScore += 2;
                 if (totalUsages > 100) baseScore += 3;
                 

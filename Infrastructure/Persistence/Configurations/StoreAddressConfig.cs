@@ -23,7 +23,7 @@ namespace Infrastructure.Persistence.Configurations
 
             builder.HasOne(sa => sa.Store)
                 .WithOne(s => s.Address)
-                .HasForeignKey<StoreAddress>(sa => sa.StoreId) // ✅ Fix: specify target entity type
+                .HasForeignKey<StoreAddress>(sa => sa.StoreId) //  Fix: specify target entity type
                 .OnDelete(DeleteBehavior.Cascade); // Optional: cascade delete if store is deleted
         }
     }

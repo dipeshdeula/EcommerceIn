@@ -73,23 +73,23 @@ namespace Application.Dto.ProductDTOs
         public bool IsPriceStable1 { get; set; } = true; // for compatibility
         public bool IsValidForCart => IsStockAvailable && CanReserveStock && IsPriceStable;
 
-        // ✅ NEW: CART QUANTITY TRACKING PROPERTIES
+        //  NEW: CART QUANTITY TRACKING PROPERTIES
         public int RequestedQuantity { get; set; } = 1;           // Quantity user wants to add
         public int EventEligibleQuantity { get; set; } = 0;      // Items that get event discount
         public int RegularPriceQuantity { get; set; } = 0;       // Items at regular price
 
-        // ✅ NEW: EVENT USAGE TRACKING PROPERTIES 
+        //  NEW: EVENT USAGE TRACKING PROPERTIES 
         public int UserEventUsageCount { get; set; } = 0;        // How many times user used this event for this product
         public int MaxEventUsagePerUser { get; set; } = 0;       // Maximum allowed uses per user per product
         public int RemainingEventUsage { get; set; } = 0;        // Remaining uses for this product
         public bool CanUseEvent { get; set; } = true;            // Can user still use event for this product
         public bool EventLimitReached { get; set; } = false;     // Has user reached event limit for this product
 
-        // ✅ NEW: ENHANCED EVENT STATUS PROPERTIES
+        //  NEW: ENHANCED EVENT STATUS PROPERTIES
         public string EventUsageStatus => RemainingEventUsage > 0 ? $"{RemainingEventUsage} uses remaining" : "Usage limit reached";
         public string EventUsageWarning => RemainingEventUsage <= 1 && RemainingEventUsage > 0 ? "Last use available" : string.Empty;
 
-        // ✅ NEW: CART PRICING BREAKDOWN PROPERTIES
+        //  NEW: CART PRICING BREAKDOWN PROPERTIES
         public decimal EventPortionTotal => EventEligibleQuantity > 0 && EventDiscountAmount > 0 ? 
             (EffectivePrice / RequestedQuantity) * EventEligibleQuantity : 0;
         
@@ -135,7 +135,7 @@ namespace Application.Dto.ProductDTOs
             return this;
         }
 
-        // ✅ NEW: Cart quantity breakdown method
+        //  NEW: Cart quantity breakdown method
         public ProductPriceInfoDTO WithQuantityBreakdown(int requestedQty, int eventEligibleQty, int regularQty)
         {
             RequestedQuantity = requestedQty;
@@ -144,7 +144,7 @@ namespace Application.Dto.ProductDTOs
             return this;
         }
 
-        // ✅ NEW: Event usage breakdown method
+        //  NEW: Event usage breakdown method
         public ProductPriceInfoDTO WithEventUsage(int currentUsage, int maxUsage, int remaining, bool canUse = true)
         {
             UserEventUsageCount = currentUsage;
@@ -172,7 +172,7 @@ namespace Application.Dto.ProductDTOs
             return $"Save Rs.{TotalDiscountAmount:F2}{breakdown}";
         }
 
-        // ✅ ENHANCED: Smart savings formatter for cart scenarios
+        //  ENHANCED: Smart savings formatter for cart scenarios
         public string GetFormattedCartSavings()
         {
             if (!HasDiscount) return string.Empty;
@@ -222,7 +222,7 @@ namespace Application.Dto.ProductDTOs
             };
         }
 
-        // ✅ ENHANCED: Cart breakdown for complex scenarios
+        //  ENHANCED: Cart breakdown for complex scenarios
         public CartPriceBreakdown GetCartPriceBreakdown()
         {
             return new CartPriceBreakdown
@@ -260,7 +260,7 @@ namespace Application.Dto.ProductDTOs
             if (maxAcceptablePrice.HasValue && EffectivePrice > maxAcceptablePrice.Value)
                 errors.Add($"Price exceeds maximum acceptable amount. Current: Rs.{EffectivePrice:F2}, Max: Rs.{maxAcceptablePrice:F2}");
 
-            // ✅ NEW: Event usage validation
+            //  NEW: Event usage validation
             if (HasActiveEvent && EventLimitReached && requestedQuantity > RemainingEventUsage)
             {
                 if (RemainingEventUsage > 0)
@@ -297,7 +297,7 @@ namespace Application.Dto.ProductDTOs
         public string FormattedBreakdown { get; set; } = string.Empty;
     }
 
-    // ✅ NEW: Cart-specific price breakdown
+    //  NEW: Cart-specific price breakdown
     public class CartPriceBreakdown
     {
         public int RequestedQuantity { get; set; }
@@ -322,7 +322,7 @@ namespace Application.Dto.ProductDTOs
         public bool CanProceed { get; set; }
         public string ErrorMessage => string.Join("; ", Errors);
 
-        // ✅ NEW: Cart-specific validation properties
+        //  NEW: Cart-specific validation properties
         public int EventEligibleQuantity { get; set; }
         public int RegularPriceQuantity { get; set; }
     }

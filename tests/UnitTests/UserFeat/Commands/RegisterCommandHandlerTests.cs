@@ -18,7 +18,7 @@ public class RegisterCommandHandlerTests
     private readonly Mock<IFileServices> _mockFileServices;
     private readonly Mock<IEmailService> _mockEmailService;
     private readonly Mock<IConfiguration> _mockConfiguration;
-    private readonly Mock<IOtpService> _mockOtpService; // ✅ Mock interface
+    private readonly Mock<IOtpService> _mockOtpService; //  Mock interface
     private readonly RegisterCommandHandler _handler;
     private readonly Fixture _fixture;
 
@@ -28,14 +28,14 @@ public class RegisterCommandHandlerTests
         _mockFileServices = new Mock<IFileServices>();
         _mockEmailService = new Mock<IEmailService>();
         _mockConfiguration = new Mock<IConfiguration>();
-        _mockOtpService = new Mock<IOtpService>(); // ✅ Mock interface
+        _mockOtpService = new Mock<IOtpService>(); //  Mock interface
 
         _handler = new RegisterCommandHandler(
             _mockUserRepository.Object,
             _mockFileServices.Object,
             _mockEmailService.Object,
             _mockConfiguration.Object,
-            _mockOtpService.Object // ✅ This will work now
+            _mockOtpService.Object //  This will work now
         );
 
         _fixture = new Fixture();
@@ -63,7 +63,7 @@ public class RegisterCommandHandlerTests
 
         _mockOtpService
             .Setup(x => x.GenerateOtp(registerDto.Email))
-            .Returns(generatedOtp); // ✅ This works now!
+            .Returns(generatedOtp); //  This works now!
 
         _mockEmailService
             .Setup(x => x.SendEmailAsync(
@@ -82,7 +82,7 @@ public class RegisterCommandHandlerTests
 
         // Verify interactions
         _mockUserRepository.Verify(x => x.GetByEmailAsync(registerDto.Email), Times.Once);
-        _mockOtpService.Verify(x => x.GenerateOtp(registerDto.Email), Times.Once); // ✅ Works!
+        _mockOtpService.Verify(x => x.GenerateOtp(registerDto.Email), Times.Once); //  Works!
         _mockEmailService.Verify(x => x.SendEmailAsync(
             registerDto.Email,
             "Account Verification",
@@ -93,7 +93,7 @@ public class RegisterCommandHandlerTests
                 u.Name == registerDto.Name &&
                 u.Email == registerDto.Email &&
                 u.Contact == registerDto.Contact),
-            registerDto.Password), Times.Once); // ✅ Works!
+            registerDto.Password), Times.Once); //  Works!
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public class RegisterCommandHandlerTests
         result.Message.Should().Be("User already exists");
 
         // Verify no OTP operations for existing users
-        _mockOtpService.Verify(x => x.GenerateOtp(It.IsAny<string>()), Times.Never); // ✅ Works!
+        _mockOtpService.Verify(x => x.GenerateOtp(It.IsAny<string>()), Times.Never); //  Works!
         _mockEmailService.Verify(x => x.SendEmailAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
@@ -152,7 +152,7 @@ public class RegisterCommandHandlerTests
 
         _mockOtpService
             .Setup(x => x.GenerateOtp(registerDto.Email))
-            .Returns(generatedOtp); // ✅ Works!
+            .Returns(generatedOtp); //  Works!
 
         _mockEmailService
             .Setup(x => x.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))

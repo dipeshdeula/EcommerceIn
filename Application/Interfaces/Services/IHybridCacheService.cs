@@ -10,6 +10,8 @@ namespace Application.Interfaces.Services
         Task SetAsync<T>(string key, T value, string cacheType, CancellationToken cancellationToken = default);
         Task RemoveAsync(string key, CancellationToken cancellationToken = default);
         Task RemoveByPatternAsync(string pattern, CancellationToken cancellationToken = default);
+        Task RemoveBulkAsync(IEnumerable<string> keys, CancellationToken cancellationToken = default);
+
 
         Task<Dictionary<int, ProductDTO?>> GetProductsBulkAsync(List<int> productIds, CancellationToken cancellationToken = default);
         Task SetProductsBulkAsync(Dictionary<int, ProductDTO> products, CancellationToken cancellationToken = default);

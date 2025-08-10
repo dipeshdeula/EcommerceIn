@@ -12,10 +12,15 @@ namespace Infrastructure.Persistence.Configurations
 
             builder.HasKey(c => c.Id);
 
-            // ✅ PRICING COLUMNS
+            builder.Property(c => c.ShippingId).IsRequired(false);
+
+            builder.Property(c => c.ShippingCost)
+            .HasColumnType("decimal(18,2)").HasDefaultValue(0m).IsRequired();
+
+            //  PRICING COLUMNS
             builder.Property(c => c.OriginalPrice)
                 .HasColumnType("decimal(18,2)")
-                .HasDefaultValue(0);
+                .HasDefaultValue(0m).IsRequired();
 
             builder.Property(c => c.ReservedPrice)
                 .HasColumnType("decimal(18,2)");
@@ -24,21 +29,21 @@ namespace Infrastructure.Persistence.Configurations
                 .HasColumnType("decimal(18,2)")
                 .HasDefaultValue(0);
 
-            // ✅ EVENT INTEGRATION
+            //  EVENT INTEGRATION
             builder.Property(c => c.EventDiscountAmount)
                 .HasColumnType("decimal(18,2)");
 
             builder.Property(c => c.EventDiscountPercentage)
                 .HasColumnType("decimal(5,2)");
 
-            // ✅ PROMO CODE INTEGRATION
+            //  PROMO CODE INTEGRATION
             builder.Property(c => c.PromoCodeDiscountAmount)
                 .HasColumnType("decimal(18,2)");
 
             builder.Property(c => c.AppliedPromoCode)
                 .HasMaxLength(50);
 
-            // ✅ TIMESTAMPS
+            //  TIMESTAMPS
             builder.Property(c => c.CreatedAt)
                 .HasColumnType("timestamp with time zone")
                 .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
@@ -52,18 +57,18 @@ namespace Infrastructure.Persistence.Configurations
             builder.Property(c => c.ExpiresAt)
                 .HasColumnType("timestamp with time zone");
 
-            // ✅ FLAGS
+            //  FLAGS
             builder.Property(c => c.IsDeleted)
                 .HasDefaultValue(false);
 
             builder.Property(c => c.IsStockReserved)
                 .HasDefaultValue(false);
 
-            // ✅ RESERVATION
+            //  RESERVATION
             builder.Property(c => c.ReservationToken)
                 .HasMaxLength(100);
 
-            // ✅ RELATIONSHIPS
+            //  RELATIONSHIPS
             builder.HasOne(c => c.User)
                 .WithMany()
                 .HasForeignKey(c => c.UserId)
@@ -79,13 +84,19 @@ namespace Infrastructure.Persistence.Configurations
                 .HasForeignKey(c => c.AppliedEventId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // ✅ PROMO CODE RELATIONSHIP
+            //  PROMO CODE RELATIONSHIP
             builder.HasOne(c => c.AppliedPromoCode_Navigation)
                 .WithMany()
                 .HasForeignKey(c => c.AppliedPromoCodeId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // ✅ INDEXES for performance
+             builder.HasOne(c => c.Shipping)
+                .WithMany()
+                .HasForeignKey(c => c.ShippingId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .IsRequired(false);
+
+            //  INDEXES for performance
             builder.HasIndex(ci => ci.ExpiresAt)
                 .HasDatabaseName("IX_CartItems_ExpiresAt");
 
@@ -97,6 +108,9 @@ namespace Infrastructure.Persistence.Configurations
 
             builder.HasIndex(ci => ci.AppliedEventId)
                 .HasDatabaseName("IX_CartItems_AppliedEventId");
+
+            builder.HasIndex(ci => ci.ShippingId)
+                .HasDatabaseName("IX_CartItems_ShippingId");
 
             builder.HasIndex(ci => new { ci.UserId, ci.ProductId, ci.IsDeleted })
                 .HasDatabaseName("IX_CartItems_UserId_ProductId_IsDeleted");

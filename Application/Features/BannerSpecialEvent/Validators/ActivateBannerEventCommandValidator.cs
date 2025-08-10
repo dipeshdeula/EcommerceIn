@@ -12,46 +12,46 @@ namespace Application.Features.BannerSpecialEvent.Commands
         {
             _unitOfWork = unitOfWork;
 
-            // ✅ Basic validation
+            //  Basic validation
             RuleFor(x => x.BannerEventId)
                 .GreaterThan(0)
                 .WithMessage("Banner event ID must be greater than 0")
                 .MustAsync(EventExists)
                 .WithMessage("Banner event does not exist or has been deleted");
 
-            // ✅ Activation validation
+            //  Activation validation
             RuleFor(x => x)
                 .MustAsync(EventCanBeActivated)
                 .When(x => x.IsActive)
                 .WithMessage("Event cannot be activated. Check date range, usage limits, and current status.");
 
-            // ✅ Deactivation validation  
+            //  Deactivation validation  
             RuleFor(x => x)
                 .MustAsync(EventCanBeDeactivated)
                 .When(x => !x.IsActive)
                 .WithMessage("Event cannot be deactivated. Event is not currently active.");
 
-            // ✅ Conflict validation for activation
+            //  Conflict validation for activation
             RuleFor(x => x)
                 .MustAsync(NoConflictingHigherPriorityEvents)
                 .When(x => x.IsActive)
                 .WithMessage("Cannot activate event due to conflicting higher priority events");
 
-            // ✅ Product validation for activation
+            //  Product validation for activation
             RuleFor(x => x)
                 .MustAsync(HasValidProducts)
                 .When(x => x.IsActive)
                 .WithMessage("Event has no valid/active products associated with it");
         }
 
-        // ✅ Check if event exists and is not deleted
+        //  Check if event exists and is not deleted
         private async Task<bool> EventExists(int eventId, CancellationToken cancellationToken)
         {
             var bannerEvent = await _unitOfWork.BannerEventSpecials.FindByIdAsync(eventId);
             return bannerEvent != null && !bannerEvent.IsDeleted;
         }
 
-        // ✅ Comprehensive activation validation
+        //  Comprehensive activation validation
         private async Task<bool> EventCanBeActivated(ActivateBannerEventCommand command, CancellationToken cancellationToken)
         {
             var bannerEvent = await _unitOfWork.BannerEventSpecials.FindByIdAsync(command.BannerEventId);
@@ -82,7 +82,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
             return true;
         }
 
-        // ✅ Deactivation validation
+        //  Deactivation validation
         private async Task<bool> EventCanBeDeactivated(ActivateBannerEventCommand command, CancellationToken cancellationToken)
         {
             var bannerEvent = await _unitOfWork.BannerEventSpecials.FindByIdAsync(command.BannerEventId);
@@ -96,7 +96,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
             return true;
         }
 
-        // ✅ Check for conflicting higher priority events
+        //  Check for conflicting higher priority events
         private async Task<bool> NoConflictingHigherPriorityEvents(ActivateBannerEventCommand command, CancellationToken cancellationToken)
         {
             var bannerEvent = await _unitOfWork.BannerEventSpecials.FindByIdAsync(command.BannerEventId);
@@ -117,7 +117,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
             return !conflictingEvents.Any();
         }
 
-        // ✅ Check if event has valid products
+        //  Check if event has valid products
         private async Task<bool> HasValidProducts(ActivateBannerEventCommand command, CancellationToken cancellationToken)
         {
             var eventProducts = await _unitOfWork.EventProducts.GetAllAsync(

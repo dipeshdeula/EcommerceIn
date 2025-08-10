@@ -106,12 +106,12 @@ namespace Infrastructure.Persistence.Services
 
                     if (isWithinServiceArea)
                     {
-                        response.Message = $"📍 GPS Location: You're in {serviceArea.CityName}! Orders and delivery available.";
+                        response.Message = $" GPS Location: You're in {serviceArea.CityName}! Orders and delivery available.";
                         response.MessageType = "success";
                     }
                     else
                     {
-                        response.Message = $"📍 GPS Location: You're {distanceFromCenter:F1}km from {serviceArea.CityName}. Outside delivery area.";
+                        response.Message = $" GPS Location: You're {distanceFromCenter:F1}km from {serviceArea.CityName}. Outside delivery area.";
                         response.MessageType = "warning";
                         response.IsComingSoon = true;
                         response.ComingSoonMessage = $"We're expanding to your area soon! Currently serving within {serviceArea.RadiusKm}km of {serviceArea.CityName}.";
@@ -137,7 +137,7 @@ namespace Infrastructure.Persistence.Services
                         CityName = detectedCity,
                         ServiceAreaName = "",
                         DistanceFromCenterKm = 0,
-                        Message = $"📍 GPS Location: {detectedCity}. Service not available in your area yet.",
+                        Message = $" GPS Location: {detectedCity}. Service not available in your area yet.",
                         MessageType = "info",
                         LocationSource = "GPS",
                         IsIPBasedLocation = false,

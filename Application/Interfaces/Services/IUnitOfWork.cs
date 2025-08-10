@@ -35,6 +35,7 @@ namespace Application.Interfaces.Services
         IBillingItemRepository BillingItems { get; }
         IServiceAreaRepository ServiceAreas { get; }
         IPromoCodeRepository PromoCodes { get; }
+        IPromocodeUsageRepository PromoCodeUsages { get; }
    
 
         // Transaction management

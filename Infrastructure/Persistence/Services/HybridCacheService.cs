@@ -27,7 +27,7 @@ namespace Infrastructure.Persistence.Services
         private readonly HybridCacheOptions _options;
         private readonly ILogger<HybridCacheService> _logger;
 
-        // ✅ PERFORMANCE METRICS
+        //  PERFORMANCE METRICS
         private readonly ConcurrentDictionary<string, CacheMetrics> _metrics = new();
         private readonly Timer _metricsTimer;
 
@@ -45,13 +45,13 @@ namespace Infrastructure.Persistence.Services
             _options = options.Value;
             _logger = logger;
 
-            // ✅ SETUP METRICS LOGGING
+            //  SETUP METRICS LOGGING
             _metricsTimer = new Timer(LogMetrics, null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
 
             _logger.LogInformation("🚀 HybridCacheService initialized with Redis Cloud connection");
         }
 
-        // ✅ CORE GET METHOD - L1 → L2 → MISS Strategy
+        //  CORE GET METHOD - L1 → L2 → MISS Strategy
         public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
         {
             var stopwatch = Stopwatch.StartNew();
@@ -74,7 +74,7 @@ namespace Infrastructure.Persistence.Services
                 {
                     var deserializedValue = JsonConvert.DeserializeObject<T>(redisValue, _options.JsonSettings);
 
-                    // 🔄 BACKFILL L1 CACHE
+                    //  BACKFILL L1 CACHE
                     var memoryCacheOptions = new MemoryCacheEntryOptions
                     {
                         AbsoluteExpirationRelativeToNow = _options.L1CacheExpiry,
@@ -104,7 +104,7 @@ namespace Infrastructure.Persistence.Services
             }
         }
 
-        // ✅ NEW: BULK GET - Single network call for multiple keys
+        //  NEW: BULK GET - Single network call for multiple keys
         public async Task<Dictionary<string, T?>> GetBulkAsync<T>(IEnumerable<string> keys, CancellationToken cancellationToken = default)
         {
             var keysList = keys.ToList();
@@ -118,7 +118,7 @@ namespace Infrastructure.Persistence.Services
             {
                 _logger.LogInformation("CACHE REQUEST: Type={Type}, Keys=[{keys}]", cacheType, string.Join(",", keysList));
 
-                // ✅ STEP 1: Check L1 cache (memory) for all keys
+                //  STEP 1: Check L1 cache (memory) for all keys
                 var l1Hits = new List<string>();
                 var l1Misses = new List<string>();
 
@@ -140,10 +140,10 @@ namespace Infrastructure.Persistence.Services
                 _logger.LogInformation("🎯 L1 SUMMARY: {Hits}/{Total} hits, Missed=[{Misses}]", 
                 l1Hits.Count, keysList.Count, string.Join(", ", l1Misses));
 
-                // ✅ STEP 2: Bulk fetch from Redis for L1 misses
+                //  STEP 2: Bulk fetch from Redis for L1 misses
                 if (l1Misses.Any())
                 {
-                     _logger.LogInformation("🔍 REDIS LOOKUP: Checking {Count} keys: [{Keys}]", 
+                     _logger.LogInformation(" REDIS LOOKUP: Checking {Count} keys: [{Keys}]", 
                     l1Misses.Count, string.Join(", ", l1Misses));
 
                     // Use Redis MGET for bulk retrieval
@@ -170,7 +170,7 @@ namespace Infrastructure.Persistence.Services
                                 results[key] = deserializedValue;
                                 l2Hits.Add(key);
 
-                                // ✅ Backfill L1 cache asynchronously
+                                //  Backfill L1 cache asynchronously
                                 var memoryCacheOptions = new MemoryCacheEntryOptions
                                 {
                                     AbsoluteExpirationRelativeToNow = _options.L1CacheExpiry,
@@ -211,7 +211,7 @@ namespace Infrastructure.Persistence.Services
 
                 RecordBulkCacheOperation(cacheType, keysList.Count, totalHits, stopwatch.ElapsedMilliseconds);
                 
-                _logger.LogInformation("✅ CACHE RESULT: {Keys} keys, {HitRate:F1}% hit rate in {ElapsedMs}ms", 
+                _logger.LogInformation(" CACHE RESULT: {Keys} keys, {HitRate:F1}% hit rate in {ElapsedMs}ms", 
                 keysList.Count, hitRate, stopwatch.ElapsedMilliseconds);
 
                 return results;
@@ -226,7 +226,7 @@ namespace Infrastructure.Persistence.Services
             }
         }
 
-        // ✅ CORE SET METHOD - Write-Through Strategy
+        //  CORE SET METHOD - Write-Through Strategy
         public async Task SetAsync<T>(string key, T value, TimeSpan? expiry = null, CancellationToken cancellationToken = default)
         {
             var stopwatch = Stopwatch.StartNew();
@@ -256,7 +256,7 @@ namespace Infrastructure.Persistence.Services
 
                 stopwatch.Stop();
                 RecordCacheWrite(cacheType, stopwatch.ElapsedMilliseconds);
-                _logger.LogDebug("✅ CACHE SET: {Key} (L1+L2) in {ElapsedMs}ms", key, stopwatch.ElapsedMilliseconds);
+                _logger.LogDebug(" CACHE SET: {Key} (L1+L2) in {ElapsedMs}ms", key, stopwatch.ElapsedMilliseconds);
             }
             catch (Exception ex)
             {
@@ -267,7 +267,7 @@ namespace Infrastructure.Persistence.Services
             }
         }
 
-        // ✅ NEW: BULK SET - Single network call for multiple key-value pairs
+        //  NEW: BULK SET - Single network call for multiple key-value pairs
         public async Task SetBulkAsync<T>(Dictionary<string, T> keyValuePairs, TimeSpan? expiry = null, CancellationToken cancellationToken = default)
         {
             if (!keyValuePairs.Any()) return;
@@ -280,7 +280,7 @@ namespace Infrastructure.Persistence.Services
                 var effectiveExpiry = expiry ?? _options.DefaultExpiry;
                 var l1Expiry = TimeSpan.FromMinutes(Math.Min(effectiveExpiry.TotalMinutes, _options.L1CacheExpiry.TotalMinutes));
 
-                // ✅ STEP 1: Prepare data for Redis pipeline
+                //  STEP 1: Prepare data for Redis pipeline
                 var redisBatch = _redisDatabase.CreateBatch();
                 var redisTasks = new List<Task>();
 
@@ -290,7 +290,7 @@ namespace Infrastructure.Persistence.Services
                     {
                         var serializedValue = JsonConvert.SerializeObject(kvp.Value, _options.JsonSettings);
                         
-                        // ✅ L1: Set in memory cache immediately
+                        //  L1: Set in memory cache immediately
                         var memoryCacheOptions = new MemoryCacheEntryOptions
                         {
                             AbsoluteExpirationRelativeToNow = l1Expiry,
@@ -299,7 +299,7 @@ namespace Infrastructure.Persistence.Services
                         };
                         _memoryCache.Set(kvp.Key, kvp.Value, memoryCacheOptions);
 
-                        // ✅ L2: Add to Redis batch
+                        //  L2: Add to Redis batch
                         redisTasks.Add(redisBatch.StringSetAsync(kvp.Key, serializedValue, effectiveExpiry));
                     }
                     catch (JsonException ex)
@@ -308,14 +308,14 @@ namespace Infrastructure.Persistence.Services
                     }
                 }
 
-                // ✅ STEP 2: Execute Redis batch operation
+                //  STEP 2: Execute Redis batch operation
                 redisBatch.Execute();
                 await Task.WhenAll(redisTasks);
 
                 stopwatch.Stop();
                 RecordBulkCacheWrite(cacheType, keyValuePairs.Count, stopwatch.ElapsedMilliseconds);
                 
-                _logger.LogInformation("✅ BULK SET: {Keys} keys (L1+L2) in {ElapsedMs}ms", 
+                _logger.LogInformation(" BULK SET: {Keys} keys (L1+L2) in {ElapsedMs}ms", 
                     keyValuePairs.Count, stopwatch.ElapsedMilliseconds);
             }
             catch (Exception ex)
@@ -327,7 +327,7 @@ namespace Infrastructure.Persistence.Services
             }
         }
 
-        // ✅ CONVENIENCE METHOD - Set with cache type
+        //  CONVENIENCE METHOD - Set with cache type
         public async Task SetAsync<T>(string key, T value, string cacheType, CancellationToken cancellationToken = default)
         {
             var expiry = _options.GetExpiry(cacheType);
@@ -340,7 +340,7 @@ namespace Infrastructure.Persistence.Services
             await SetBulkAsync(keyValuePairs, expiry, cancellationToken);
         }
 
-        // ✅ OPTIMIZED: E-commerce specific bulk methods
+        //  OPTIMIZED: E-commerce specific bulk methods
         public async Task<Dictionary<int, ProductDTO?>> GetProductsBulkAsync(List<int> productIds, CancellationToken cancellationToken = default)
         {
             if (!productIds?.Any() == true) return new Dictionary<int, ProductDTO?>();
@@ -380,7 +380,7 @@ namespace Infrastructure.Persistence.Services
         {
             if (!productIds?.Any() == true) return new Dictionary<int, ProductPriceInfoDTO?>();
 
-            // ✅ USER-SPECIFIC vs GLOBAL PRICING
+            //  USER-SPECIFIC vs GLOBAL PRICING
             var keyPrefix = userId.HasValue ? $"pricing:user:{userId}:product:" : "pricing:global:product:";
             var keys = productIds!.Select(id => $"{keyPrefix}{id}").ToList();
             
@@ -415,7 +415,7 @@ namespace Infrastructure.Persistence.Services
             _logger.LogDebug("💰 PRICING BULK: Cached {Count} pricing records", pricing!.Count);
         }
 
-        // ✅ LEGACY METHODS (for backward compatibility) - Now use bulk operations internally
+        //  LEGACY METHODS (for backward compatibility) - Now use bulk operations internally
         public async Task<List<ProductDTO>> GetProductsAsync(List<int> productIds, CancellationToken cancellationToken = default)
         {
             var bulkResults = await GetProductsBulkAsync(productIds, cancellationToken);
@@ -444,7 +444,7 @@ namespace Infrastructure.Persistence.Services
             await SetPricingBulkAsync(dictionary, userId, cancellationToken);
         }
 
-        // ✅ BULK REMOVE
+        //  BULK REMOVE
         public async Task RemoveBulkAsync(IEnumerable<string> keys, CancellationToken cancellationToken = default)
         {
             var keysList = keys.ToList();
@@ -470,7 +470,7 @@ namespace Infrastructure.Persistence.Services
             }
         }
 
-        // ✅ CACHE INVALIDATION
+        //  CACHE INVALIDATION
         public async Task RemoveAsync(string key, CancellationToken cancellationToken = default)
         {
             await RemoveBulkAsync(new[] { key }, cancellationToken);
@@ -480,19 +480,46 @@ namespace Infrastructure.Persistence.Services
         {
             try
             {
+                _logger.LogDebug(" Searching for keys matching pattern: {Pattern}", pattern);
+                
                 var server = _redis.GetServer(_redis.GetEndPoints().First());
-                var keys = server.Keys(pattern: pattern).ToArray();
+                
+                //  IMPROVED PATTERN MATCHING - Handle wildcards better
+                var searchPattern = pattern.Contains("*") ? pattern : $"*{pattern}*";
+                var keys = server.Keys(pattern: searchPattern, pageSize: 1000).ToArray();
 
                 if (keys.Any())
                 {
-                    await RemoveBulkAsync(keys.Select(k => k.ToString()), cancellationToken);
-                    
-                    _logger.LogInformation("🗑️ CACHE PATTERN REMOVE: {Count} keys matching '{Pattern}'", keys.Length, pattern);
+                    _logger.LogInformation("🗑️ Found {Count} keys matching pattern '{Pattern}': [{Keys}]", 
+                        keys.Length, pattern, string.Join(", ", keys.Take(5).Select(k => k.ToString())));
+
+                    // Remove from L1 cache (memory)
+                    foreach (var key in keys)
+                    {
+                        _memoryCache.Remove(key.ToString());
+                    }
+
+                    // Remove from L2 cache (Redis) in batches
+                    const int batchSize = 100;
+                    for (int i = 0; i < keys.Length; i += batchSize)
+                    {
+                        var batch = keys.Skip(i).Take(batchSize).ToArray();
+                        await _redisDatabase.KeyDeleteAsync(batch);
+                        
+                        _logger.LogDebug("🗑️ Removed batch {BatchNum}: {Count} keys", (i / batchSize) + 1, batch.Length);
+                    }
+
+                    _logger.LogInformation(" Successfully removed {Count} keys matching pattern '{Pattern}'", keys.Length, pattern);
+                }
+                else
+                {
+                    _logger.LogDebug("📭 No keys found matching pattern: {Pattern}", pattern);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "🚨 Cache pattern removal error for pattern {Pattern}: {Error}", pattern, ex.Message);
+                _logger.LogError(ex, "❌ Failed to remove keys by pattern '{Pattern}': {Error}", pattern, ex.Message);
+                throw;
             }
         }
 
@@ -512,7 +539,9 @@ namespace Infrastructure.Persistence.Services
             _logger.LogInformation("🗑️ PRODUCTS INVALIDATED: {Count} products", productIds.Count);
         }
 
-        // ✅ CACHE HEALTH MONITORING
+        
+
+        //  CACHE HEALTH MONITORING
         public async Task<CacheHealthInfo> GetHealthAsync(CancellationToken cancellationToken = default)
         {
             var health = new CacheHealthInfo();
@@ -545,7 +574,7 @@ namespace Infrastructure.Persistence.Services
             {
                 health.IsRedisConnected = false;
                 health.Warnings.Add($"Redis connection error: {ex.Message}");
-                _logger.LogWarning("⚠️ Redis health check failed: {Error}", ex.Message);
+                _logger.LogWarning(" Redis health check failed: {Error}", ex.Message);
             }
 
             // Memory cache health
@@ -560,7 +589,7 @@ namespace Infrastructure.Persistence.Services
             return health;
         }
 
-        // ✅ CACHE WARM-UP for critical data
+        //  CACHE WARM-UP for critical data
         public async Task WarmUpAsync(CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("🔥 Starting cache warm-up...");
@@ -570,7 +599,7 @@ namespace Infrastructure.Persistence.Services
                 // Warm up critical data (implement based on your needs)
                 // This is a placeholder - you'd implement based on your most accessed data
 
-                _logger.LogInformation("✅ Cache warm-up completed");
+                _logger.LogInformation(" Cache warm-up completed");
             }
             catch (Exception ex)
             {
@@ -578,7 +607,7 @@ namespace Infrastructure.Persistence.Services
             }
         }
 
-        // ✅ HELPER METHODS
+        //  HELPER METHODS
         private static long EstimateSize<T>(T? value)
         {
             if (value == null) return 1;

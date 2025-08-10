@@ -228,7 +228,7 @@ namespace Application.Provider
         }
     }
 
-    // ✅ Configuration class (enhanced)
+    //  Configuration class (enhanced)
     public class EsewaConfig
     {
         public string MerchantId { get; }

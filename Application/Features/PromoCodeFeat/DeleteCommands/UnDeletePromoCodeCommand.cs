@@ -39,10 +39,8 @@ namespace Application.Features.PromoCodeFeat.DeleteCommands
             catch (Exception ex)
             {
                 return Result<string>.Failure("error:",ex.Message);
-            }
-            
-
-                
+            }           
+                           
 
         }
     }

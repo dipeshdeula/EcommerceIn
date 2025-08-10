@@ -37,11 +37,13 @@ namespace Infrastructure.Persistence.Services
         private IServiceAreaRepository? _serviceAreas;
         private IShippingRepository? _shippings;
         private IPromoCodeRepository? _promoCodes;
+        private IPromocodeUsageRepository? _promoCodesUsage;
 
         public UnitOfWork(MainDbContext context, ILogger<UnitOfWork> logger)
         {
             _context = context;
             _logger = logger;
+
 
         }
 
@@ -107,6 +109,8 @@ namespace Infrastructure.Persistence.Services
         public IShippingRepository Shippings => _shippings ??= new ShippingRepository(_context);
 
         public IPromoCodeRepository PromoCodes => _promoCodes ??= new PromoCodeRepository(_context);
+
+        public IPromocodeUsageRepository PromoCodeUsages => _promoCodesUsage ??= new PromoCodeUsageRepository(_context);
 
 
        
@@ -183,7 +187,7 @@ namespace Infrastructure.Persistence.Services
             }
         }
 */
-         // ✅ Advanced transaction helpers
+         //  Advanced transaction helpers
          public async Task ExecuteInTransactionAsync(Func<Task> operation)
         {
             var strategy = _context.Database.CreateExecutionStrategy();

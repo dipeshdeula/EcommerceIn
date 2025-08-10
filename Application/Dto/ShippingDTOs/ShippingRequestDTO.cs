@@ -14,6 +14,6 @@ namespace Application.Dto.ShippingDTOs
         public double? DeliveryLongitude { get; set; }
         public bool RequestRushDelivery { get; set; } = false;
         public DateTime? RequestedDeliveryDate { get; set; }
-        public int? PreferredConfigurationId { get; set; } // Override default config
+        public int? PreferredConfigurationId { get; set; } = 1; // Override default config
     }
 }

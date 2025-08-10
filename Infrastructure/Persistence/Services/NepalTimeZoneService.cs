@@ -264,7 +264,7 @@ namespace Infrastructure.Persistence.Services
 
             if (utcEnd < utcStart)
             {
-                _logger.LogWarning("⚠️ Swapping invalid time range: {Start} - {End}", utcStart, utcEnd);
+                _logger.LogWarning(" Swapping invalid time range: {Start} - {End}", utcStart, utcEnd);
                 (utcStart, utcEnd) = (utcEnd, utcStart);
             }
 

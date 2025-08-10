@@ -116,7 +116,7 @@ namespace Application.Extension
                     options.AddPolicy("CanManageProducts", policy =>
                         policy.RequireClaim("Permission", "ManageProducts"));
                         
-                        // ✅ DEBUG: Policy to check any authenticated user
+                        //  DEBUG: Policy to check any authenticated user
                 options.AddPolicy("RequireAuthenticated", policy =>
                     policy.RequireAuthenticatedUser());
                 });

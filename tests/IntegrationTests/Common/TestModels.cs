@@ -9,12 +9,12 @@ namespace IntegrationTests.Common
     /// These are used only for integration testing to match API contracts
     /// </summary>
     
-    // ✅ Command/Query models for testing
+    //  Command/Query models for testing
     public record TestVerifyOtpCommand(string Email, string Otp) : IRequest<Result<string>>;
     public record TestLoginQuery(string Email, string Password) : IRequest<IResult>;
     public record TestVerifyGoogleTokenCommand(string Token) : IRequest<IResult>;
     
-    // ✅ DTO models for testing  
+    //  DTO models for testing  
     public class TestTokenRequestDto
     {
         public string RefreshToken { get; set; } = string.Empty;
@@ -33,7 +33,7 @@ namespace IntegrationTests.Common
         public string Contact { get; set; } = string.Empty;
     }
 
-    // ✅ Response models for testing
+    //  Response models for testing
     public class TestApiResponse<T>
     {
         public string Message { get; set; } = string.Empty;

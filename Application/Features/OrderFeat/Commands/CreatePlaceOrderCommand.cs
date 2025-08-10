@@ -115,7 +115,7 @@ namespace Application.Features.OrderFeat.Commands
                     };
                     orderItems.Add(orderItem);
 
-                    // ✅ Prepare event usage records - one per cart item that had event discount
+                    //  Prepare event usage records - one per cart item that had event discount
                     foreach (var cartItem in groupedItem.Items.Where(ci => ci.AppliedEventId.HasValue && ci.EventDiscountAmount > 0))
                     {
                         var eventUsage = new EventUsage

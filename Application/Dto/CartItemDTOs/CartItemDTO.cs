@@ -1,5 +1,7 @@
 ﻿using Application.Dto.CategoryDTOs;
 using Application.Dto.ProductDTOs;
+using Application.Dto.PromoCodeDTOs;
+using Application.Dto.ShippingDTOs;
 using Application.Dto.UserDTOs;
 
 namespace Application.Dto.CartItemDTOs
@@ -10,6 +12,7 @@ namespace Application.Dto.CartItemDTOs
         public int Id { get; set; }
         public int UserId { get; set; }
         public int ProductId { get; set; }
+        public int ShippingId { get; set; } // New field for shipping details
         public int Quantity { get; set; }
 
         // CART-SPECIFIC PRICING (Locked-in at time of adding) 
@@ -17,6 +20,13 @@ namespace Application.Dto.CartItemDTOs
         public decimal? OriginalPrice { get; set; }
         public decimal? EventDiscountAmount { get; set; }
         public int? AppliedEventId { get; set; }
+
+        // Promo Code
+        public int AppliedPromoCodeId { get; set; }
+        public decimal PromoCodeDiscountAmount { get; set; }
+        public string? AppliedPromoCode { get; set; }
+
+        public decimal ShippingCost { get; set; }
 
         // STOCK RESERVATION 
         public bool IsStockReserved { get; set; }
@@ -31,9 +41,10 @@ namespace Application.Dto.CartItemDTOs
         //  COMPUTED PROPERTIES (Business logic) 
         public bool IsExpired => ExpiresAt <= DateTime.UtcNow;
         public bool IsActive => !IsDeleted && !IsExpired && IsStockReserved;
-        public decimal TotalItemPrice => ReservedPrice * Quantity;
+        public decimal TotalItemPrice => ReservedPrice * Quantity   ;
+        public decimal GrandTotal => TotalItemPrice + ShippingCost;
         public decimal TotalDiscountAmount => (EventDiscountAmount ?? 0) * Quantity;
-        public decimal OriginalTotalPrice => (OriginalPrice ?? ReservedPrice) * Quantity;
+        public decimal OriginalTotalPrice => OriginalPrice ?? ReservedPrice;
 
 
         // DISPLAY PROPERTIES
@@ -41,10 +52,12 @@ namespace Application.Dto.CartItemDTOs
 
         public string FormattedReservedPrice => $"Rs. {ReservedPrice:F2}";
         public string FormattedTotalPrice => $"Rs. {TotalItemPrice:F2}";
+        public string FormattedShippingCost => $"Rs. {ShippingCost:F2}";
+        public string FormattedGrandTotal => $"Rs. {GrandTotal:F2}";
         public string FormattedDiscount => TotalDiscountAmount > 0 ? $"Save Rs. {TotalDiscountAmount:F2}" : string.Empty;
         public decimal TotalSavingsAmount => ((OriginalPrice ?? ReservedPrice) - ReservedPrice) * Quantity;
         public string FormattedEventDiscount => EventDiscountAmount.HasValue && EventDiscountAmount > 0
-          ? $"Event Discount: Rs. {(EventDiscountAmount.Value * Quantity):F2}"
+          ? $"Event Discount: Rs. {EventDiscountAmount.Value * Quantity:F2}"
           : string.Empty;
 
 
@@ -67,5 +80,7 @@ namespace Application.Dto.CartItemDTOs
         public CategoryDTO? Category { get; set; }
         public ProductDTO? Product { get; set; }
         public UserDTO? User { get; set; }
+        public PromoCodeDTO? PromoCodeDTO { get; set; }
+        public ShippingDTO? Shipping { get; set; }
     }
 }

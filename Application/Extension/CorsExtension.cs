@@ -15,7 +15,7 @@ namespace Application.Extension
                            .AllowAnyHeader();
                 });
 
-                // ✅ Specific policy for payment callbacks
+                //  Specific policy for payment callbacks
                 options.AddPolicy("PaymentCallbackPolicy", builder =>
                 {
                     builder.WithOrigins(
@@ -34,7 +34,7 @@ namespace Application.Extension
                     .AllowCredentials();
                 });
 
-                // ✅ Most permissive policy for development
+                //  Most permissive policy for development
                 options.AddPolicy("Development", builder =>
                 {
                     builder.SetIsOriginAllowed(_ => true)

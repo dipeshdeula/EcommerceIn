@@ -1,6 +1,7 @@
 ﻿using Domain.Entities.Common;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,6 +18,9 @@ namespace Domain.Entities
         public decimal OrderTotal { get; set; }
         public decimal ShippingCost { get; set; }
         public decimal DiscountAmount { get; set; }
+
+        [StringLength(100)]
+        public string UsageContext { get; set; } = "Order"; // "Cart", "Order", "Checkout"
        
         public DateTime UsedAt { get; set; }
 

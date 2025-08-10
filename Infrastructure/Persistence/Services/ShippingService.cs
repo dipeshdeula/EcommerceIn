@@ -5,6 +5,7 @@ using Application.Extension;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Domain.Entities;
+using Domain.Enums.BannerEventSpecial;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
@@ -15,6 +16,7 @@ namespace Infrastructure.Persistence.Services
     public class ShippingService : IShippingService
     {
         private readonly IShippingRepository _shippingRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ILocationService _locationService;
         private readonly IDistributedCache _cache;
         private readonly ILogger<ShippingService> _logger;
@@ -23,22 +25,33 @@ namespace Infrastructure.Persistence.Services
             IShippingRepository shippingRepository,
             ILocationService locationService,
             IDistributedCache cache,
+            IUnitOfWork unitOfwork,
             ILogger<ShippingService> logger)
         {
             _shippingRepository = shippingRepository;
             _locationService = locationService;
+            _unitOfWork = unitOfwork;
             _cache = cache;
             _logger = logger;
         }
 
         public async Task<Result<ShippingCalculationDetailDTO>> CalculateShippingAsync(
-            ShippingRequestDTO request, 
+            ShippingRequestDTO request,
             CancellationToken cancellationToken = default)
         {
             try
             {
-                _logger.LogInformation("Calculating shipping for UserId: {UserId}, OrderTotal: ₨{OrderTotal}", 
+                _logger.LogInformation("Calculating shipping for UserId: {UserId}, OrderTotal: ₨{OrderTotal}",
                     request.UserId, request.OrderTotal);
+
+                // check for active free shipping banner event
+                var freeShippingEvent = await CheckActiveFreeShippingBannerEventsAsync(cancellationToken);
+                if (freeShippingEvent != null)
+                {
+
+                    _logger.LogInformation("Free shipping banner event active: {EventName}", freeShippingEvent.Name);
+                    return Result<ShippingCalculationDetailDTO>.Success(CreateFreeShippingEventResult(request.OrderTotal, freeShippingEvent));
+                }
 
                 // Get active configuration
                 var activeConfigResult = await GetActiveConfigurationInternalAsync();
@@ -51,7 +64,7 @@ namespace Infrastructure.Persistence.Services
                 var result = new ShippingCalculationDetailDTO
                 {
                     OrderSubtotal = request.OrderTotal,
-                    IsShippingAvailable = false,
+                    IsShippingAvailable = true,
                     Configuration = new ShippingSummaryDTO
                     {
                         Id = config.Id,
@@ -62,8 +75,8 @@ namespace Infrastructure.Persistence.Services
                 };
 
                 // Validate delivery location if coordinates provided
-                if (config.RequireLocationValidation && 
-                    request.DeliveryLatitude.HasValue && 
+                if (config.RequireLocationValidation &&
+                    request.DeliveryLatitude.HasValue &&
                     request.DeliveryLongitude.HasValue)
                 {
                     var locationValidation = await _locationService.ValidateLocationAsync(new LocationRequestDTO
@@ -73,7 +86,7 @@ namespace Infrastructure.Persistence.Services
                         UserIPLocation = false
                     }, request.UserId, cancellationToken);
 
-                    if (!locationValidation.Succeeded || 
+                    if (!locationValidation.Succeeded ||
                         locationValidation.Data?.IsWithinServiceArea != true)
                     {
                         result.CustomerMessage = "Delivery not available in your area";
@@ -95,8 +108,8 @@ namespace Infrastructure.Persistence.Services
                 if (isFreeShippingPromoActive)
                 {
                     baseShippingCost = 0;
-                    shippingReason = string.IsNullOrEmpty(config.FreeShippingDescription) ? 
-                        "Free shipping promotion active! 🎉" : config.FreeShippingDescription;
+                    shippingReason = string.IsNullOrEmpty(config.FreeShippingDescription) ?
+                        "Free shipping promotion active! " : config.FreeShippingDescription;
                     result.IsFreeShipping = true;
                     result.AppliedPromotions.Add("Free Shipping Event");
                 }
@@ -168,11 +181,11 @@ namespace Infrastructure.Persistence.Services
                 result.DeliveryEstimate = deliveryDays == 1 ? "Next day delivery" : $"Delivery in {deliveryDays} days";
 
                 // Set customer message
-                result.CustomerMessage = string.IsNullOrEmpty(config.CustomerMessage) ? 
+                result.CustomerMessage = string.IsNullOrEmpty(config.CustomerMessage) ?
                     (result.IsFreeShipping ? "🚚 Free shipping applied!" : $"🚚 Shipping: ₨{finalShippingCost}") :
                     config.CustomerMessage;
 
-                _logger.LogInformation("Shipping calculated: ₨{ShippingCost} for order ₨{OrderTotal}", 
+                _logger.LogInformation("Shipping calculated: ₨{ShippingCost} for order ₨{OrderTotal}",
                     finalShippingCost, request.OrderTotal);
 
                 return Result<ShippingCalculationDetailDTO>.Success(result);
@@ -183,12 +196,81 @@ namespace Infrastructure.Persistence.Services
                 return Result<ShippingCalculationDetailDTO>.Failure($"Error calculating shipping: {ex.Message}");
             }
         }
+        
+        /// <summary>
+        ///  CREATE FREE SHIPPING EVENT RESULT
+        /// </summary>
+        private ShippingCalculationDetailDTO CreateFreeShippingEventResult(decimal orderTotal, BannerEventSpecial freeShippingEvent)
+        {
+            return new ShippingCalculationDetailDTO
+            {
+                OrderSubtotal = orderTotal,
+                IsShippingAvailable = true,
+                IsFreeShipping = true,
+                BaseShippingCost = 0,
+                FinalShippingCost = 0,
+                TotalAmount = orderTotal,
+                ShippingReason = $" Free shipping event: {freeShippingEvent.Name}",
+                CustomerMessage = $"🚚 Free shipping applied from {freeShippingEvent.Name}!",
+                AppliedPromotions = new List<string> { $"Free Shipping Event: {freeShippingEvent.Name}" },
+                DeliveryEstimate = "Standard delivery time applies",
+                Configuration = new ShippingSummaryDTO
+                {
+                    Id = 0, // Event-based, not config-based
+                    Name = $"Event: {freeShippingEvent.Name}",
+                    IsFreeShippingActive = true,
+                    FreeShippingDescription = freeShippingEvent.Name
+                }
+            };
+        }
+
+         /// <summary>
+        ///  CHECK FOR ACTIVE FREE SHIPPING BANNER EVENTS
+        /// </summary>
+        private async Task<BannerEventSpecial?> CheckActiveFreeShippingBannerEventsAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+
+
+               
+                var activeEvents = await _unitOfWork.BannerEventSpecials.GetAllAsync(
+                    predicate: e => e.IsActive &&
+                                  !e.IsDeleted &&
+                                  e.StartDate <= DateTime.UtcNow &&
+                                  e.EndDate >= DateTime.UtcNow &&
+                                  e.PromotionType == PromotionType.FreeShipping,                    
+                    cancellationToken: cancellationToken
+                );
+
+                 var result = activeEvents.FirstOrDefault();
+        
+                if (result != null)
+                {
+                    _logger.LogInformation(" Found active free shipping event: {EventName} (Id: {EventId})", 
+                        result.Name, result.Id);
+                }
+                else
+                {
+                    _logger.LogDebug("No active free shipping events found");
+                }
+
+                return result;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking for free shipping banner events");
+                return null;
+            }
+        }
+
 
         public async Task<Result<List<ShippingDTO>>> GetAllsAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                // ✅ Using your existing GetWithIncludesAsync method with proper parameters
+                //  Using your existing GetWithIncludesAsync method with proper parameters
                 var configurations = await _shippingRepository.GetWithIncludesAsync(
                     predicate: s => !s.IsDeleted,
                     orderBy: q => q.OrderByDescending(s => s.IsDefault).ThenBy(s => s.Name),
@@ -210,7 +292,7 @@ namespace Infrastructure.Persistence.Services
         {
             try
             {
-                // ✅ Using your existing GetAsync method properly
+                //  Using your existing GetAsync method properly
                 var configuration = await _shippingRepository.GetAsync(
                     predicate: s => s.Id == Id && !s.IsDeleted,
                     includeProperties: "CreatedByUser,LastModifiedByUser",
@@ -245,8 +327,8 @@ namespace Infrastructure.Persistence.Services
         }
 
         public async Task<Result<ShippingDTO>> CreateAsync(
-            CreateShippingDTO request, 
-            int createdByUserId, 
+            CreateShippingDTO request,
+            int createdByUserId,
             CancellationToken cancellationToken = default)
         {
             try
@@ -254,7 +336,7 @@ namespace Infrastructure.Persistence.Services
                 // If setting as default, deactivate current default
                 if (request.SetAsDefault)
                 {
-                    // ✅ Using your existing GetAllAsync method
+                    //  Using your existing GetAllAsync method
                     var currentDefaults = await _shippingRepository.GetAllAsync(
                         predicate: c => c.IsDefault && c.IsActive && !c.IsDeleted,
                         includeDeleted: false
@@ -295,14 +377,14 @@ namespace Infrastructure.Persistence.Services
                 };
 
                 await _shippingRepository.AddAsync(configuration, cancellationToken);
-                // ✅ Save changes explicitly
+                //  Save changes explicitly
                 await _shippingRepository.SaveChangesAsync(cancellationToken);
 
                 // Clear cache
                 await _cache.RemoveAsync("shipping_config_active");
 
                 var result = configuration.ToShippingDTO();
-                _logger.LogInformation("Created shipping configuration '{ConfigName}' by user {UserId}", 
+                _logger.LogInformation("Created shipping configuration '{ConfigName}' by user {UserId}",
                     request.Name, createdByUserId);
 
                 return Result<ShippingDTO>.Success(result);
@@ -315,9 +397,9 @@ namespace Infrastructure.Persistence.Services
         }
 
         public async Task<Result<ShippingDTO>> UpdateAsync(
-            int Id, 
-            CreateShippingDTO request, 
-            int modifiedByUserId, 
+            int Id,
+            CreateShippingDTO request,
+            int modifiedByUserId,
             CancellationToken cancellationToken = default)
         {
             try
@@ -366,7 +448,7 @@ namespace Infrastructure.Persistence.Services
                 configuration.UpdatedAt = DateTime.UtcNow;
 
                 await _shippingRepository.UpdateAsync(configuration, cancellationToken);
-                // ✅ Save changes explicitly
+                //  Save changes explicitly
                 await _shippingRepository.SaveChangesAsync(cancellationToken);
 
                 // Clear cache
@@ -402,7 +484,7 @@ namespace Infrastructure.Persistence.Services
                     await _shippingRepository.UpdateAsync(config, cancellationToken);
                 }
 
-                // ✅ Save changes explicitly
+                //  Save changes explicitly
                 await _shippingRepository.SaveChangesAsync(cancellationToken);
 
                 // Clear cache
@@ -475,11 +557,11 @@ namespace Infrastructure.Persistence.Services
         }
 
         public async Task<Result<bool>> EnableFreeShippingPromotionAsync(
-            int Id, 
-            DateTime startDate, 
-            DateTime endDate, 
-            string description, 
-            int modifiedByUserId, 
+            int Id,
+            DateTime startDate,
+            DateTime endDate,
+            string description,
+            int modifiedByUserId,
             CancellationToken cancellationToken = default)
         {
             try
@@ -511,8 +593,8 @@ namespace Infrastructure.Persistence.Services
         }
 
         public async Task<Result<bool>> DisableFreeShippingPromotionAsync(
-            int Id, 
-            int modifiedByUserId, 
+            int Id,
+            int modifiedByUserId,
             CancellationToken cancellationToken = default)
         {
             try
@@ -558,7 +640,7 @@ namespace Infrastructure.Persistence.Services
                 }
 
                 var config = activeConfigResult.Data;
-                
+
                 return Result<object>.Success(new
                 {
                     isShippingAvailable = true,
@@ -592,20 +674,20 @@ namespace Infrastructure.Persistence.Services
         {
             try
             {
-                // Try cache first
-                var cacheKey = "shipping_config_active";
-                var cachedConfig = await _cache.GetStringAsync(cacheKey);
-                
-                if (cachedConfig != null)
-                {
-                    var cached = JsonSerializer.Deserialize<Shipping>(cachedConfig);
-                    if (cached != null)
-                    {
-                        return Result<Shipping>.Success(cached);
-                    }
-                }
+                // // Try cache first
+                // var cacheKey = "shipping_config_active";
+                // var cachedConfig = await _cache.GetStringAsync(cacheKey);
 
-                // ✅ Get from database using FirstOrDefaultAsync with proper parameters
+                // if (cachedConfig != null)
+                // {
+                //     var cached = JsonSerializer.Deserialize<Shipping>(cachedConfig);
+                //     if (cached != null)
+                //     {
+                //         return Result<Shipping>.Success(cached);
+                //     }
+                // }
+
+                //  Get from database using FirstOrDefaultAsync with proper parameters
                 var activeConfig = await _shippingRepository.FirstOrDefaultAsync(
                     predicate: c => c.IsActive && c.IsDefault && !c.IsDeleted
                 );
@@ -625,12 +707,12 @@ namespace Infrastructure.Persistence.Services
                     return Result<Shipping>.Failure("No active shipping configuration found");
                 }
 
-                // Cache for 15 minutes
-                var cacheOptions = new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15)
-                };
-                await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(activeConfig), cacheOptions);
+                // // Cache for 15 minutes
+                // var cacheOptions = new DistributedCacheEntryOptions
+                // {
+                //     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15)
+                // };
+                // await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(activeConfig), cacheOptions);
 
                 return Result<Shipping>.Success(activeConfig);
             }
@@ -659,5 +741,8 @@ namespace Infrastructure.Persistence.Services
 
             return nepaliHolidays.Contains(today);
         }
+       
+        
+
     }
 }

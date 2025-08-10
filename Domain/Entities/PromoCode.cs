@@ -63,13 +63,13 @@ namespace Domain.Entities
         
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        // ✅ NAVIGATION PROPERTIES
+        //  NAVIGATION PROPERTIES
         public virtual Category? Category { get; set; }
         public virtual User CreatedByUser { get; set; } = null!;
         public virtual User? LastModifiedByUser { get; set; }
         public virtual ICollection<PromoCodeUsage> PromoCodeUsages { get; set; } = new List<PromoCodeUsage>();
 
-        // ✅ DOMAIN METHODS - Business Logic
+        //  DOMAIN METHODS - Business Logic
         
         /// <summary>
         /// Check if promo code is valid at specific UTC time
@@ -119,6 +119,14 @@ namespace Domain.Entities
             return userUsageCount < MaxUsagePerUser.Value;
         }
         
+         /// <summary>
+        ///  NEW: Get actual user usage count from database
+        /// </summary>
+        public int GetUserUsageCount(int userId)
+        {
+            return PromoCodeUsages.Count(u => u.UserId == userId && !u.IsDeleted);
+        }
+        
         /// <summary>
         /// Get remaining usage count for user
         /// </summary>
@@ -126,7 +134,7 @@ namespace Domain.Entities
         {
             if (!MaxUsagePerUser.HasValue)
                 return null;
-                
+
             var userUsageCount = PromoCodeUsages.Count(u => u.UserId == userId);
             return Math.Max(0, MaxUsagePerUser.Value - userUsageCount);
         }
@@ -211,24 +219,55 @@ namespace Domain.Entities
                 _ => "DISCOUNT APPLIED"
             };
         }
-        
+
         /// <summary>
         /// Record usage of this promo code
         /// </summary>
-        public void RecordUsage(int userId, decimal discountAmount, int? orderId = null)
+        public PromoCodeUsage RecordUsage(int userId, decimal discountAmount, string usageContext = "Cart", int? orderId = null)
         {
-            PromoCodeUsages.Add(new PromoCodeUsage
+            var usage = new PromoCodeUsage
             {
                 PromoCodeId = Id,
                 UserId = userId,
                 DiscountAmount = discountAmount,
                 OrderId = orderId,
-                UsedAt = DateTime.UtcNow
-            });
-            
+                UsageContext = usageContext,
+                UsedAt = DateTime.UtcNow,
+                IsDeleted = false
+            };
+
+            PromoCodeUsages.Add(usage);
+            CurrentUsageCount++;
+            UpdatedAt = DateTime.UtcNow;
+
+            return usage;
+        }
+        /// <summary>
+        ///  NEW: Create usage record without adding to collection (for explicit DB insert)
+        /// </summary>
+        public PromoCodeUsage CreateUsageRecord(int userId, decimal discountAmount, string usageContext = "Cart", int? orderId = null)
+        {
+            return new PromoCodeUsage
+            {
+                PromoCodeId = Id,
+                UserId = userId,
+                DiscountAmount = discountAmount,
+                OrderId = orderId,
+                UsageContext = usageContext,
+                UsedAt = DateTime.UtcNow,
+                IsDeleted = false
+            };
+        }
+
+        /// <summary>
+        ///  NEW: Increment usage count (for database updates)
+        /// </summary>
+        public void IncrementUsageCount()
+        {
             CurrentUsageCount++;
             UpdatedAt = DateTime.UtcNow;
         }
+        
         
         /// <summary>
         /// Validate minimum order amount requirement

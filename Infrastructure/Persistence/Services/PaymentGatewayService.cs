@@ -342,7 +342,7 @@ namespace Infrastructure.Persistence.Services
                 _logger.LogInformation("Initiating payment: PaymentRequestId={PaymentRequestId}, Method={PaymentMethodId}, Amount={Amount}",
                     paymentRequest.Id, paymentRequest.PaymentMethodId, paymentRequest.PaymentAmount);
 
-                // ✅ Get payment method configuration from database
+                //  Get payment method configuration from database
                 var paymentMethod = await GetPaymentMethodAsync(paymentRequest.PaymentMethodId, cancellationToken);
                 if (paymentMethod == null)
                 {
@@ -575,7 +575,7 @@ namespace Infrastructure.Persistence.Services
             paymentRequest.PaymentUrl = response.PaymentUrl;
             paymentRequest.UpdatedAt = DateTime.UtcNow;
 
-            // ✅ Store provider-specific transaction ID based on provider name
+            //  Store provider-specific transaction ID based on provider name
             switch (paymentMethod.ProviderName.ToLower())
             {
                 case "esewa":

@@ -277,7 +277,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
                 await _unitOfWork.EventRules.AddAsync(rule, cancellationToken);
             }
 
-            _logger.LogInformation("✅ Created {Count} event rules", ruleEntities.Count);
+            _logger.LogInformation(" Created {Count} event rules", ruleEntities.Count);
         }
 
         /// <summary>
@@ -316,7 +316,7 @@ namespace Application.Features.BannerSpecialEvent.Commands
                     return inputTimeSlot.Trim();
                 }
 
-                _logger.LogWarning("⚠️ Invalid time slot format provided: {TimeSlot}. Auto-generating from dates.", inputTimeSlot);
+                _logger.LogWarning(" Invalid time slot format provided: {TimeSlot}. Auto-generating from dates.", inputTimeSlot);
             }
 
             // CASE 2: Auto-generate based on YOUR ACTUAL EVENT TYPES

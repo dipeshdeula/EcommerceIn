@@ -9,13 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- ✅ EXPLICIT Entity Framework Core references with correct versions -->
+    <!--  EXPLICIT Entity Framework Core references with correct versions -->
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" Version="8.0.11" />
     
-    <!-- ✅ Testing packages -->
+    <!--  Testing packages -->
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.11" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="xunit" Version="2.4.2" />
@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- ✅ Project references with explicit conditions -->
+    <!--  Project references with explicit conditions -->
     <ProjectReference Include="..\..\Domain\Domain.csproj" />
     <ProjectReference Include="..\..\Application\Application.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Infrastructure.csproj" />
@@ -46,7 +46,7 @@
     </None>
   </ItemGroup>
 
-  <!-- ✅ Add import to ensure EF Core references are properly resolved -->
+  <!--  Add import to ensure EF Core references are properly resolved -->
   <Import Project="..\..\Infrastructure\Infrastructure.csproj.props" Condition="Exists('..\..\Infrastructure\Infrastructure.csproj.props')" />
 
 </Project>

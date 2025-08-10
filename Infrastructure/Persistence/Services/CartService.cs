@@ -97,6 +97,8 @@ namespace Infrastructure.Persistence.Services
                     var createdCartItem = await _unitOfWork.CartItems.AddAsync(cartItem);
                     await _unitOfWork.SaveChangesAsync();
 
+ 
+
                     // 7. Convert to DTO
                     var cartItemDto = createdCartItem.ToDTO();
 

@@ -9,14 +9,14 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Persistence.Configurations
 {
-    public class EventRuleConfig : IEntityTypeConfiguration<EventRule> // ✅ FIX: Use EventRule, not Common.EventRule
+    public class EventRuleConfig : IEntityTypeConfiguration<EventRule> //  FIX: Use EventRule, not Common.EventRule
     {
-        public void Configure(EntityTypeBuilder<EventRule> builder) // ✅ FIX: Remove override
+        public void Configure(EntityTypeBuilder<EventRule> builder) //  FIX: Remove override
         {
             builder.ToTable("EventRules");
             builder.HasKey(er => er.Id);
 
-            // ✅ BUSINESS PROPERTIES
+            //  BUSINESS PROPERTIES
             builder.Property(er => er.TargetValue)
                 .HasMaxLength(500)
                 .IsRequired();
@@ -52,20 +52,20 @@ namespace Infrastructure.Persistence.Configurations
             builder.Property(er => er.Priority)
                 .HasDefaultValue(1);
 
-            // ✅ SIMPLE TRACKING
+            //  SIMPLE TRACKING
             builder.Property(er => er.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             builder.Property(er => er.UpdatedAt)
                 .IsRequired(false);
 
-            // ✅ RELATIONSHIPS
+            //  RELATIONSHIPS
             builder.HasOne(er => er.BannerEvent)
                 .WithMany(be => be.Rules)
                 .HasForeignKey(er => er.BannerEventId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // ✅ INDEXES
+            //  INDEXES
             builder.HasIndex(er => er.BannerEventId)
                  .HasDatabaseName("IX_EventRules_BannerEvent");
             builder.HasIndex(er => er.Type)

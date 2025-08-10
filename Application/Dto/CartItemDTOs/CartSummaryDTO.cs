@@ -15,8 +15,16 @@ namespace Application.Dto.CartItemDTOs
 
         //  PRICING BREAKDOWN
         public decimal SubTotal { get; set; }
+        public decimal TotalShipping { get; set; }
         public decimal TotalDiscount { get; set; }
+        public decimal EventDiscounts { get; set; }
+        public decimal PromoCodeDiscounts { get; set; }
         public decimal EstimatedTotal { get; set; }
+
+        // Shipping Details
+        public bool HasFreeShipping { get; set; }
+        public string ShippingMessage { get; set; } = string.Empty;
+        public List<string> AppliedShippingPromotions { get; set; } = new();
 
         //  CART STATUS 
         public bool CanCheckout { get; set; }
@@ -46,6 +54,11 @@ namespace Application.Dto.CartItemDTOs
         public int DistinctProductCount { get; set; }
         public bool HasEventItems { get; set; }
         public decimal EventSavings { get; set; }
+
+        // Location info
+        public string? DeliveryLocation { get; set; }
+        public bool IsLocationValid { get; set; }
+        public string? LocationMessage { get; set; }
 
         //  DISPLAY PROPERTIES 
         public string FormattedSubTotal => $"Rs. {SubTotal:F2}";
@@ -90,9 +103,9 @@ namespace Application.Dto.CartItemDTOs
             var activeItems = cartItems.Where(c => !c.IsExpired).ToList();
             var expiredItems = cartItems.Where(c => c.IsExpired).ToList();
             
-            var subTotal = activeItems.Sum(c => c.ReservedPrice * c.Quantity);
-            var totalDiscount = activeItems.Sum(c => (c.EventDiscountAmount ?? 0) * c.Quantity);
-            var eventSavings = activeItems.Where(c => c.AppliedEventId.HasValue).Sum(c => (c.EventDiscountAmount ?? 0) * c.Quantity);
+            var subTotal = activeItems.Sum(c => c.ReservedPrice);
+            var totalDiscount = activeItems.Sum(c => (c.EventDiscountAmount ?? 0));
+            var eventSavings = activeItems.Where(c => c.AppliedEventId.HasValue).Sum(c => (c.EventDiscountAmount ?? 0) );
 
             var validationErrors = new List<string>();
             

@@ -5,7 +5,7 @@ namespace Application.Dto.BannerEventSpecialDTOs
 {
     public class RuleEvaluationResultDTO
     {
-        // ✅ Basic validation properties
+        //  Basic validation properties
         [JsonPropertyName("isValid")]
         public bool IsValid { get; set; }
 
@@ -15,14 +15,14 @@ namespace Application.Dto.BannerEventSpecialDTOs
         [JsonPropertyName("messages")]
         public List<string> Messages { get; set; } = new();
 
-        // ✅ Rule evaluation results
+        //  Rule evaluation results
         [JsonPropertyName("appliedRules")]
         public List<AppliedRuleDTO> AppliedRules { get; set; } = new();
 
         [JsonPropertyName("failedRules")]
         public List<FailedRuleDTO> FailedRules { get; set; } = new();
 
-        // ✅ Discount calculation
+        //  Discount calculation
         [JsonPropertyName("calculatedDiscount")]
         public decimal CalculatedDiscount { get; set; }
 
@@ -32,14 +32,14 @@ namespace Application.Dto.BannerEventSpecialDTOs
         [JsonPropertyName("finalDiscount")]
         public decimal FinalDiscount { get; set; }
 
-        // ✅ Performance metrics
+        //  Performance metrics
         [JsonPropertyName("processingTimeMs")]
         public long ProcessingTimeMs { get; set; }
 
         [JsonPropertyName("rulesEvaluated")]
         public int RulesEvaluated { get; set; }
 
-        // ✅ Summary information
+        //  Summary information
         [JsonPropertyName("summaryMessage")]
         public string SummaryMessage => IsEligible ? "All rules passed - Discount applied" : "Some rules failed - No discount";
 
@@ -55,7 +55,7 @@ namespace Application.Dto.BannerEventSpecialDTOs
         };
     }
 
-    // ✅ DTO for successfully applied rules
+    //  DTO for successfully applied rules
     public class AppliedRuleDTO
     {
         [JsonPropertyName("id")]
@@ -89,7 +89,7 @@ namespace Application.Dto.BannerEventSpecialDTOs
         public string RuleDescription { get; set; } = string.Empty;
     }
 
-    // ✅ DTO for failed rules with failure reasons
+    //  DTO for failed rules with failure reasons
     public class FailedRuleDTO
     {
         [JsonPropertyName("id")]

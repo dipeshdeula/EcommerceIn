@@ -209,7 +209,7 @@ namespace Infrastructure.DependencyInjection
                     sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                     onRetry: (outcome, timespan, retryCount, context) =>
                     {
-                        Console.WriteLine($"⚠️ HTTP Retry {retryCount} after {timespan} seconds");
+                        Console.WriteLine($" HTTP Retry {retryCount} after {timespan} seconds");
                     });
         }
     }

@@ -32,7 +32,7 @@ namespace Application.Utilities
         {
             try
             {
-                // ✅ ENHANCED: Use cryptographically secure random
+                //  ENHANCED: Use cryptographically secure random
                 using var rng = RandomNumberGenerator.Create();
                 var bytes = new byte[4];
                 rng.GetBytes(bytes);
@@ -48,7 +48,7 @@ namespace Application.Utilities
                     SlidingExpiration = null // No sliding expiration for OTPs
                 };
 
-                // ✅ Remove old OTP if exists
+                //  Remove old OTP if exists
                 _memoryCache.Remove(email);
                 
                 _memoryCache.Set(email, otp, cacheOptions);
@@ -81,7 +81,7 @@ namespace Application.Utilities
                     
                     if (isValid)
                     {
-                        // ✅ Remove OTP after successful validation (one-time use)
+                        //  Remove OTP after successful validation (one-time use)
                         _memoryCache.Remove(email);
                         _logger.LogInformation("OTP validated successfully for email: {Email}", email);
                     }
@@ -123,7 +123,7 @@ namespace Application.Utilities
                     Priority = CacheItemPriority.High
                 };
 
-                // ✅ Clean up existing entries
+                //  Clean up existing entries
                 RemoveUserInfo(email);
 
                 _memoryCache.Set(email + "_user", user, userCacheOptions);
@@ -190,7 +190,7 @@ namespace Application.Utilities
             }
         }
 
-        // ✅ BONUS: Get remaining OTP time
+        //  BONUS: Get remaining OTP time
         public TimeSpan? GetOtpRemainingTime(string email)
         {
             try

@@ -4,7 +4,7 @@ using Domain.Entities;
 namespace Application.Extension
 {
     /// <summary>
-    /// ✅ Application layer extensions for PromoCode with timezone support
+    ///  Application layer extensions for PromoCode with timezone support
     /// </summary>
     public static class PromoCodeExtensions
     {

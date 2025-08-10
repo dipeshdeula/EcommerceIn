@@ -535,7 +535,7 @@ namespace Infrastructure.Persistence.Repositories
     {
         IQueryable<TEntity> query = _dbContext.Set<TEntity>();
 
-        // ✅ Apply predicate only if not null
+        //  Apply predicate only if not null
         if (predicate != null)
         {
             query = query.Where(predicate);

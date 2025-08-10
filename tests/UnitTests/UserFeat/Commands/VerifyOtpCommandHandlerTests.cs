@@ -13,18 +13,18 @@ namespace UnitTests.UserFeat.Commands;
 public class VerifyOtpCommandHandlerTests
 {
     private readonly Mock<IUserRepository> _mockUserRepository;
-    private readonly Mock<IOtpService> _mockOtpService; // ✅ Mock interface
+    private readonly Mock<IOtpService> _mockOtpService; //  Mock interface
     private readonly VerifyOtpCommandHandler _handler;
     private readonly Fixture _fixture;
 
     public VerifyOtpCommandHandlerTests()
     {
         _mockUserRepository = new Mock<IUserRepository>();
-        _mockOtpService = new Mock<IOtpService>(); // ✅ Mock interface
+        _mockOtpService = new Mock<IOtpService>(); //  Mock interface
 
         _handler = new VerifyOtpCommandHandler(
             _mockUserRepository.Object,
-            _mockOtpService.Object // ✅ Works now
+            _mockOtpService.Object //  Works now
         );
 
         _fixture = new Fixture();
@@ -50,11 +50,11 @@ public class VerifyOtpCommandHandlerTests
 
         _mockOtpService
             .Setup(x => x.ValidateOtp(email, otp))
-            .Returns(true); // ✅ Works now!
+            .Returns(true); //  Works now!
 
         _mockOtpService
             .Setup(x => x.GetUserInfo(email))
-            .Returns((storedUser, storedPassword)); // ✅ Works now!
+            .Returns((storedUser, storedPassword)); //  Works now!
 
         _mockUserRepository
             .Setup(x => x.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
@@ -68,8 +68,8 @@ public class VerifyOtpCommandHandlerTests
         result.Succeeded.Should().BeTrue();
         result.Message.Should().Be("OTP verified successfully. Account has been created.");
 
-        _mockOtpService.Verify(x => x.ValidateOtp(email, otp), Times.Once); // ✅ Works!
-        _mockOtpService.Verify(x => x.GetUserInfo(email), Times.Once); // ✅ Works!
+        _mockOtpService.Verify(x => x.ValidateOtp(email, otp), Times.Once); //  Works!
+        _mockOtpService.Verify(x => x.GetUserInfo(email), Times.Once); //  Works!
         _mockUserRepository.Verify(x => x.AddAsync(
             It.Is<User>(u => u.Email == email),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -85,7 +85,7 @@ public class VerifyOtpCommandHandlerTests
 
         _mockOtpService
             .Setup(x => x.ValidateOtp(email, otp))
-            .Returns(false); // ✅ Works now!
+            .Returns(false); //  Works now!
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -95,7 +95,7 @@ public class VerifyOtpCommandHandlerTests
         result.Succeeded.Should().BeFalse();
         result.Message.Should().Be("Invalid or expired OTP.");
 
-        _mockOtpService.Verify(x => x.ValidateOtp(email, otp), Times.Once); // ✅ Works!
+        _mockOtpService.Verify(x => x.ValidateOtp(email, otp), Times.Once); //  Works!
         _mockOtpService.Verify(x => x.GetUserInfo(It.IsAny<string>()), Times.Never);
         _mockUserRepository.Verify(x => x.AddAsync(
             It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -115,7 +115,7 @@ public class VerifyOtpCommandHandlerTests
 
         _mockOtpService
             .Setup(x => x.GetUserInfo(email))
-            .Returns((null, null)); // ✅ No stored user info
+            .Returns((null, null)); //  No stored user info
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);

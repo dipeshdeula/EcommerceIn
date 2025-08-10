@@ -34,7 +34,7 @@ namespace Application.Features.PromoCodeFeat.DeleteCommands
                     return Result<bool>.Failure("Promo code not found");
                 }
 
-                // ✅ SOFT DELETE
+                //  SOFT DELETE
                 promoCode.IsDeleted = true;
                 promoCode.IsActive = false;
                 promoCode.LastModifiedByUserId = request.DeletedByUserId;
@@ -43,7 +43,7 @@ namespace Application.Features.PromoCodeFeat.DeleteCommands
                 await _promoCodeRepository.UpdateAsync(promoCode, cancellationToken);
                 await _promoCodeRepository.SaveChangesAsync(cancellationToken);
 
-                // ✅ CLEAR CACHE
+                //  CLEAR CACHE
                 await _cache.RemoveAsync($"promo_code_{promoCode.Code.ToLower()}");
 
                 _logger.LogInformation("Soft deleted promo code {Id} by user {UserId}", request.Id, request.DeletedByUserId);

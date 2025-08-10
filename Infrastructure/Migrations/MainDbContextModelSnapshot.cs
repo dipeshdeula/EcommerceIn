@@ -353,10 +353,17 @@ namespace Infrastructure.Migrations
                     b.Property<int?>("AppliedEventId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("AppliedPromoCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("AppliedPromoCodeId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC' ");
+                        .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
 
                     b.Property<decimal?>("EventDiscountAmount")
                         .HasColumnType("decimal(18,2)");
@@ -373,25 +380,46 @@ namespace Infrastructure.Migrations
                         .HasDefaultValue(false);
 
                     b.Property<bool>("IsStockReserved")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("LastActivityAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal>("OriginalPrice")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
+
                     b.Property<int>("ProductId")
                         .HasColumnType("integer");
+
+                    b.Property<decimal?>("PromoCodeDiscountAmount")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
                     b.Property<decimal>("RegularDiscountAmount")
-                        .HasColumnType("numeric");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
 
                     b.Property<string>("ReservationToken")
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<decimal>("ReservedPrice")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("ShippingCost")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
+
+                    b.Property<int?>("ShippingId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -401,13 +429,25 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AppliedEventId");
+                    b.HasIndex("AppliedEventId")
+                        .HasDatabaseName("IX_CartItems_AppliedEventId");
 
-                    b.HasIndex("ExpiresAt");
+                    b.HasIndex("AppliedPromoCodeId")
+                        .HasDatabaseName("IX_CartItems_AppliedPromoCodeId");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("IX_CartItems_ExpiresAt");
 
                     b.HasIndex("ProductId");
 
-                    b.HasIndex("UserId", "IsDeleted");
+                    b.HasIndex("ShippingId")
+                        .HasDatabaseName("IX_CartItems_ShippingId");
+
+                    b.HasIndex("UserId", "IsDeleted")
+                        .HasDatabaseName("IX_CartItems_UserId_IsDeleted");
+
+                    b.HasIndex("UserId", "ProductId", "IsDeleted")
+                        .HasDatabaseName("IX_CartItems_UserId_ProductId_IsDeleted");
 
                     b.ToTable("CartItems", (string)null);
                 });
@@ -1240,9 +1280,6 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("ActivatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("AdminNotes")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
@@ -1263,9 +1300,6 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
                     b.Property<int>("CreatedByUserId")
                         .HasColumnType("integer");
 
@@ -1278,11 +1312,7 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<DateTime?>("DeactivatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
@@ -1312,9 +1342,6 @@ namespace Infrastructure.Migrations
                     b.Property<int?>("MaxUsagePerUser")
                         .HasColumnType("integer");
 
-                    b.Property<decimal?>("MinCartValue")
-                        .HasColumnType("numeric");
-
                     b.Property<decimal?>("MinOrderAmount")
                         .HasColumnType("decimal(18,2)");
 
@@ -1336,11 +1363,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(0);
 
-                    b.Property<DateTime?>("UpdatedAt")
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -1378,7 +1402,7 @@ namespace Infrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
-                    b.Property<decimal>("DiscountApplied")
+                    b.Property<decimal>("DiscountAmount")
                         .HasColumnType("numeric");
 
                     b.Property<bool>("IsDeleted")
@@ -1407,6 +1431,11 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("text");
+
+                    b.Property<string>("UsageContext")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime>("UsedAt")
                         .HasColumnType("timestamp with time zone");
@@ -1576,7 +1605,7 @@ namespace Infrastructure.Migrations
                             CenterLongitude = 85.047799999999995,
                             CityName = "Hetauda",
                             Country = "Nepal",
-                            CreatedAt = new DateTime(2025, 8, 8, 10, 52, 5, 347, DateTimeKind.Utc).AddTicks(8277),
+                            CreatedAt = new DateTime(2025, 8, 10, 12, 27, 35, 74, DateTimeKind.Utc).AddTicks(3141),
                             DeliveryEndTime = new TimeSpan(0, 21, 0, 0, 0),
                             DeliveryStartTime = new TimeSpan(0, 9, 0, 0, 0),
                             Description = "Premium delivery service in Hetauda city and surrounding areas",
@@ -1590,7 +1619,7 @@ namespace Infrastructure.Migrations
                             NotAvailableMessage = "Service not available in your area yet. Coming soon to Hetauda!",
                             Province = "Bagmati",
                             RadiusKm = 15.0,
-                            UpdatedAt = new DateTime(2025, 8, 8, 10, 52, 5, 347, DateTimeKind.Utc).AddTicks(8279)
+                            UpdatedAt = new DateTime(2025, 8, 10, 12, 27, 35, 74, DateTimeKind.Utc).AddTicks(3143)
                         });
                 });
 
@@ -1617,7 +1646,9 @@ namespace Infrastructure.Migrations
                         .HasDefaultValue("1,2,3,4,5,6,7");
 
                     b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
 
                     b.Property<int>("CreatedByUserId")
                         .HasColumnType("integer");
@@ -1627,7 +1658,7 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)")
-                        .HasDefaultValue("");
+                        .HasDefaultValue("Standard shipping rates apply");
 
                     b.Property<TimeSpan?>("DeliveryEndTime")
                         .HasColumnType("interval");
@@ -1643,7 +1674,7 @@ namespace Infrastructure.Migrations
                     b.Property<int>("EstimatedDeliveryDays")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasDefaultValue(2);
+                        .HasDefaultValue(1);
 
                     b.Property<string>("FreeShippingDescription")
                         .IsRequired()
@@ -1661,12 +1692,12 @@ namespace Infrastructure.Migrations
                     b.Property<decimal>("FreeShippingThreshold")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("decimal(18,2)")
-                        .HasDefaultValue(1000m);
+                        .HasDefaultValue(1000.00m);
 
                     b.Property<decimal>("HighOrderShippingCost")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("decimal(18,2)")
-                        .HasDefaultValue(100m);
+                        .HasDefaultValue(100.00m);
 
                     b.Property<decimal>("HolidaySurcharge")
                         .ValueGeneratedOnAdd()
@@ -1699,12 +1730,12 @@ namespace Infrastructure.Migrations
                     b.Property<decimal>("LowOrderShippingCost")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("decimal(18,2)")
-                        .HasDefaultValue(50m);
+                        .HasDefaultValue(50.00m);
 
                     b.Property<decimal>("LowOrderThreshold")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("decimal(18,2)")
-                        .HasDefaultValue(300m);
+                        .HasDefaultValue(300.00m);
 
                     b.Property<double>("MaxDeliveryDistanceKm")
                         .ValueGeneratedOnAdd()
@@ -1737,7 +1768,9 @@ namespace Infrastructure.Migrations
                         .HasDefaultValue(0m);
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
 
                     b.Property<decimal>("WeekendSurcharge")
                         .ValueGeneratedOnAdd()
@@ -1748,15 +1781,24 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("CreatedByUserId");
 
-                    b.HasIndex("IsActive");
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("IX_Shippings_IsActive");
 
-                    b.HasIndex("IsDefault");
+                    b.HasIndex("IsDefault")
+                        .HasDatabaseName("IX_Shippings_IsDefault");
 
-                    b.HasIndex("IsDeleted");
+                    b.HasIndex("IsDeleted")
+                        .HasDatabaseName("IX_Shippings_IsDeleted");
 
                     b.HasIndex("LastModifiedByUserId");
 
-                    b.HasIndex("IsActive", "IsDefault", "IsDeleted");
+                    b.HasIndex("IsDefault", "IsDeleted")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Shippings_UniqueDefault")
+                        .HasFilter("\"IsDefault\" = true AND \"IsDeleted\" = false");
+
+                    b.HasIndex("IsActive", "IsDefault", "IsDeleted")
+                        .HasDatabaseName("IX_Shippings_ActiveDefaultDeleted");
 
                     b.ToTable("Shippings", (string)null);
                 });
@@ -2127,11 +2169,21 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("AppliedEventId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Domain.Entities.PromoCode", "AppliedPromoCode_Navigation")
+                        .WithMany()
+                        .HasForeignKey("AppliedPromoCodeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Domain.Entities.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Domain.Entities.Shipping", "Shipping")
+                        .WithMany()
+                        .HasForeignKey("ShippingId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Domain.Entities.User", "User")
                         .WithMany()
@@ -2141,7 +2193,11 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("AppliedEvent");
 
+                    b.Navigation("AppliedPromoCode_Navigation");
+
                     b.Navigation("Product");
+
+                    b.Navigation("Shipping");
 
                     b.Navigation("User");
                 });

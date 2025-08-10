@@ -27,7 +27,7 @@ namespace Application.Features.CartItemFeat.Commands
         {
             try
             {
-                // ✅ Get cart items with this promo code applied
+                //  Get cart items with this promo code applied
                 var cartItems = await _unitOfWork.CartItems.GetAllAsync(
                     predicate: c => c.UserId == request.UserId && 
                                   !c.IsDeleted && 
@@ -41,7 +41,7 @@ namespace Application.Features.CartItemFeat.Commands
                     return Result<string>.Failure("No cart items found with this promo code");
                 }
                 
-                // ✅ Remove promo code from each cart item
+                //  Remove promo code from each cart item
                 foreach (var cartItem in cartItems)
                 {
                     cartItem.RemovePromoCode();

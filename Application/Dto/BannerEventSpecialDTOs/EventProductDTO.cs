@@ -15,7 +15,7 @@ namespace Application.Dto.BannerEventSpecialDTOs
         public string ProductName { get; set; } = string.Empty;
 
         [JsonPropertyName("specificDiscount")]
-        public decimal SpecificDiscount { get; set; } = 0; // ✅ Default to 0 instead of nullable
+        public decimal SpecificDiscount { get; set; } = 0; //  Default to 0 instead of nullable
 
         public DateTime AddedAt { get; set; }
         public decimal ProductMarketPrice { get; set; }
@@ -29,7 +29,7 @@ namespace Application.Dto.BannerEventSpecialDTOs
         [JsonPropertyName("hasSpecificDiscount")]
         public bool HasSpecificDiscount { get; set; }
 
-        // ✅ Additional calculated properties
+        //  Additional calculated properties
         [JsonPropertyName("discountAmount")]
         public decimal DiscountAmount => Math.Max(0, ProductMarketPrice - CalculatedDiscountPrice);
 

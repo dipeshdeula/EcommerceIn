@@ -8,16 +8,16 @@ namespace Infrastructure.DependencyInjection
     {
         public static IServiceCollection AddPaymentServices(this IServiceCollection services, IConfiguration configuration)
         {
-            // ✅ Register core payment services
+            //  Register core payment services
             //services.AddScoped<IPaymentGatewayService, PaymentGatewayService>();
             services.AddScoped<IPaymentSecurityService, PaymentSecurityService>();
 
-            // ✅ Register payment providers
+            //  Register payment providers
             services.AddScoped<EsewaProvider>();
             services.AddScoped<KhaltiProvider>();
             services.AddScoped<CODProvider>();
 
-            // ✅ Configure HTTP clients with retry policies
+            //  Configure HTTP clients with retry policies
             services.AddHttpClient("EsewaClient", client =>
             {
                 client.BaseAddress = new Uri("https://rc-epay.esewa.com.np");
@@ -47,7 +47,7 @@ namespace Infrastructure.DependencyInjection
                     sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                     onRetry: (outcome, timespan, retryCount, context) =>
                     {
-                        Console.WriteLine($"⚠️ Payment API Retry {retryCount} after {timespan} seconds");
+                        Console.WriteLine($" Payment API Retry {retryCount} after {timespan} seconds");
                     });
         }
     }

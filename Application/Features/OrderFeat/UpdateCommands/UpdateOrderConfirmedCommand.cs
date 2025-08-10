@@ -319,7 +319,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
                             </div>
 
                             <div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 20px; border-radius: 6px; margin: 20px 0;'>
-                                <h3 style='color: #155724; margin-top: 0;'>✅ What happens next?</h3>
+                                <h3 style='color: #155724; margin-top: 0;'> What happens next?</h3>
                                 <ul style='color: #155724; margin: 0; padding-left: 20px;'>
                                     <li>Our team is preparing your order right now</li>
                                     <li>You'll receive an SMS when your order is dispatched</li>

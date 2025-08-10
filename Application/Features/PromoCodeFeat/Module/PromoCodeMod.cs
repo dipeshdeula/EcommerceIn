@@ -27,12 +27,12 @@ namespace Application.Features.PromoCodeFeat.Module
 
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
-            app = app.MapGroup("/admin");
+            app = app.MapGroup("/promoCode");
 
                      
 
             // Admin endpoints
-            app.MapGet("/admin/all", async (
+            app.MapGet("/getAll", async (
                 [FromServices] IMediator mediator,
                 [FromQuery] bool includeInactive = false,
                 [FromQuery] bool includeExpired = false,
@@ -54,7 +54,7 @@ namespace Application.Features.PromoCodeFeat.Module
                 .RequireAuthorization("RequireAdmin")
                 .Produces<PagedResult<PromoCodeDTO>>(StatusCodes.Status200OK);
 
-            app.MapGet("/admin/{id:int}", async (
+            app.MapGet("/getById", async (
                 int id,
                [FromServices] IMediator mediator)=>
         {
@@ -71,7 +71,7 @@ namespace Application.Features.PromoCodeFeat.Module
                 .Produces<PromoCodeDTO>(StatusCodes.Status200OK)
                 .Produces(StatusCodes.Status404NotFound);
 
-            app.MapPost("/admin/create", async (
+            app.MapPost("/create", async (
                 [FromBody] AddPromoCodeDTO request,
                 [FromServices] ICurrentUserService currentUserService,
                 [FromServices] IUserRepository userRepository,
@@ -97,19 +97,26 @@ namespace Application.Features.PromoCodeFeat.Module
                 .Produces<PromoCodeDTO>(StatusCodes.Status201Created)
                 .Produces(StatusCodes.Status400BadRequest);
 
-            app.MapPut("/admin/{id:int}", async (
+            app.MapPut("/update", async (
                  int id,
                 [FromBody] UpdatePromoCodeDTO request,
+                [FromServices] ICurrentUserService currentUserService,
+                [FromServices] IUserRepository userRepository,
                 [FromServices] IMediator mediator)=>
         {
-                // TODO: Get user ID from authentication context
-                var userId = 1; // Replace with actual admin user ID from JWT
+                var userId = currentUserService.GetUserIdAsInt();
+                var userInfo = await userRepository.FindByIdAsync(userId);
 
-                var command = new UpdatePromoCodeCommand(id, request, userId);
-                var result = await mediator.Send(command);
+            if (userInfo == null)
+            {
+                return Results.BadRequest("User not found");
+            }                
 
-                if (!result.Succeeded)
-                    return Results.NotFound(new { result.Message });
+            var command = new UpdatePromoCodeCommand(id, request, userInfo.Id);
+            var result = await mediator.Send(command);
+
+            if (!result.Succeeded)
+                return Results.NotFound(new { result.Message });
 
                 return Results.Ok(result.Data);
             })  .WithName("UpdatePromoCode")
@@ -118,7 +125,7 @@ namespace Application.Features.PromoCodeFeat.Module
                 .Produces<PromoCodeDTO>(StatusCodes.Status200OK)
                 .Produces(StatusCodes.Status404NotFound);
 
-            app.MapPut("/admin/{id:int}/activate", async (
+            app.MapPut("/activate", async (
                 int id,
                 [FromServices] IUserRepository userRepository,
                 [FromServices] ICurrentUserService currentUserService,
@@ -145,7 +152,7 @@ namespace Application.Features.PromoCodeFeat.Module
                 .RequireAuthorization("RequireAdmin")
                 .Produces(StatusCodes.Status200OK);
 
-            app.MapPut("/admin/{id:int}/deactivate", async (
+            app.MapPut("/deactivate", async (
                  [FromServices] ICurrentUserService currentUserservice,
                 [FromServices] IUserRepository userRepository,
                 int id,
@@ -171,11 +178,13 @@ namespace Application.Features.PromoCodeFeat.Module
                 .RequireAuthorization("RequireAdmin")
                 .Produces(StatusCodes.Status200OK);
 
-            app.MapGet("/admin/{id:int}/usage", async (
-                int id,
-                [FromServices] IMediator mediator) =>
+            app.MapGet("/usage", async (
+                 [FromServices] IMediator mediator,
+                int PageNumber =1 ,
+                int PageSize = 10
+               ) =>
             {
-                var query = new GetPromoCodeUsageQuery(id);
+                var query = new GetPromoCodeUsageQuery(PageNumber,PageSize);
                 var result = await mediator.Send(query);
 
                 if (!result.Succeeded)
@@ -185,9 +194,9 @@ namespace Application.Features.PromoCodeFeat.Module
             })   .WithName("GetPromoCodeUsage")
                 .WithSummary("Get promo code usage history (Admin)")
                 .RequireAuthorization("RequireAdmin")
-                .Produces<List<PromoCodeUsageDTO>>(StatusCodes.Status200OK);
+                .Produces<IEnumerable<PromoCodeUsageDTO>>(StatusCodes.Status200OK);
 
-            app.MapGet("/{id:int}/softDelete", async (
+            app.MapDelete("/softDelete", async (
                [FromQuery] int id,
                [FromServices] ISender mediator,
                ICurrentUserService currentUserService,
@@ -223,7 +232,7 @@ namespace Application.Features.PromoCodeFeat.Module
                .RequireAuthorization("RequireAdmin")
                .Produces<string>(StatusCodes.Status200OK);
 
-            app.MapDelete("/{id:int}/unDelete", async (
+            app.MapDelete("/unDelete", async (
                 [FromQuery] int id,
                 ISender mediator
                 ) =>
@@ -242,11 +251,11 @@ namespace Application.Features.PromoCodeFeat.Module
                 .RequireAuthorization("RequireAdmin")
                 .Produces<string>(StatusCodes.Status200OK);
 
-            app.MapGet("/{id:int}/hardDelete", async (
+            app.MapDelete("/hardDelete", async (
                [FromQuery] int id,
                [FromServices] ISender mediator,
-               ICurrentUserService currentUserService,
-               IUserRepository userRepository
+               [FromServices] ICurrentUserService currentUserService,
+               [FromServices] IUserRepository userRepository
                ) => {
                    try
                    {

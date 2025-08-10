@@ -190,7 +190,7 @@ namespace Infrastructure.Persistence.Services
                 ProductName = product.Name,
                 OriginalPrice = product.MarketPrice,
                 BasePrice = basePrice,
-                EffectivePrice = totalRegularPrice,
+                EffectivePrice = basePrice,
                 EventDiscountAmount = 0,
                 ProductDiscountAmount = product.DiscountPrice.HasValue ? (product.MarketPrice - basePrice) * quantity : 0,
                 HasProductDiscount = product.DiscountPrice.HasValue && product.DiscountPrice < product.MarketPrice,
@@ -237,8 +237,8 @@ namespace Infrastructure.Persistence.Services
                     }
 
                     // Set final pricing
-                    priceInfo.EffectivePrice = totalEventPrice + totalRegularPriceAdjusted;
-                    priceInfo.EventDiscountAmount = totalEventDiscount;
+                    priceInfo.EffectivePrice = quantity > 0 ? (totalEventPrice + totalRegularPriceAdjusted)/quantity : basePrice;
+                    priceInfo.EventDiscountAmount = eventEligibleQuantity > 0 ? (totalEventDiscount / eventEligibleQuantity) : 0;
                     priceInfo.EventEligibleQuantity = eventEligibleQuantity;
                     priceInfo.RegularPriceQuantity = regularPriceQuantity;
 

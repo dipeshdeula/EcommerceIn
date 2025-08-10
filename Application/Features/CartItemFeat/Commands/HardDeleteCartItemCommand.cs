@@ -74,6 +74,7 @@ namespace Application.Features.CartItemFeat.Commands
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                     await _cacheService.InvalidateUserCartCacheAsync(UserId, cancellationToken);
+                    await _cacheService.ForceRefreshUserCartAsync(UserId, cancellationToken);
 
                     _logger.LogInformation("Cart item deleted successfully: CartItemId={CartItemId}",
                         request.CartItemId);

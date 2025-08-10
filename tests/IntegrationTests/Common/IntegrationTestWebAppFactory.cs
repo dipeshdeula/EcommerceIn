@@ -23,22 +23,22 @@ public class IntegrationTestWebAppFactory<TProgram> : WebApplicationFactory<TPro
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // ✅ CRITICAL: Set test environment FIRST
+        //  CRITICAL: Set test environment FIRST
         builder.UseEnvironment("Test");
         
-        // ✅ Configure AppSettings
+        //  Configure AppSettings
         builder.ConfigureAppConfiguration((context, config) =>
         {
             config.Sources.Clear();
 
-            // ✅ Use base path to locate the file correctly
+            //  Use base path to locate the file correctly
             var projectDir = Directory.GetCurrentDirectory();
             var configPath = Path.Combine(projectDir, "appsettings.Test.json");
             
-            // ✅ FIXED: Use the absolute path variable instead of relative path
+            //  FIXED: Use the absolute path variable instead of relative path
             config.AddJsonFile(configPath, optional: true, reloadOnChange: true);
             
-            // ✅ Always have in-memory configuration as fallback
+            //  Always have in-memory configuration as fallback
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 {"ConnectionStrings:DefaultConnection", "InMemory"},
@@ -68,14 +68,14 @@ public class IntegrationTestWebAppFactory<TProgram> : WebApplicationFactory<TPro
         // Configure services
         builder.ConfigureServices(services =>
         {
-            // ✅ Configure test database FIRST
+            //  Configure test database FIRST
             ConfigureTestDatabase(services);
             
-            // ✅ Add controllers explicitly to ensure they're registered
+            //  Add controllers explicitly to ensure they're registered
             services.AddControllers()
                     .AddApplicationPart(typeof(TProgram).Assembly);
             
-            // ✅ Add MVC and ensure endpoint routing is enabled
+            //  Add MVC and ensure endpoint routing is enabled
             services.AddMvc();
             services.AddRouting();
             
@@ -92,11 +92,11 @@ public class IntegrationTestWebAppFactory<TProgram> : WebApplicationFactory<TPro
             // Replace services for testing
             ReplaceServicesForTesting(services);
             
-            // ✅ Add the DatabaseInitializer for proper test database setup
+            //  Add the DatabaseInitializer for proper test database setup
             services.AddScoped<DatabaseInitializer>();
         });
         
-        // ✅ Configure the HTTP request pipeline
+        //  Configure the HTTP request pipeline
        // Inside the Configure method:
 builder.Configure(app =>
 {
@@ -160,23 +160,23 @@ builder.Configure(app =>
 
     private static void ConfigureTestDatabase(IServiceCollection services)
     {
-        // ✅ Remove existing DbContext registration
+        //  Remove existing DbContext registration
         var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<MainDbContext>));
         if (descriptor != null)
             services.Remove(descriptor);
 
-        // ✅ Remove other DB-related services that might conflict
+        //  Remove other DB-related services that might conflict
         var dbContextDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(MainDbContext));
         if (dbContextDescriptor != null)
             services.Remove(dbContextDescriptor);
 
-        // ✅ Add InMemory database with proper configuration
+        //  Add InMemory database with proper configuration
         services.AddDbContext<MainDbContext>(options =>
         {
             options.UseInMemoryDatabase($"IntegrationTestDb_{Guid.NewGuid()}");
             options.EnableSensitiveDataLogging();
             options.EnableDetailedErrors();
-            // ✅ Configure for testing
+            //  Configure for testing
             options.ConfigureWarnings(warnings => {
                 warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning);
                 // Add this to ignore migration-related warnings
@@ -195,7 +195,7 @@ builder.Configure(app =>
             return mock.Object;
         });
 
-        // ✅ Mock FileServices
+        //  Mock FileServices
         ReplaceService<IFileServices>(services, () =>
         {
             var mock = new Mock<IFileServices>();
@@ -204,7 +204,7 @@ builder.Configure(app =>
             return mock.Object;
         });
 
-        // ✅ Mock CurrentUserService
+        //  Mock CurrentUserService
         ReplaceService<ICurrentUserService>(services, () =>
         {
             var mock = new Mock<ICurrentUserService>();
@@ -225,7 +225,7 @@ builder.Configure(app =>
             services.AddSingleton(descriptor.ServiceType, mockService);
         }
 
-        // ✅ Add test logging
+        //  Add test logging
         services.AddLogging(builder =>
         {
             builder.AddConsole();
@@ -233,16 +233,16 @@ builder.Configure(app =>
         });
     }
     
-    // ✅ Fixed implementation of ReplaceService
+    //  Fixed implementation of ReplaceService
     private static void ReplaceService<T>(IServiceCollection services, Func<T> factory) where T : class
     {
-        // ✅ Debug output to identify service type
+        //  Debug output to identify service type
         Console.WriteLine($"Replacing service: {typeof(T).Name}");
         
-        // ✅ Remove ALL existing registrations of this type
+        //  Remove ALL existing registrations of this type
         var descriptors = services.Where(d => d.ServiceType == typeof(T)).ToList();
         
-        // ✅ Debug output to see how many instances were found
+        //  Debug output to see how many instances were found
         Console.WriteLine($"Found {descriptors.Count} existing registrations of {typeof(T).Name}");
         
         foreach (var descriptor in descriptors)
@@ -263,7 +263,7 @@ builder.Configure(app =>
         var scope = Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MainDbContext>();
         
-        // ✅ Use EnsureCreated instead of running migrations
+        //  Use EnsureCreated instead of running migrations
         await context.Database.EnsureCreatedAsync();
         
         return context;

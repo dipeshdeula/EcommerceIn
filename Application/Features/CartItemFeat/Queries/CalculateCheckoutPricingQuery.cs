@@ -29,7 +29,7 @@ namespace Application.Features.CartItemFeat.Queries
         {
             try
             {
-                // ✅ Get cart summary first using existing query
+                //  Get cart summary first using existing query
                 var cartSummaryResult = await _mediator.Send(new GetCartSummaryWithPromoQuery(request.UserId), cancellationToken);
                 if (!cartSummaryResult.Succeeded)
                 {
@@ -38,39 +38,39 @@ namespace Application.Features.CartItemFeat.Queries
                 
                 var cartSummary = cartSummaryResult.Data!;
                 
-                // ✅ Calculate shipping discounts
+                //  Calculate shipping discounts
                 var shippingDiscounts = cartSummary.AppliedPromoCodes
                     .Where(p => p.Type == PromoCodeType.FreeShipping)
                     .Sum(p => p.TotalDiscount);
                 
                 var finalShipping = Math.Max(0, request.ShippingCost - shippingDiscounts);
                 
-                // ✅ Calculate tax
+                //  Calculate tax
                 var taxableAmount = cartSummary.FinalSubtotal + finalShipping;
                 var finalTax = taxableAmount * request.TaxRate;
                 
                 var orderSummary = new OrderPricingSummaryDTO
                 {
-                    // ✅ ORIGINAL AMOUNTS
+                    //  ORIGINAL AMOUNTS
                     OriginalSubtotal = cartSummary.OriginalSubtotal,
                     OriginalShipping = request.ShippingCost,
                     OriginalTax = (cartSummary.OriginalSubtotal + request.ShippingCost) * request.TaxRate,
                     OriginalTotal = cartSummary.OriginalSubtotal + request.ShippingCost + ((cartSummary.OriginalSubtotal + request.ShippingCost) * request.TaxRate),
                     
-                    // ✅ DISCOUNT BREAKDOWN
+                    //  DISCOUNT BREAKDOWN
                     ProductDiscounts = 0,
                     EventDiscounts = cartSummary.EventDiscounts,
                     PromoCodeDiscounts = cartSummary.PromoCodeDiscounts,
                     ShippingDiscounts = shippingDiscounts,
                     TotalDiscounts = cartSummary.TotalDiscounts + shippingDiscounts,
                     
-                    // ✅ FINAL AMOUNTS
+                    //  FINAL AMOUNTS
                     FinalSubtotal = cartSummary.FinalSubtotal,
                     FinalShipping = finalShipping,
                     FinalTax = finalTax,
                     FinalTotal = cartSummary.FinalSubtotal + finalShipping + finalTax,
                     
-                    // ✅ APPLIED PROMO CODES
+                    //  APPLIED PROMO CODES
                     AppliedPromoCodes = cartSummary.AppliedPromoCodes.Select(p => new OrderPromoCodeSummaryDTO
                     {
                         PromoCodeId = p.PromoCodeId,
@@ -84,7 +84,7 @@ namespace Application.Features.CartItemFeat.Queries
                         FormattedDiscount = p.FormattedDiscount
                     }).ToList(),
                     
-                    // ✅ CART SUMMARY
+                    //  CART SUMMARY
                     TotalItems = cartSummary.TotalItems,
                     TotalQuantity = cartSummary.TotalQuantity,
                     Items = cartSummary.Items.Select(i => new OrderItemPricingDTO
@@ -103,11 +103,11 @@ namespace Application.Features.CartItemFeat.Queries
                         AppliedEvent = i.AppliedEventName
                     }).ToList(),
                     
-                    // ✅ VALIDATION
+                    //  VALIDATION
                     IsValidForCheckout = cartSummary.CanCheckout,
                     ValidationErrors = cartSummary.ValidationErrors,
                     
-                    // ✅ METADATA
+                    //  METADATA
                     Currency = "NPR",
                     CalculatedAt = DateTime.UtcNow,
                     TimeZone = "NPT"

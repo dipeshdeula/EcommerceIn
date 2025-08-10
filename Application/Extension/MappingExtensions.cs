@@ -592,6 +592,13 @@ namespace Application.Extension
                 Quantity = cartItem.Quantity,
                 OriginalPrice = CalculateOriginalPrice(cartItem),
                 ReservedPrice = cartItem.ReservedPrice,
+                ShippingCost = cartItem.ShippingCost,
+                ShippingId = cartItem.ShippingId ?? 0,
+
+                // PROMO CODE
+                AppliedPromoCodeId = cartItem.AppliedPromoCodeId ?? 0,
+                PromoCodeDiscountAmount = cartItem.PromoCodeDiscountAmount ?? 0,
+                AppliedPromoCode = cartItem.AppliedPromoCode,
                 EventDiscountAmount = cartItem.EventDiscountAmount,
                 AppliedEventId = cartItem.AppliedEventId,
                 IsStockReserved = cartItem.IsStockReserved,
@@ -600,9 +607,11 @@ namespace Application.Extension
                 CreatedAt = cartItem.CreatedAt,
                 UpdatedAt = cartItem.UpdatedAt,
                 IsDeleted = cartItem.IsDeleted,
-                Category = cartItem.Product?.Category != null ? cartItem.Product.Category.ToDTO() : null,
+              //  Category = cartItem.Product?.Category != null ? cartItem.Product.Category.ToDTO() : null,
                 Product = cartItem.Product?.ToDTO(),
                 User = cartItem.User?.ToDTO(),
+                Shipping = cartItem.Shipping?.ToShippingDTO(),
+               
 
             };
         }
@@ -634,22 +643,53 @@ namespace Application.Extension
                 validationErrors.Add($"{outOfStockItems.Count} item(s) are out of stock");
             }
 
-            return new CartSummaryDTO
+            // Calculate subtotal and shipping
+            var subtotal = activeItems.Sum(c => c.ReservedPrice * c.Quantity);
+            var totalShipping = activeItems.Sum(c => c.ShippingCost);
+            var totalEventDiscounts = activeItems.Sum(c => c.EventDiscountAmount ?? 0);
+            var totalPromoDiscounts = activeItems.Sum(c => c.PromoCodeDiscountAmount ?? 0);
+
+
+           return new CartSummaryDTO
             {
                 UserId = userId,
                 TotalItems = activeItems.Count,
                 TotalQuantity = activeItems.Sum(c => c.Quantity),
-                SubTotal = activeItems.Sum(c => c.ReservedPrice * c.Quantity),
-                TotalDiscount = activeItems.Sum(c => (c.EventDiscountAmount ?? 0) * c.Quantity),
-                EstimatedTotal = activeItems.Sum(c => c.ReservedPrice * c.Quantity),
+                SubTotal = subtotal,
+                
+                //  SHIPPING BREAKDOWN
+                TotalShipping = totalShipping,
+                TotalDiscount = totalEventDiscounts + totalPromoDiscounts,
+                EventDiscounts = totalEventDiscounts,
+                PromoCodeDiscounts = totalPromoDiscounts,
+                
+                EstimatedTotal = subtotal + totalShipping - (totalEventDiscounts + totalPromoDiscounts),
+                
                 CanCheckout = activeItems.Any() && !expiredItems.Any() && !outOfStockItems.Any(),
                 HasExpiredItems = expiredItems.Any(),
                 HasOutOfStockItems = outOfStockItems.Any(),
                 ExpiredItemsCount = expiredItems.Count,
                 EarliestExpiration = activeItems.Any() ? activeItems.Min(c => c.ExpiresAt) : null,
                 ValidationErrors = validationErrors,
-                Items = activeItems.Select(c => c.ToDTO()).ToList()
+                Items = activeItems.Select(c => c.ToDTO()).ToList(),
+                
+                //  SHIPPING INFO
+                HasFreeShipping = totalShipping == 0 && activeItems.Any(),
+                ShippingMessage = totalShipping == 0 ? "🚚 Free Shipping Applied!" : $"🚚 Shipping: Rs.{totalShipping:F2}"
             };
+        }
+
+        // Calculate original price from available CartItem data
+        private static decimal? CalculateOriginalPrice(CartItem cartItem)
+        { 
+            var eventDiscount = cartItem.EventDiscountAmount ?? 0;
+            var promoDiscount = cartItem.PromoCodeDiscountAmount ?? 0;
+            var regularDiscount = cartItem.RegularDiscountAmount;
+
+            var estimatedOriginal = cartItem.ReservedPrice + regularDiscount + eventDiscount + promoDiscount;
+            return estimatedOriginal > 0 ? estimatedOriginal : cartItem.ReservedPrice;
+
+
         }
         public static CartItemDTO ToEnhancedDTO(this CartItem cartItem, ProductPriceInfoDTO? currentPricing = null)
         {
@@ -673,20 +713,7 @@ namespace Application.Extension
         }
 
 
-        //  HELPER: Calculate original price from available CartItem data
-        private static decimal? CalculateOriginalPrice(CartItem cartItem)
-        {
-            // Try to reconstruct original price from available data
-            // Original Price = Reserved Price + Regular Discount + Event Discount
-
-            var eventDiscount = cartItem.EventDiscountAmount ?? 0;
-            var regularDiscount = cartItem.RegularDiscountAmount;
-
-            // Calculate estimated original price
-            var estimatedOriginal = cartItem.ReservedPrice + regularDiscount + eventDiscount;
-
-            return estimatedOriginal > 0 ? estimatedOriginal : cartItem.ReservedPrice;
-        }
+        
 
 
 

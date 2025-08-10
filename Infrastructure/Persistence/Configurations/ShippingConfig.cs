@@ -22,19 +22,19 @@ namespace Infrastructure.Persistence.Configurations
 
             builder.Property(s => s.LowOrderThreshold)
                 .HasColumnType("decimal(18,2)")
-                .HasDefaultValue(300);
+                .HasDefaultValue(300.00m);
 
             builder.Property(s => s.LowOrderShippingCost)
                 .HasColumnType("decimal(18,2)")
-                .HasDefaultValue(50);
+                .HasDefaultValue(50.00m);
 
             builder.Property(s => s.HighOrderShippingCost)
                 .HasColumnType("decimal(18,2)")
-                .HasDefaultValue(100);
+                .HasDefaultValue(100.00m);
 
             builder.Property(s => s.FreeShippingThreshold)
                 .HasColumnType("decimal(18,2)")
-                .HasDefaultValue(1000);
+                .HasDefaultValue(1000.00m);
 
             builder.Property(s => s.WeekendSurcharge)
                 .HasColumnType("decimal(18,2)")
@@ -60,7 +60,7 @@ namespace Infrastructure.Persistence.Configurations
                 .HasDefaultValue(15);
 
             builder.Property(s => s.EstimatedDeliveryDays)
-                .HasDefaultValue(2);
+                .HasDefaultValue(1);
 
             builder.Property(s => s.FreeShippingDescription)
                 .HasMaxLength(500)
@@ -68,7 +68,7 @@ namespace Infrastructure.Persistence.Configurations
 
             builder.Property(s => s.CustomerMessage)
                 .HasMaxLength(1000)
-                .HasDefaultValue("");
+                .HasDefaultValue("Standard shipping rates apply");
 
             builder.Property(s => s.AdminNotes)
                 .HasMaxLength(2000)
@@ -77,6 +77,21 @@ namespace Infrastructure.Persistence.Configurations
             builder.Property(s => s.AvailableDays)
                 .HasMaxLength(20)
                 .HasDefaultValue("1,2,3,4,5,6,7");
+
+            // DATETIME PROPERTIES
+             builder.Property(s => s.CreatedAt)
+                .HasColumnType("timestamp with time zone")
+                .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+
+            builder.Property(s => s.UpdatedAt)
+                .HasColumnType("timestamp with time zone")
+                .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+
+            builder.Property(s => s.FreeShippingStartDate)
+                .HasColumnType("timestamp with time zone");
+
+            builder.Property(s => s.FreeShippingEndDate)
+                .HasColumnType("timestamp with time zone");
 
             // Default values
             builder.Property(s => s.IsActive)
@@ -109,10 +124,23 @@ namespace Infrastructure.Persistence.Configurations
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Indexes
-            builder.HasIndex(s => s.IsActive);
-            builder.HasIndex(s => s.IsDefault);
-            builder.HasIndex(s => s.IsDeleted);
-            builder.HasIndex(s => new { s.IsActive, s.IsDefault, s.IsDeleted });
+           builder.HasIndex(s => s.IsActive)
+                .HasDatabaseName("IX_Shippings_IsActive");
+
+            builder.HasIndex(s => s.IsDefault)
+                .HasDatabaseName("IX_Shippings_IsDefault");
+
+            builder.HasIndex(s => s.IsDeleted)
+                .HasDatabaseName("IX_Shippings_IsDeleted");
+
+            builder.HasIndex(s => new { s.IsActive, s.IsDefault, s.IsDeleted })
+                .HasDatabaseName("IX_Shippings_ActiveDefaultDeleted");
+
+            //  UNIQUE CONSTRAINT - Only one default shipping config
+            builder.HasIndex(s => new { s.IsDefault, s.IsDeleted })
+                .HasDatabaseName("IX_Shippings_UniqueDefault")
+                .HasFilter("\"IsDefault\" = true AND \"IsDeleted\" = false")
+                .IsUnique();
         }
     }
 

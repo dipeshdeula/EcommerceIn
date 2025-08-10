@@ -10,10 +10,10 @@ namespace Application.Interfaces.Repositories
         IQueryable<TEntity> GetQueryable();
         IQueryable<TEntity> GetQueryable(bool includeDeleted);
 
-        // ✅ Single entity operations
+        //  Single entity operations
         Task<TEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 
-        // ✅ ADDED: Missing GetAsync method
+        //  ADDED: Missing GetAsync method
         Task<TEntity?> GetAsync(
             Expression<Func<TEntity, bool>> predicate,
             string? includeProperties = null,

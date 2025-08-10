@@ -538,17 +538,17 @@ namespace Application.Features.BannerSpecialEvent.Module
             return recommendations;
         }
 
-        // ✅ NEW: Method for generating recommendations from rule evaluation results
+        //  NEW: Method for generating recommendations from rule evaluation results
         private static List<string> GenerateRuleTestRecommendations(RuleEvaluationResultDTO ruleResult, BannerEventSpecialDTO eventData)
         {
             var recommendations = new List<string>();
 
             try
             {
-                // ✅ Rule evaluation specific recommendations
+                //  Rule evaluation specific recommendations
                 if (ruleResult.IsEligible)
                 {
-                    recommendations.Add("✅ Cart meets all event requirements");
+                    recommendations.Add(" Cart meets all event requirements");
                     
                     if (!string.IsNullOrEmpty(ruleResult.FormattedDiscount))
                     {
@@ -585,14 +585,14 @@ namespace Application.Features.BannerSpecialEvent.Module
                         {
                             recommendations.Add($"• Rule {rule.Priority}: {rule.FailureReason}");
 
-                            // ✅ Specific suggestions based on failure reasons
+                            //  Specific suggestions based on failure reasons
                             if (!string.IsNullOrEmpty(rule.RequiredAction))
                             {
                                 recommendations.Add($"  → {rule.RequiredAction}");
                             }
                             else
                             {
-                                // ✅ Fallback suggestions based on rule type and failure reason
+                                //  Fallback suggestions based on rule type and failure reason
                                 if (rule.FailureReason.Contains("minimum order", StringComparison.OrdinalIgnoreCase))
                                 {
                                     recommendations.Add($"  → Increase order value to at least Rs.{rule.MinOrderValue ?? 0}");
@@ -622,17 +622,17 @@ namespace Application.Features.BannerSpecialEvent.Module
                     }
                 }
 
-                // ✅ Additional insights based on event data
+                //  Additional insights based on event data
                 if (eventData?.MaxDiscountAmount.HasValue == true && ruleResult.CalculatedDiscount > eventData.MaxDiscountAmount.Value)
                 {
-                    recommendations.Add($"⚠️ Calculated discount (Rs.{ruleResult.CalculatedDiscount:F2}) exceeds event cap (Rs.{eventData.MaxDiscountAmount:F2})");
+                    recommendations.Add($" Calculated discount (Rs.{ruleResult.CalculatedDiscount:F2}) exceeds event cap (Rs.{eventData.MaxDiscountAmount:F2})");
                     recommendations.Add($"Final discount will be capped at Rs.{eventData.MaxDiscountAmount:F2}");
                 }
 
-                // ✅ Performance insights
+                //  Performance insights
                 if (ruleResult.ProcessingTimeMs > 1000)
                 {
-                    recommendations.Add("⚠️ Rule evaluation took longer than expected");
+                    recommendations.Add(" Rule evaluation took longer than expected");
                     recommendations.Add("Consider optimizing rule complexity for better performance");
                 }
                 else if (ruleResult.ProcessingTimeMs > 0)
@@ -640,13 +640,13 @@ namespace Application.Features.BannerSpecialEvent.Module
                     recommendations.Add($"✓ Rule evaluation completed in {ruleResult.ProcessingTimeMs}ms");
                 }
 
-                // ✅ Rules evaluation summary
+                //  Rules evaluation summary
                 if (ruleResult.RulesEvaluated > 0)
                 {
                     recommendations.Add($"📊 Summary: {ruleResult.RulesEvaluated} rules evaluated, {ruleResult.AppliedRules?.Count ?? 0} applied, {ruleResult.FailedRules?.Count ?? 0} failed");
                 }
 
-                // ✅ Fallback if no recommendations were generated
+                //  Fallback if no recommendations were generated
                 if (recommendations.Count == 0)
                 {
                     recommendations.Add("Rule evaluation completed - check evaluation details for more information");
@@ -654,10 +654,10 @@ namespace Application.Features.BannerSpecialEvent.Module
             }
             catch (Exception)
             {
-                // ✅ Error handling - provide basic fallback recommendations
+                //  Error handling - provide basic fallback recommendations
                 recommendations.Clear();
-                recommendations.Add("⚠️ Error generating detailed recommendations");
-                recommendations.Add(ruleResult.IsEligible ? "✅ Cart is eligible for discount" : "❌ Cart is not eligible for discount");
+                recommendations.Add(" Error generating detailed recommendations");
+                recommendations.Add(ruleResult.IsEligible ? " Cart is eligible for discount" : "❌ Cart is not eligible for discount");
                 
                 if (ruleResult.CalculatedDiscount > 0)
                 {
@@ -698,7 +698,7 @@ namespace Application.Features.BannerSpecialEvent.Module
                         <= 3 => "Moderate targeting - Multiple criteria",
                         _ => "Complex targeting - Advanced rule system"
                     },
-                    // ✅ Safe rule breakdown with null checks
+                    //  Safe rule breakdown with null checks
                     ruleBreakdown = eventData.Rules?.Select(r => new
                     {
                         ruleId = r.Id,
@@ -725,7 +725,7 @@ namespace Application.Features.BannerSpecialEvent.Module
                         >= 20 => "Low usage - May need promotion",
                         _ => "Very low usage - Review targeting"
                     },
-                    // ✅ Safe usage insights with null checks
+                    //  Safe usage insights with null checks
                     usageTrend = eventData.UsageSummary != null ? new
             {
                 totalDiscount = eventData.UsageSummary.FormattedTotalDiscount ?? "Rs.0.00",

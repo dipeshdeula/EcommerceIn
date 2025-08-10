@@ -145,7 +145,7 @@ Console.WriteLine($"eSewa Merchant ID: {esewaMerchantId}");
 Console.WriteLine($"eSewa Base URL: {esewaBaseUrl}");
 Console.WriteLine($"eSewa Secret Key: {esewaSecret}");*/
 
-// ✅ Skip validation in Test environment
+//  Skip validation in Test environment
 if (!builder.Environment.IsEnvironment("Test"))
 {
     // Only validate in non-test environments
@@ -212,7 +212,7 @@ new AuthorizationServiceRegistration().AddServices(builder.Services);
 var serviceDescriptors = builder.Services.Where(
     s => s.ServiceType == typeof(IHybridCacheService)).ToList();
 
-Console.WriteLine($"🔍 HybridCacheService registrations found: {serviceDescriptors.Count}");
+Console.WriteLine($" HybridCacheService registrations found: {serviceDescriptors.Count}");
 foreach (var descriptor in serviceDescriptors)
 {
     Console.WriteLine($"   - {descriptor.Lifetime}: {descriptor.ImplementationType?.Name}");
@@ -279,17 +279,17 @@ using (var scope = app.Services.CreateScope())
 
         if (health.IsRedisConnected)
         {
-            Console.WriteLine("✅ Redis cloud connection successful");
+            Console.WriteLine(" Redis cloud connection successful");
             Console.WriteLine($"📊 Redis latency: {health.RedisLatency.TotalMilliseconds:F2}ms");
         }
         else
         {
-            Console.WriteLine("⚠️ Redis connection failed - using memory cache only");
+            Console.WriteLine(" Redis connection failed - using memory cache only");
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"⚠️ Cache service initialization failed: {ex.Message}");
+        Console.WriteLine($" Cache service initialization failed: {ex.Message}");
     }
 }
 
@@ -320,10 +320,10 @@ app.UseCors("Development"); // Use most permissive for development
 app.UseAuthentication();
 app.UseAuthorization();
 
-// ✅ Add specific CORS for payment callbacks
+//  Add specific CORS for payment callbacks
 app.Use(async (context, next) =>
 {
-    // ✅ Special handling for payment callback routes
+    //  Special handling for payment callback routes
 
     if (context.Request.Path.StartsWithSegments("/payment/callback"))
     {
@@ -383,7 +383,7 @@ app.MapGet("/health", async (MainDbContext db) =>
         return Results.Problem($"Health check failed: {ex.Message}");
     }
 });
-// ✅ UPDATED: test-redis endpoint with working health check
+//  UPDATED: test-redis endpoint with working health check
 app.MapGet("/test-redis", async (IHybridCacheService cacheService) =>
 {
     try
@@ -394,7 +394,7 @@ app.MapGet("/test-redis", async (IHybridCacheService cacheService) =>
             tests = new List<object>()
         };
 
-        // ✅ TEST 1: Manual Health Check (using working method)
+        //  TEST 1: Manual Health Check (using working method)
         var healthSuccess = false;
         var healthLatency = 0.0;
         var healthDetails = "";
@@ -438,7 +438,7 @@ app.MapGet("/test-redis", async (IHybridCacheService cacheService) =>
             });
         }
 
-        // ✅ TEST 2: Write Test
+        //  TEST 2: Write Test
         var testKey = $"test-key-{DateTime.UtcNow:yyyyMMdd-HHmmss}";
         var testValue = "Hello Redis from .NET 8!";
 
@@ -454,7 +454,7 @@ app.MapGet("/test-redis", async (IHybridCacheService cacheService) =>
             details = $"Wrote key: {testKey}"
         });
 
-        // ✅ TEST 3: Read Test
+        //  TEST 3: Read Test
         var readStart = DateTime.UtcNow;
         var retrievedValue = await cacheService.GetAsync<string>(testKey);
         var readTime = (DateTime.UtcNow - readStart).TotalMilliseconds;
@@ -468,7 +468,7 @@ app.MapGet("/test-redis", async (IHybridCacheService cacheService) =>
             details = readSuccess ? $"Retrieved: {retrievedValue}" : "Value mismatch"
         });
 
-        // ✅ TEST 4: Cleanup
+        //  TEST 4: Cleanup
         try
         {
             await cacheService.RemoveAsync(testKey);
@@ -500,7 +500,7 @@ app.MapGet("/test-redis", async (IHybridCacheService cacheService) =>
     }
 });
 
-// ✅ SIMPLE: Quick Redis ping
+//  SIMPLE: Quick Redis ping
 app.MapGet("/redis-ping", async (IHybridCacheService cacheService) =>
 {
     try
@@ -559,7 +559,7 @@ app.MapGet("/redis-dashboard", async (IHybridCacheService cacheService) =>
         <h1 class='title'>🚀 Redis Cache Dashboard</h1>
         
         <div class='status {(health.IsRedisConnected ? "success" : "error")}'>
-            <h3>Connection Status: {(health.IsRedisConnected ? "✅ CONNECTED" : "❌ DISCONNECTED")}</h3>
+            <h3>Connection Status: {(health.IsRedisConnected ? " CONNECTED" : "❌ DISCONNECTED")}</h3>
         </div>
         
         <div class='metric'>
