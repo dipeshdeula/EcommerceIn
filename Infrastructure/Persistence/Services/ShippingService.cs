@@ -182,7 +182,7 @@ namespace Infrastructure.Persistence.Services
 
                 // Set customer message
                 result.CustomerMessage = string.IsNullOrEmpty(config.CustomerMessage) ?
-                    (result.IsFreeShipping ? "🚚 Free shipping applied!" : $"🚚 Shipping: ₨{finalShippingCost}") :
+                    (result.IsFreeShipping ? " Free shipping applied!" : $" Shipping: ₨{finalShippingCost}") :
                     config.CustomerMessage;
 
                 _logger.LogInformation("Shipping calculated: ₨{ShippingCost} for order ₨{OrderTotal}",
@@ -211,7 +211,7 @@ namespace Infrastructure.Persistence.Services
                 FinalShippingCost = 0,
                 TotalAmount = orderTotal,
                 ShippingReason = $" Free shipping event: {freeShippingEvent.Name}",
-                CustomerMessage = $"🚚 Free shipping applied from {freeShippingEvent.Name}!",
+                CustomerMessage = $" Free shipping applied from {freeShippingEvent.Name}!",
                 AppliedPromotions = new List<string> { $"Free Shipping Event: {freeShippingEvent.Name}" },
                 DeliveryEstimate = "Standard delivery time applies",
                 Configuration = new ShippingSummaryDTO
@@ -230,10 +230,7 @@ namespace Infrastructure.Persistence.Services
         private async Task<BannerEventSpecial?> CheckActiveFreeShippingBannerEventsAsync(CancellationToken cancellationToken)
         {
             try
-            {
-
-
-               
+            {               
                 var activeEvents = await _unitOfWork.BannerEventSpecials.GetAllAsync(
                     predicate: e => e.IsActive &&
                                   !e.IsDeleted &&

@@ -39,7 +39,7 @@ namespace Application.Extension
         /// </summary>
         public static bool IsCurrentlyActive(this PromoCode promoCode, INepalTimeZoneService timeZoneService)
         {
-            return promoCode.IsActive && 
+            return promoCode.IsActive &&
                    timeZoneService.IsEventActiveNow(promoCode.StartDate, promoCode.EndDate);
         }
 
@@ -87,81 +87,108 @@ namespace Application.Extension
         public static string GetUserFriendlyStatus(this PromoCode promoCode, INepalTimeZoneService timeZoneService)
         {
             var currentUtc = timeZoneService.GetUtcCurrentTime();
-            
+
             if (!promoCode.IsActive)
                 return "Inactive";
-            
+
             if (promoCode.IsDeleted)
                 return "Deleted";
-            
+
             if (!promoCode.IsStartedAtTime(currentUtc))
             {
                 var startNepal = timeZoneService.ConvertFromUtcToNepal(promoCode.StartDate);
                 return $"Starts {startNepal:MMM dd, yyyy HH:mm} NPT";
             }
-            
+
             if (promoCode.IsExpiredAtTime(currentUtc))
             {
                 var endNepal = timeZoneService.ConvertFromUtcToNepal(promoCode.EndDate);
                 return $"Expired {endNepal:MMM dd, yyyy HH:mm} NPT";
             }
-            
+
             if (!promoCode.HasUsageRemaining())
                 return "Usage limit reached";
-            
+
             var daysRemaining = promoCode.GetDaysRemaining(timeZoneService);
             if (daysRemaining <= 1)
                 return "Expires today";
-            
+
             if (daysRemaining <= 7)
                 return $"Expires in {daysRemaining} days";
-            
+
             return "Active";
         }
 
         /// <summary>
         /// Get validation errors for promo code usage
         /// </summary>
-        public static List<string> GetValidationErrors(this PromoCode promoCode, INepalTimeZoneService timeZoneService, 
+        public static List<string> GetValidationErrors(this PromoCode promoCode, INepalTimeZoneService timeZoneService,
             int userId, decimal orderAmount, int? categoryId = null, string? customerTier = null)
         {
             var errors = new List<string>();
             var currentUtc = timeZoneService.GetUtcCurrentTime();
-            
+
             if (!promoCode.IsActive)
                 errors.Add("This promo code is currently inactive");
-            
+
             if (promoCode.IsDeleted)
                 errors.Add("This promo code is no longer available");
-            
+
             if (!promoCode.IsStartedAtTime(currentUtc))
             {
                 var startNepal = timeZoneService.ConvertFromUtcToNepal(promoCode.StartDate);
                 errors.Add($"This promo code is not valid until {startNepal:MMM dd, yyyy HH:mm} NPT");
             }
-            
+
             if (promoCode.IsExpiredAtTime(currentUtc))
             {
                 var endNepal = timeZoneService.ConvertFromUtcToNepal(promoCode.EndDate);
                 errors.Add($"This promo code expired on {endNepal:MMM dd, yyyy HH:mm} NPT");
             }
-            
+
             if (!promoCode.HasUsageRemaining())
                 errors.Add("This promo code has reached its usage limit");
-            
+
             if (!promoCode.CanUserUse(userId))
                 errors.Add($"You have already used this promo code the maximum number of times ({promoCode.MaxUsagePerUser})");
-            
+
             if (!promoCode.ValidateMinOrderAmount(orderAmount))
                 errors.Add($"Minimum order amount of Rs.{promoCode.MinOrderAmount:F2} required (current: Rs.{orderAmount:F2})");
-            
+
             if (!promoCode.AppliesTo(categoryId))
                 errors.Add("This promo code is not valid for items in your cart");
-            
+
             if (!promoCode.AppliesTo(customerTier))
                 errors.Add($"This promo code is only valid for {promoCode.CustomerTier} customers");
-            
+
             return errors;
+        }
+        
+                /// <summary>
+        /// ✅ HELPER: Get formatted discount string for promo codes
+        /// </summary>
+            private static string GetFormattedDiscount(this PromoCode promoCode)
+            {
+                return promoCode.Type switch
+                {
+                    Domain.Enums.PromoCodeType.Percentage => $"{promoCode.DiscountValue}% off",
+                    Domain.Enums.PromoCodeType.FixedAmount => $"Rs. {promoCode.DiscountValue:F2} off",
+                    Domain.Enums.PromoCodeType.FreeShipping => "Free Shipping",
+                    _ => $"{promoCode.DiscountValue}% off"
+                };
+            }
+
+                
+
+        /// <summary>
+        /// ✅ HELPER: Check if promo code can be used at specific time
+        /// </summary>
+        private static bool CanBeUsedAt(this PromoCode promoCode, DateTime checkTime)
+        {
+            return promoCode.IsActive && 
+                !promoCode.IsDeleted && 
+                promoCode.IsValidAtTime(checkTime) && 
+                promoCode.GetTotalRemainingUsage() > 0;
         }
     }
 }

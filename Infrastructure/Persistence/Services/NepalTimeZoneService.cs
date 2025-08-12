@@ -119,7 +119,9 @@ namespace Infrastructure.Persistence.Services
                 
                 _logger.LogTrace("Converted Nepal {NepalTime} → UTC {UtcTime}",
                     nepalDateTime.ToString("yyyy-MM-dd HH:mm:ss"),
-                    utcTime.ToString("yyyy-MM-dd HH:mm:ss"));
+                    utcTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                    (nepalDateTime-utcTime).TotalMinutes);
+                    
 
                 return utcTime;
             }
@@ -127,7 +129,8 @@ namespace Infrastructure.Persistence.Services
             {
                 _logger.LogError(ex, " Error converting Nepal to UTC time: {DateTime}", nepalDateTime);
                 // FALLBACK: Manual conversion
-                return nepalDateTime.Subtract(NepalOffset);
+                var utcTime =  nepalDateTime.Subtract(NepalOffset);
+                return DateTime.SpecifyKind(utcTime, DateTimeKind.Utc);
             }
         }
 
@@ -138,9 +141,9 @@ namespace Infrastructure.Persistence.Services
             var timeToCheck = checkTime ?? GetUtcCurrentTime();
 
             // ENSURE ALL COMPARISONS ARE IN UTC
-            var utcStart = ToUtcSafely(startTime);
-            var utcEnd = ToUtcSafely(endTime);
-            var utcCheck = ToUtcSafely(timeToCheck);
+            var utcStart = EnsureUtc(startTime);
+            var utcEnd = EnsureUtc(endTime);
+            var utcCheck = EnsureUtc(timeToCheck);
 
             var result = utcCheck >= utcStart && utcCheck <= utcEnd;
 
@@ -162,22 +165,22 @@ namespace Infrastructure.Persistence.Services
         public TimeSpan GetTimeUntilEventStart(DateTime eventStartUtc)
         {
             var now = GetUtcCurrentTime();
-            var utcStart = ToUtcSafely(eventStartUtc);
+            var utcStart = EnsureUtc(eventStartUtc);
             return utcStart > now ? utcStart - now : TimeSpan.Zero;
         }
 
         public TimeSpan GetTimeUntilEventEnd(DateTime eventEndUtc)
         {
             var now = GetUtcCurrentTime();
-            var utcEnd = ToUtcSafely(eventEndUtc);
+            var utcEnd = EnsureUtc(eventEndUtc);
             return utcEnd > now ? utcEnd - now : TimeSpan.Zero;
         }
 
         public string GetEventTimeStatus(DateTime startTime, DateTime endTime)
         {
             var now = GetUtcCurrentTime();
-            var utcStart = ToUtcSafely(startTime);
-            var utcEnd = ToUtcSafely(endTime);
+            var utcStart = EnsureUtc(startTime);
+            var utcEnd = EnsureUtc(endTime);
 
             if (now < utcStart)
             {
@@ -205,22 +208,24 @@ namespace Infrastructure.Persistence.Services
 
         public string FormatUtcTime(DateTime dateTime, string format = "yyyy-MM-dd HH:mm:ss")
         {
-            var utcTime = ToUtcSafely(dateTime);
+            var utcTime = EnsureUtc(dateTime);
             return utcTime.ToString(format) + " UTC";
         }
 
-        public DateTime ToUtcSafely(DateTime dateTime)
+        public DateTime EnsureUtc(DateTime dateTime)
         {
             return dateTime.Kind switch
             {
                 DateTimeKind.Utc => dateTime,
-                DateTimeKind.Local => dateTime.ToUniversalTime(), //  CORRECT: Use system local timezone
-                DateTimeKind.Unspecified => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc), // ASSUME UTC for unspecified
+                DateTimeKind.Local => dateTime.ToUniversalTime(),
+               
+                DateTimeKind.Unspecified => ConvertFromNepalToUtc(dateTime),
+
                 _ => dateTime
             };
         }
 
-        public DateTime EnsureUtc(DateTime dateTime) => ToUtcSafely(dateTime);       
+        //public DateTime EnsureUtc(DateTime dateTime) => ToUtcSafely(dateTime);       
 
         public bool IsUtcTime(DateTime dateTime) => dateTime.Kind == DateTimeKind.Utc;
         
@@ -244,9 +249,9 @@ namespace Infrastructure.Persistence.Services
 
          public bool ValidateTimeRange(DateTime start, DateTime end)
         {
-            var utcStart = ToUtcSafely(start);
-            var utcEnd = ToUtcSafely(end);
-            
+            var utcStart = EnsureUtc(start);
+            var utcEnd = EnsureUtc(end);
+
             if (utcEnd <= utcStart)
             {
                 _logger.LogWarning("Invalid time range: End time {End} is not after start time {Start}", 
@@ -259,8 +264,8 @@ namespace Infrastructure.Persistence.Services
 
         public (DateTime utcStart, DateTime utcEnd) NormalizeTimeRange(DateTime start, DateTime end)
         {
-            var utcStart = ToUtcSafely(start);
-            var utcEnd = ToUtcSafely(end);
+            var utcStart = EnsureUtc(start);
+            var utcEnd = EnsureUtc(end);
 
             if (utcEnd < utcStart)
             {
@@ -280,6 +285,22 @@ namespace Infrastructure.Persistence.Services
             if (timeSpan.TotalMinutes >= 1)
                 return $"{timeSpan.Minutes}m {timeSpan.Seconds}s";
             return $"{timeSpan.Seconds}s";
+        }
+
+        public DateTime EnsureUtcFromNepal(DateTime nepalDateTime)
+        {
+            return ConvertFromNepalToUtc(nepalDateTime);
+        }
+        public DateTime EnsureUtcFromUnknown(DateTime dateTime, bool assumeNepalTime = true)
+        {
+            return dateTime.Kind switch
+            {
+                DateTimeKind.Utc => dateTime,
+                DateTimeKind.Local => dateTime.ToUniversalTime(),
+                DateTimeKind.Unspecified when assumeNepalTime => ConvertFromNepalToUtc(dateTime),
+                DateTimeKind.Unspecified => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc),
+                _ => dateTime
+            };
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Application.Common;
+using Application.Common.Helper;
 using Application.Common.Models;
 using Application.Dto.PromoCodeDTOs;
 using Application.Features.PromoCodeFeat.Commands;
@@ -98,32 +99,87 @@ namespace Application.Features.PromoCodeFeat.Module
                 .Produces(StatusCodes.Status400BadRequest);
 
             app.MapPut("/update", async (
-                 int id,
-                [FromBody] UpdatePromoCodeDTO request,
-                [FromServices] ICurrentUserService currentUserService,
-                [FromServices] IUserRepository userRepository,
-                [FromServices] IMediator mediator)=>
+            int id,
+            [FromBody] UpdatePromoCodeDTO request,
+            [FromServices] ICurrentUserService currentUserService,
+            [FromServices] IUserRepository userRepository,
+            [FromServices] IMediator mediator) =>
         {
-                var userId = currentUserService.GetUserIdAsInt();
-                var userInfo = await userRepository.FindByIdAsync(userId);
+            var userId = currentUserService.GetUserIdAsInt();
+            var userInfo = await userRepository.FindByIdAsync(userId);
 
             if (userInfo == null)
             {
                 return Results.BadRequest("User not found");
-            }                
+            }
+
+            // ✅ VALIDATE DATE FORMATS USING TimeParsingHelper
+            if (request.HasDateUpdates && !request.HasValidDateFormats)
+            {
+                var errors = new List<string>();
+                if (!string.IsNullOrEmpty(request.StartDateParsingError))
+                    errors.Add($"Start Date: {request.StartDateParsingError}");
+                if (!string.IsNullOrEmpty(request.EndDateParsingError))
+                    errors.Add($"End Date: {request.EndDateParsingError}");
+                
+                return Results.BadRequest(new { 
+                    message = "Invalid date format(s)", 
+                    errors = errors,
+                    supportedFormats = TimeParsingHelper.GetSupportedFormats(),
+                    examples = new {
+                        valid = "08/12/2025 5:13 PM, 2025-08-12 17:13, 08/12/2025 17:13",
+                        yourInput = new {
+                            startDate = request.StartDateNepal,
+                            endDate = request.EndDateNepal
+                        }
+                    }
+                });
+            }
+
+            // ✅ VALIDATE DATE RANGE
+            if (request.HasDateUpdates && !request.IsValidDateRange)
+            {
+                return Results.BadRequest(new { 
+                    message = "Invalid date range. End date must be after start date.",
+                    parsedDates = new {
+                        startDate = request.StartDateParsed?.ToString("yyyy-MM-dd HH:mm:ss"),
+                        endDate = request.EndDateParsed?.ToString("yyyy-MM-dd HH:mm:ss")
+                    }
+                });
+            }
 
             var command = new UpdatePromoCodeCommand(id, request, userInfo.Id);
             var result = await mediator.Send(command);
 
             if (!result.Succeeded)
-                return Results.NotFound(new { result.Message });
+                return Results.BadRequest(new { result.Message, result.Errors });
 
-                return Results.Ok(result.Data);
-            })  .WithName("UpdatePromoCode")
-                .WithSummary("Update promo code (Admin)")
-                .RequireAuthorization("RequireAdmin")
-                .Produces<PromoCodeDTO>(StatusCodes.Status200OK)
-                .Produces(StatusCodes.Status404NotFound);
+            return Results.Ok(new { 
+                message = result.Message, 
+                data = result.Data,
+                dateInfo = new {
+                    startDateNepal = result.Data?.FormattedStartDate,
+                    endDateNepal = result.Data?.FormattedEndDate,
+                    isActive = result.Data?.IsActive,
+                    daysRemaining = result.Data?.DaysRemaining
+                },
+                conversionInfo = new {
+                    inputFormats = new {
+                        startDateInput = request.StartDateNepal,
+                        endDateInput = request.EndDateNepal
+                    },
+                    parsedNepal = new {
+                        startDate = request.StartDateParsed?.ToString("yyyy-MM-dd HH:mm:ss"),
+                        endDate = request.EndDateParsed?.ToString("yyyy-MM-dd HH:mm:ss")
+                    }
+                }
+            });
+        })
+        .WithName("UpdatePromoCode")
+        .WithSummary("Update promo code with flexible Nepal timezone support (Admin)")
+        .RequireAuthorization("RequireAdmin")
+        .Produces<PromoCodeDTO>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status404NotFound);
 
             app.MapPut("/activate", async (
                 int id,
@@ -286,6 +342,71 @@ namespace Application.Features.PromoCodeFeat.Module
                })
                .RequireAuthorization("RequireAdmin")
                .Produces<string>(StatusCodes.Status200OK);
+
+               app.MapGet("/test-timezone", async (
+                [FromServices] INepalTimeZoneService nepalTimeZoneService,
+                [FromQuery] string? testDate = "08/12/2025 5:43 PM") =>
+            {
+                try
+                {
+                    var parseResult = TimeParsingHelper.ParseFlexibleDateTime(testDate!);
+                    if (!parseResult.Succeeded)
+                    {
+                        return Results.BadRequest($"Invalid date format: {parseResult.Message}");
+                    }
+
+                    var nepalTime = parseResult.Data;
+                    var utcTime = nepalTimeZoneService.ConvertFromNepalToUtc(nepalTime);
+                    var backToNepal = nepalTimeZoneService.ConvertFromUtcToNepal(utcTime);
+                    var currentNepal = nepalTimeZoneService.GetNepalCurrentTime();
+                    var currentUtc = nepalTimeZoneService.GetUtcCurrentTime();
+
+                    // Test EnsureUtc behavior
+                    var ensureUtcResult = nepalTimeZoneService.EnsureUtc(nepalTime);
+
+                    return Results.Ok(new
+                    {
+                        input = testDate,
+                        parsing = new {
+                            inputKind = nepalTime.Kind.ToString(),
+                            parsedNepal = nepalTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                            parsedTicks = nepalTime.Ticks
+                        },
+                        conversion = new {
+                            convertedUtc = utcTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                            utcKind = utcTime.Kind.ToString(),
+                            utcTicks = utcTime.Ticks,
+                            backToNepal = backToNepal.ToString("yyyy-MM-dd HH:mm:ss"),
+                            backToNepalKind = backToNepal.Kind.ToString()
+                        },
+                        timezoneInfo = new {
+                            offsetMinutes = (nepalTime - utcTime).TotalMinutes,
+                            isCorrectOffset = Math.Abs((nepalTime - utcTime).TotalMinutes - 345) < 1, // Should be 345 minutes
+                            expectedOffset = 345
+                        },
+                        currentTimes = new {
+                            currentNepalTime = currentNepal.ToString("yyyy-MM-dd HH:mm:ss"),
+                            currentUtcTime = currentUtc.ToString("yyyy-MM-dd HH:mm:ss")
+                        },
+                        ensureUtcTest = new {
+                            ensureUtcResult = ensureUtcResult.ToString("yyyy-MM-dd HH:mm:ss"),
+                            ensureUtcKind = ensureUtcResult.Kind.ToString(),
+                            isCorrect = Math.Abs((ensureUtcResult - utcTime).TotalMinutes) < 1
+                        },
+                        validation = new {
+                            isValidConversion = Math.Abs((backToNepal - nepalTime).TotalSeconds) < 1,
+                            roundTripError = (backToNepal - nepalTime).TotalSeconds
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest($"Error: {ex.Message}\nStackTrace: {ex.StackTrace}");
+                }
+            })
+            .WithName("TestTimezoneConversion")
+            .WithSummary("Test Nepal timezone conversion")
+            .RequireAuthorization("RequireAdmin");
 
         }         
     }

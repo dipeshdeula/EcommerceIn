@@ -181,7 +181,7 @@ namespace Application.Features.CartItemFeat.Commands
                     cancellationToken: cancellationToken
                 );
                 
-                _logger.LogInformation("📊 User {UserId} has used promo code '{Code}' {UsageCount}/{MaxUsage} times", 
+                _logger.LogInformation(" User {UserId} has used promo code '{Code}' {UsageCount}/{MaxUsage} times", 
                     request.UserId, promoCode.Code, userUsageCount, promoCode.MaxUsagePerUser.Value);
                 
                 if (userUsageCount >= promoCode.MaxUsagePerUser.Value)

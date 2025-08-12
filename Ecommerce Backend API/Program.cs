@@ -280,7 +280,7 @@ using (var scope = app.Services.CreateScope())
         if (health.IsRedisConnected)
         {
             Console.WriteLine(" Redis cloud connection successful");
-            Console.WriteLine($"📊 Redis latency: {health.RedisLatency.TotalMilliseconds:F2}ms");
+            Console.WriteLine($" Redis latency: {health.RedisLatency.TotalMilliseconds:F2}ms");
         }
         else
         {
@@ -579,7 +579,7 @@ app.MapGet("/redis-dashboard", async (IHybridCacheService cacheService) =>
         
         <div id='testResults' style='margin-top: 20px;'></div>
         
-        <h3>📊 API Endpoints</h3>
+        <h3> API Endpoints</h3>
         <ul>
             <li><a href='/redis-ping' target='_blank'>GET /redis-ping</a> - Quick connectivity test</li>
             <li><a href='/test-redis' target='_blank'>GET /test-redis</a> - Comprehensive test</li>

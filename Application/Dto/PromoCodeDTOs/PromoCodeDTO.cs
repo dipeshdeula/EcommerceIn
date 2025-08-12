@@ -74,7 +74,8 @@ namespace Application.Dto.PromoCodeDTOs
             _ => "SPECIAL DISCOUNT"
         };
 
-        public string FormattedValidPeriod => $"{StartDate:MMM dd} - {EndDate:MMM dd, yyyy}";
+        [JsonPropertyName("formattedValidPeriod")]
+        public string FormattedValidPeriod => $"{StartDateNepal:MMM dd} - {EndDateNepal:MMM dd, yyyy}";
         public bool IsNotStarted => DateTime.UtcNow < StartDate;
         public bool IsCurrentlyValid => DateTime.UtcNow >= StartDate && DateTime.UtcNow <= EndDate && IsActive;
 

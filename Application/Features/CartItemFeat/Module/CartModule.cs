@@ -57,8 +57,8 @@ namespace Application.Features.CartItemFeat.Module
                     message = result.Message, 
                     data = result.Data,
                     shippingInfo = new {
-                        cost = result.Data.ShippingCost,
-                        message = result.Data.ShippingCost == 0 ? "🚚 Free shipping applied!" : $"🚚 Shipping: Rs.{result.Data.ShippingCost:F2}"
+                       // cost = result.Data.ShippingCost,
+                        //message = result.Data.ShippingCost == 0 ? " Free shipping applied!" : $" Shipping: Rs.{result.Data.ShippingCost:F2}"
                     }
                 });
             })
@@ -120,24 +120,25 @@ namespace Application.Features.CartItemFeat.Module
                     return Results.BadRequest(new { message = result?.Message ?? "An error occurred.", data = result?.Data });
                 }
 
-                // Calculate total shipping for summary
-                var cartItems = result.Data ?? new List<CartItemDTO>();
-                var totalShipping = cartItems.Sum(c => c.ShippingCost);
-                var hasAnyFreeShipping = cartItems.Any(c => c.ShippingCost == 0);
-
+                //  NEW: Return clean cart structure
                 return Results.Ok(new { 
                     message = result.Message, 
-                    data = result.Data,
+                    data = result.Data, // This is now CartDTO with proper structure
                     summary = new {
-                        totalItems = cartItems.Count(),
-                        totalShipping = totalShipping,
-                        hasFreeShipping = hasAnyFreeShipping,
-                        shippingMessage = hasAnyFreeShipping ? "🚚 Free shipping on some items!" : $"🚚 Total shipping: Rs.{totalShipping:F2}"
+                        totalItems = result.Data?.TotalItems ?? 0,
+                        activeItems = result.Data?.ActiveItems ?? 0,
+                        expiredItems = result.Data?.ExpiredItems ?? 0,
+                        totalItemPrice = result.Data?.FormattedTotalItemPrice ?? "Rs. 0.00",
+                        totalDiscount = result.Data?.FormattedTotalDiscount ?? "Rs. 0.00",
+                        shippingCost = result.Data?.FormattedShippingCost ?? "Rs. 0.00",
+                        grandTotal = result.Data?.FormattedGrandTotal ?? "Rs. 0.00",
+                        canCheckout = result.Data?.CanCheckout ?? false,
+                        shippingMessage = result.Data?.ShippingMessage ?? ""
                     }
                 });
             })
             .WithName("GetCartItemsByUserId")
-            .WithSummary("Get cart items for a specific user with shipping summary");
+            .WithSummary("Get cart items for a specific user with proper shipping calculation");
 
             app.MapPut("/updateCartItem", async (
                 int Id, int UserId, int? ProductId, int? Quantity, ISender mediator) =>
@@ -347,7 +348,7 @@ namespace Application.Features.CartItemFeat.Module
                             {
                                 Page = page,
                                 ElapsedMs = elapsed,
-                                ItemCount = result.Data?.Count() ?? 0,
+                                //ItemCount = result.Data?.Count() ?? 0,
                                 CacheHit = isCacheHit,
                                 Message = result.Message
                             });

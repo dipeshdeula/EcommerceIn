@@ -55,7 +55,7 @@ namespace Application.Features.ShippingFeat.Module
             .Produces<object>(StatusCodes.Status200OK);
 
             // Admin endpoints
-            app.MapGet("/admin/all", async (
+            app.MapGet("/getAll", async (
                 [FromServices] ISender mediator,
                 [FromQuery] int pageNumber = 1,
                 [FromQuery] int pageSize = 10) =>
@@ -73,7 +73,7 @@ namespace Application.Features.ShippingFeat.Module
             .WithSummary("Get all shipping configurations (Admin)")
             .Produces<List<ShippingDTO>>(StatusCodes.Status200OK);
 
-            app.MapGet("/admin/{id:int}", async (
+            app.MapGet("/getShippingById", async (
                 int id,
                 [FromServices] ISender mediator) =>
             {
@@ -91,7 +91,7 @@ namespace Application.Features.ShippingFeat.Module
             .Produces<ShippingDTO>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound);
 
-            app.MapPost("/admin/create", async (
+            app.MapPost("/create", async (
                 [FromBody] CreateShippingDTO request,
                 [FromServices] ISender mediator,
                 [FromServices] ICurrentUserService currentUserService) =>
@@ -127,7 +127,7 @@ namespace Application.Features.ShippingFeat.Module
                 if (!result.Succeeded)
                     return Results.BadRequest(new { result.Message, result.Errors });
 
-                return Results.Created($"/shipping/admin/{result.Data.Id}", new { result.Message, result.Data });
+                return Results.Created($"/shipping/{result.Data.Id}", new { result.Message, result.Data });
             })
             .RequireAuthorization("RequireAdmin")
             .WithName("CreateShippingConfiguration")
@@ -135,7 +135,7 @@ namespace Application.Features.ShippingFeat.Module
             .Produces<ShippingDTO>(StatusCodes.Status201Created)
             .Produces(StatusCodes.Status400BadRequest);
 
-            app.MapPut("/admin/{id:int}", async (
+            app.MapPut("/update", async (
                 int id,
                 [FromBody] CreateShippingDTO request,
                 [FromServices] ISender mediator,
@@ -181,7 +181,7 @@ namespace Application.Features.ShippingFeat.Module
             .Produces<ShippingDTO>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound);
 
-            app.MapPut("/admin/{id:int}/set-default", async (
+            app.MapPut("/set-default", async (
                 int id,
                 [FromServices] ISender mediator,
                 [FromServices] ICurrentUserService currentUserService) =>
@@ -204,7 +204,7 @@ namespace Application.Features.ShippingFeat.Module
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound);
 
-            app.MapDelete("/admin/{id:int}/soft-delete", async (
+            app.MapDelete("/soft-delete", async (
                 int id,
                 [FromServices] ISender mediator) =>
             {
@@ -221,7 +221,7 @@ namespace Application.Features.ShippingFeat.Module
             .WithSummary("Soft delete shipping configuration (Admin)")
             .Produces(StatusCodes.Status200OK);
 
-            app.MapDelete("/admin/{id:int}/hard-delete", async (
+            app.MapDelete("/hard-delete", async (
                 int id,
                 [FromServices] ISender mediator) =>
             {
@@ -238,7 +238,7 @@ namespace Application.Features.ShippingFeat.Module
             .WithSummary("Permanently delete shipping configuration (Admin)")
             .Produces(StatusCodes.Status200OK);
 
-            app.MapGet("/admin/active", async ([FromServices] ISender mediator) =>
+            app.MapGet("/active", async ([FromServices] ISender mediator) =>
             {
                 var query = new GetActiveShippingQuery();
                 var result = await mediator.Send(query);

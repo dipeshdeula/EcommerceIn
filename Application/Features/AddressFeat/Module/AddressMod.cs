@@ -58,9 +58,10 @@ namespace Application.Features.AddressFeat.Module
             });
 
             app.MapPut("/updateAddress", async (
+                [FromQuery] int id,
                 UpdateAddressDTO updateAddressDto, ISender mediator) =>
             {
-                var command = new UpdateAddressCommand(updateAddressDto);
+                var command = new UpdateAddressCommand(id,updateAddressDto);
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                     return Results.BadRequest(new { result.Message, result.Errors });

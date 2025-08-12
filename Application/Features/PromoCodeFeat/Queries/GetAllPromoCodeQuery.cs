@@ -3,6 +3,7 @@ using Application.Common.Models;
 using Application.Dto.PromoCodeDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -20,13 +21,16 @@ namespace Application.Features.PromoCodeFeat.Queries
     public class GetAllPromoCodesQueryHandler : IRequestHandler<GetAllPromoCodesQuery, Result<PagedResult<PromoCodeDTO>>>
     {
         private readonly IPromoCodeRepository _promoCodeRepository;
+        private readonly INepalTimeZoneService _nepalTimeZoneService;
         private readonly ILogger<GetAllPromoCodesQueryHandler> _logger;
         
         public GetAllPromoCodesQueryHandler(
             IPromoCodeRepository promoCodeRepository,
+            INepalTimeZoneService nepalTimeZoneService,
             ILogger<GetAllPromoCodesQueryHandler> logger)
         {
             _promoCodeRepository = promoCodeRepository;
+            _nepalTimeZoneService = nepalTimeZoneService;
             _logger = logger;
         }
         
@@ -59,7 +63,7 @@ namespace Application.Features.PromoCodeFeat.Queries
 
 
                 // Convert to DTOs
-               var promoCodeDTOs = promoCodes.Select(p => p.ToPromoCodeDTO()).ToList();
+               var promoCodeDTOs = promoCodes.Select(p => p.ToPromoCodeDTO(_nepalTimeZoneService)).ToList();
                 
                 // Create paged result using YOUR existing pattern
                 var result = new PagedResult<PromoCodeDTO>

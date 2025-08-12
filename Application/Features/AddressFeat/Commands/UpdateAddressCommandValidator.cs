@@ -21,7 +21,7 @@ namespace Application.Features.AddressFeat.Commands
             "Barahathawa","Bardaghat","Manma","Martadi","Charikot","Rukumkot","Jiri","Bajura","Diktel","Tumlingtar","Salleri"};
 
 
-            RuleFor(x => x.updateAddressDto.Id)
+            RuleFor(x => x.id)
                 .NotEmpty().WithMessage("Address ID is required.")
                 .MustAsync(async (id, cancellation) => await _addressRepository.AnyAsync(a => a.Id == id))
                 .WithMessage("Address doesn't exist!");

@@ -118,9 +118,9 @@ namespace Domain.Entities
         public string GetShippingInfo()
         {
             if (ShippingCost == 0)
-                return "🚚 Free Shipping";
+                return " Free Shipping";
             
-            return $"🚚 Shipping: Rs.{ShippingCost:F2}";
+            return $" Shipping: Rs.{ShippingCost:F2}";
         }
     }
 }

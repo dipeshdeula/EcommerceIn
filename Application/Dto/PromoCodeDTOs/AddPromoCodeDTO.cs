@@ -1,82 +1,99 @@
-﻿using Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+using Application.Common.Helper;
+using Application.Common;
+using Domain.Enums;
 
 namespace Application.Dto.PromoCodeDTOs
 {
     public class AddPromoCodeDTO
     {
         [Required]
-        [StringLength(50)]
         public string Code { get; set; } = string.Empty;
 
         [Required]
-        [StringLength(100)]
         public string Name { get; set; } = string.Empty;
 
-        [StringLength(500)]
+        public PromoCodeType Type { get; set; }
+
         public string? Description { get; set; }
 
         [Required]
-        public PromoCodeType Type { get; set; } = PromoCodeType.Percentage;
-
-        [Range(0, 100)]
+        [Range(0.01, 100)]
         public decimal DiscountValue { get; set; }
-        public bool IsActive { get; set; } = false;
 
-        public decimal? MaxDiscountAmount { get; set; }
-        public decimal? MinOrderAmount { get; set; }
+        [Range(0, double.MaxValue)]
+        public decimal MaxDiscountAmount { get; set; }
 
-        public int? MaxTotalUsage { get; set; }
-        public int? MaxUsagePerUser { get; set; }
+        [Range(0, double.MaxValue)]
+        public decimal MinOrderAmount { get; set; }
 
-        //  NEPAL TIME INPUTS - Using STRING format to avoid DateTime.Kind issues
-        [JsonPropertyName("startDateNepal")]
+        [Range(1, int.MaxValue)]
+        public int MaxTotalUsage { get; set; }
+
+        [Range(1, int.MaxValue)]
+        public int MaxUsagePerUser { get; set; }
+
+        // ✅ USE CONSISTENT DATE INPUT FORMAT WITH TimeParsingHelper
         [Required]
+        [JsonPropertyName("startDateNepal")]
         public string StartDateNepal { get; set; } = string.Empty;
 
-        [JsonPropertyName("endDateNepal")]
         [Required]
+        [JsonPropertyName("endDateNepal")]
         public string EndDateNepal { get; set; } = string.Empty;
 
+        public bool IsActive { get; set; } = true;
         public bool ApplyToShipping { get; set; } = false;
-        public bool StackableWithEvents { get; set; } = true;
+        public bool StackableWithEvents { get; set; } = false;
 
-        [StringLength(50)]
         public string? CustomerTier { get; set; }
 
-        [StringLength(1000)]
-        public string? AdminNotes { get; set; }
-
-        //  HELPER PROPERTIES
+        // ✅ PARSING HELPERS USING TimeParsingHelper
         [JsonIgnore]
-        public DateTime StartDateParsed
+        public DateTime? StartDateParsed
         {
             get
             {
-                if (DateTime.TryParse(StartDateNepal, out var date))
-                    return DateTime.SpecifyKind(date, DateTimeKind.Unspecified);
-                return DateTime.MinValue;
+                var result = TimeParsingHelper.ParseFlexibleDateTime(StartDateNepal);
+                return result.Succeeded ? result.Data : null;
             }
         }
 
         [JsonIgnore]
-        public DateTime EndDateParsed
+        public DateTime? EndDateParsed
         {
             get
             {
-                if (DateTime.TryParse(EndDateNepal, out var date))
-                    return DateTime.SpecifyKind(date, DateTimeKind.Unspecified);
-                return DateTime.MinValue;
+                var result = TimeParsingHelper.ParseFlexibleDateTime(EndDateNepal);
+                return result.Succeeded ? result.Data : null;
             }
         }
 
         [JsonIgnore]
-        public bool IsValidDateRange => EndDateParsed > StartDateParsed && StartDateParsed != DateTime.MinValue;
+        public bool HasValidDateFormats => StartDateParsed.HasValue && EndDateParsed.HasValue;
+
+        [JsonIgnore]
+        public bool IsValidDateRange => HasValidDateFormats && EndDateParsed > StartDateParsed;
+
+        [JsonIgnore]
+        public string? StartDateParsingError
+        {
+            get
+            {
+                var result = TimeParsingHelper.ParseFlexibleDateTime(StartDateNepal);
+                return result.Succeeded ? null : result.Message;
+            }
+        }
+
+        [JsonIgnore]
+        public string? EndDateParsingError
+        {
+            get
+            {
+                var result = TimeParsingHelper.ParseFlexibleDateTime(EndDateNepal);
+                return result.Succeeded ? null : result.Message;
+            }
+        }
     }
 }

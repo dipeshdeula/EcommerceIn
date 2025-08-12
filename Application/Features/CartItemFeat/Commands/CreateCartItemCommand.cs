@@ -262,7 +262,7 @@ namespace Application.Features.CartItemFeat.Commands
                 FinalShippingCost = 0,
                 TotalAmount = orderTotal,
                 ShippingReason = $"🎉 Free shipping event: {eventName}",
-                CustomerMessage = $"🚚 Free shipping applied from {eventName}!",
+                CustomerMessage = $" Free shipping applied from {eventName}!",
                 AppliedPromotions = new List<string> { $"Free Shipping Event: {eventName}" },
                 DeliveryEstimate = "Standard delivery time applies"
             };
@@ -300,8 +300,8 @@ namespace Application.Features.CartItemFeat.Commands
         {
             try
             {
-                _logger.LogInformation("📊 Cart analytics: UserId={UserId}, ProductId={ProductId}, Price=Rs.{Price}, Shipping=Rs.{Shipping}",
-                    request.UserId, request.ProductId, cartItem.ReservedPrice, cartItem.ShippingCost);
+                _logger.LogInformation(" Cart analytics: UserId={UserId}, ProductId={ProductId}, Price=Rs.{Price}",
+                    request.UserId, request.ProductId, cartItem.ReservedPrice);
 
                 // TODO: Implement proper background events (RabbitMQ, SignalR notifications, etc.)
                 await Task.CompletedTask;

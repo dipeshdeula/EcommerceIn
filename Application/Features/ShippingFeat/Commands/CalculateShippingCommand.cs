@@ -176,7 +176,7 @@ namespace Application.Features.ShippingFeat.Commands
 
                 // Set customer message
                 result.CustomerMessage = string.IsNullOrEmpty(config.CustomerMessage) ?
-                    (result.IsFreeShipping ? "🚚 Free shipping applied!" : $"🚚 Shipping: ₨{finalShippingCost}") :
+                    (result.IsFreeShipping ? " Free shipping applied!" : $" Shipping: ₨{finalShippingCost}") :
                     config.CustomerMessage;
 
                 _logger.LogInformation("Shipping calculated: ₨{ShippingCost} for order ₨{OrderTotal}",

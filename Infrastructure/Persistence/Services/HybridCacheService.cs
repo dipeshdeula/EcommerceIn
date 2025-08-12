@@ -98,7 +98,7 @@ namespace Infrastructure.Persistence.Services
             catch (Exception ex)
             {
                 stopwatch.Stop();
-                _logger.LogError(ex, "🚨 Cache GET error for key {Key}: {Error}", key, ex.Message);
+                _logger.LogError(ex, " Cache GET error for key {Key}: {Error}", key, ex.Message);
                 RecordCacheError(cacheType, stopwatch.ElapsedMilliseconds);
                 return default(T);
             }
@@ -186,7 +186,7 @@ namespace Infrastructure.Persistence.Services
                             }
                             catch (JsonException ex)
                             {
-                                _logger.LogError(ex, "🚨 DESERIALIZATION ERROR: {Key} - {Error}", key, ex.Message);
+                                _logger.LogError(ex, " DESERIALIZATION ERROR: {Key} - {Error}", key, ex.Message);
                                 results[key] = default(T);
                             }
                         }
@@ -219,7 +219,7 @@ namespace Infrastructure.Persistence.Services
             catch (Exception ex)
             {
                 stopwatch.Stop();
-                _logger.LogError(ex, "🚨 CACHE ERROR: {KeyCount} keys failed - {Error}", keysList.Count, ex.Message);
+                _logger.LogError(ex, " CACHE ERROR: {KeyCount} keys failed - {Error}", keysList.Count, ex.Message);
 
                 // Return empty results for all keys on error
                 return keysList.ToDictionary(k => k, k => default(T));
@@ -261,7 +261,7 @@ namespace Infrastructure.Persistence.Services
             catch (Exception ex)
             {
                 stopwatch.Stop();
-                _logger.LogError(ex, "🚨 Cache SET error for key {Key}: {Error}", key, ex.Message);
+                _logger.LogError(ex, " Cache SET error for key {Key}: {Error}", key, ex.Message);
                 RecordCacheError(cacheType, stopwatch.ElapsedMilliseconds);
                 throw;
             }
@@ -321,7 +321,7 @@ namespace Infrastructure.Persistence.Services
             catch (Exception ex)
             {
                 stopwatch.Stop();
-                _logger.LogError(ex, "🚨 Bulk cache SET error for {KeyCount} keys: {Error}", keyValuePairs.Count, ex.Message);
+                _logger.LogError(ex, " Bulk cache SET error for {KeyCount} keys: {Error}", keyValuePairs.Count, ex.Message);
                 RecordCacheError(cacheType, stopwatch.ElapsedMilliseconds);
                 throw;
             }
@@ -462,11 +462,11 @@ namespace Infrastructure.Persistence.Services
                 var redisKeys = keysList.Select(k => (RedisKey)k).ToArray();
                 await _redisDatabase.KeyDeleteAsync(redisKeys);
 
-                _logger.LogDebug("🗑️ BULK REMOVE: {Count} keys", keysList.Count);
+                _logger.LogDebug(" BULK REMOVE: {Count} keys", keysList.Count);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "🚨 Bulk cache REMOVE error for {KeyCount} keys: {Error}", keysList.Count, ex.Message);
+                _logger.LogError(ex, " Bulk cache REMOVE error for {KeyCount} keys: {Error}", keysList.Count, ex.Message);
             }
         }
 
@@ -490,7 +490,7 @@ namespace Infrastructure.Persistence.Services
 
                 if (keys.Any())
                 {
-                    _logger.LogInformation("🗑️ Found {Count} keys matching pattern '{Pattern}': [{Keys}]", 
+                    _logger.LogInformation(" Found {Count} keys matching pattern '{Pattern}': [{Keys}]", 
                         keys.Length, pattern, string.Join(", ", keys.Take(5).Select(k => k.ToString())));
 
                     // Remove from L1 cache (memory)
@@ -506,7 +506,7 @@ namespace Infrastructure.Persistence.Services
                         var batch = keys.Skip(i).Take(batchSize).ToArray();
                         await _redisDatabase.KeyDeleteAsync(batch);
                         
-                        _logger.LogDebug("🗑️ Removed batch {BatchNum}: {Count} keys", (i / batchSize) + 1, batch.Length);
+                        _logger.LogDebug(" Removed batch {BatchNum}: {Count} keys", (i / batchSize) + 1, batch.Length);
                     }
 
                     _logger.LogInformation(" Successfully removed {Count} keys matching pattern '{Pattern}'", keys.Length, pattern);
@@ -536,7 +536,7 @@ namespace Infrastructure.Persistence.Services
             await RemoveByPatternAsync($"pricing:*:product:*", cancellationToken);
             await RemoveBulkAsync(keysToRemove, cancellationToken);
             
-            _logger.LogInformation("🗑️ PRODUCTS INVALIDATED: {Count} products", productIds.Count);
+            _logger.LogInformation(" PRODUCTS INVALIDATED: {Count} products", productIds.Count);
         }
 
         
@@ -592,7 +592,7 @@ namespace Infrastructure.Persistence.Services
         //  CACHE WARM-UP for critical data
         public async Task WarmUpAsync(CancellationToken cancellationToken = default)
         {
-            _logger.LogInformation("🔥 Starting cache warm-up...");
+            _logger.LogInformation(" Starting cache warm-up...");
 
             try
             {
@@ -603,7 +603,7 @@ namespace Infrastructure.Persistence.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "🚨 Cache warm-up failed: {Error}", ex.Message);
+                _logger.LogError(ex, " Cache warm-up failed: {Error}", ex.Message);
             }
         }
 
@@ -721,7 +721,7 @@ namespace Infrastructure.Persistence.Services
                 Errors = kvp.Value.Errors
             }).ToList();
 
-            _logger.LogInformation("📊 CACHE METRICS: {MetricsSummary}",
+            _logger.LogInformation(" CACHE METRICS: {MetricsSummary}",
                 JsonConvert.SerializeObject(summary, Formatting.Indented));
         }
 

@@ -643,7 +643,7 @@ namespace Application.Features.BannerSpecialEvent.Module
                 //  Rules evaluation summary
                 if (ruleResult.RulesEvaluated > 0)
                 {
-                    recommendations.Add($"📊 Summary: {ruleResult.RulesEvaluated} rules evaluated, {ruleResult.AppliedRules?.Count ?? 0} applied, {ruleResult.FailedRules?.Count ?? 0} failed");
+                    recommendations.Add($" Summary: {ruleResult.RulesEvaluated} rules evaluated, {ruleResult.AppliedRules?.Count ?? 0} applied, {ruleResult.FailedRules?.Count ?? 0} failed");
                 }
 
                 //  Fallback if no recommendations were generated

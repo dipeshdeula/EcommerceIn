@@ -7,6 +7,7 @@ using MediatR;
 namespace Application.Features.AddressFeat.Commands
 {
     public record UpdateAddressCommand(
+        int id,
         UpdateAddressDTO updateAddressDto
 
         ) : IRequest<Result<AddressDTO>>;
@@ -20,9 +21,9 @@ namespace Application.Features.AddressFeat.Commands
         }
         public async Task<Result<AddressDTO>> Handle(UpdateAddressCommand request, CancellationToken cancellationToken)
         {
-            var address = await _addressRepository.FindByIdAsync(request.updateAddressDto.Id);
+            var address = await _addressRepository.FindByIdAsync(request.id);
             if (address == null)
-                return Result<AddressDTO>.Failure($"Address with id : {request.updateAddressDto.Id} is not found");
+                return Result<AddressDTO>.Failure($"Address with id : {request.id} is not found");
 
             address.Label = request.updateAddressDto.Label ?? address.Label;
             address.Street = request.updateAddressDto.Street ?? address.Street;
@@ -33,8 +34,9 @@ namespace Application.Features.AddressFeat.Commands
             address.Longitude = request.updateAddressDto.Longitude ?? address.Longitude;
 
             await _addressRepository.UpdateAsync(address, cancellationToken);
+            await _addressRepository.SaveChangesAsync(cancellationToken);
 
-            return Result<AddressDTO>.Success(address.ToDTO(), $"Address with id : {request.updateAddressDto.Id} is updated successfully");
+            return Result<AddressDTO>.Success(address.ToDTO(), $"Address with id : {request.id} is updated successfully");
 
 
 

@@ -26,7 +26,7 @@ namespace Application.Dto.CartItemDTOs
         public decimal PromoCodeDiscountAmount { get; set; }
         public string? AppliedPromoCode { get; set; }
 
-        public decimal ShippingCost { get; set; }
+        //public decimal ShippingCost { get; set; }
 
         // STOCK RESERVATION 
         public bool IsStockReserved { get; set; }
@@ -42,7 +42,7 @@ namespace Application.Dto.CartItemDTOs
         public bool IsExpired => ExpiresAt <= DateTime.UtcNow;
         public bool IsActive => !IsDeleted && !IsExpired && IsStockReserved;
         public decimal TotalItemPrice => ReservedPrice * Quantity   ;
-        public decimal GrandTotal => TotalItemPrice + ShippingCost;
+        //public decimal GrandTotal => TotalItemPrice + ShippingCost;
         public decimal TotalDiscountAmount => (EventDiscountAmount ?? 0) * Quantity;
         public decimal OriginalTotalPrice => OriginalPrice ?? ReservedPrice;
 
@@ -52,8 +52,8 @@ namespace Application.Dto.CartItemDTOs
 
         public string FormattedReservedPrice => $"Rs. {ReservedPrice:F2}";
         public string FormattedTotalPrice => $"Rs. {TotalItemPrice:F2}";
-        public string FormattedShippingCost => $"Rs. {ShippingCost:F2}";
-        public string FormattedGrandTotal => $"Rs. {GrandTotal:F2}";
+       // public string FormattedShippingCost => $"Rs. {ShippingCost:F2}";
+       // public string FormattedGrandTotal => $"Rs. {GrandTotal:F2}";
         public string FormattedDiscount => TotalDiscountAmount > 0 ? $"Save Rs. {TotalDiscountAmount:F2}" : string.Empty;
         public decimal TotalSavingsAmount => ((OriginalPrice ?? ReservedPrice) - ReservedPrice) * Quantity;
         public string FormattedEventDiscount => EventDiscountAmount.HasValue && EventDiscountAmount > 0
@@ -77,10 +77,10 @@ namespace Application.Dto.CartItemDTOs
         }
 
         //  NAVIGATION
-        public CategoryDTO? Category { get; set; }
+        //public CategoryDTO? Category { get; set; }
         public ProductDTO? Product { get; set; }
-        public UserDTO? User { get; set; }
-        public PromoCodeDTO? PromoCodeDTO { get; set; }
-        public ShippingDTO? Shipping { get; set; }
+        //public UserDTO? User { get; set; }
+        //public PromoCodeDTO? PromoCodeDTO { get; set; }
+        //public ShippingDTO? Shipping { get; set; }
     }
 }

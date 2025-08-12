@@ -310,7 +310,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
                             </div>
 
                             <div style='background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 6px; margin: 20px 0;'>
-                                <h3 style='color: #856404; margin-top: 0;'>🚚 Delivery Information</h3>
+                                <h3 style='color: #856404; margin-top: 0;'> Delivery Information</h3>
                                 <p style='color: #856404; margin: 0; font-size: 16px;'>
                                     <strong>Estimated Delivery Time:</strong> {deliveryTime:MMM dd, yyyy 'at' HH:mm}<br>
                                     <strong>Delivery Window:</strong> Approximately {etaMinutes} minutes from now<br>

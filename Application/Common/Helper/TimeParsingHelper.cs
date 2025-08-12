@@ -146,9 +146,65 @@ namespace Application.Common.Helper
         {
             return $"Unable to parse '{input}'. Try formats like: {string.Join(", ", GetSupportedFormats())}";
         }
+                /// <summary>
+        /// Parse Nepal timezone datetime input with enhanced format support
+        /// </summary>
+        public static Result<DateTime> ParseNepalDateTime(string input, DateTime? baseDate = null)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return Result<DateTime>.Failure("Time input cannot be empty");
 
+            input = input.Trim();
+            var targetDate = baseDate ?? DateTime.Today;
 
+            // ✅ NEPAL-SPECIFIC DATETIME FORMATS (prioritized)
+            var nepalDateTimeFormats = new[]
+            {
+                "MM/dd/yyyy h:mm tt",      // "08/12/2025 5:13 PM" (your format)
+                "MM/dd/yyyy hh:mm tt",     // "08/12/2025 05:13 PM" 
+                "MM/dd/yyyy H:mm",         // "08/12/2025 17:13"
+                "MM/dd/yyyy HH:mm",        // "08/12/2025 17:13"
+                "MM/dd/yyyy h:mm:ss tt",   // "08/12/2025 5:13:00 PM"
+                "MM/dd/yyyy HH:mm:ss",     // "08/12/2025 17:13:00"
+                "dd/MM/yyyy h:mm tt",      // "12/08/2025 5:13 PM" (alternate format)
+                "dd/MM/yyyy HH:mm",        // "12/08/2025 17:13"
+                "yyyy-MM-dd h:mm tt",      // "2025-08-12 5:13 PM"
+                "yyyy-MM-dd hh:mm tt",     // "2025-08-12 05:13 PM"
+                "yyyy-MM-dd H:mm",         // "2025-08-12 17:13"
+                "yyyy-MM-dd HH:mm",        // "2025-08-12 17:13"
+                "yyyy-MM-dd h:mm:ss tt",   // "2025-08-12 5:13:00 PM"
+                "yyyy-MM-dd HH:mm:ss",     // "2025-08-12 17:13:00"
+                "yyyy-MM-ddTHH:mm:ss",     // "2025-08-12T17:13:00"
+                "yyyy-MM-dd HH:mm:ss.fff", // "2025-08-12 17:13:00.000"
+            };
 
+            foreach (var format in nepalDateTimeFormats)
+            {
+                if (DateTime.TryParseExact(input, format, CultureInfo.InvariantCulture,
+                    DateTimeStyles.None, out var parsedDateTime))
+                {
+                    return Result<DateTime>.Success(DateTime.SpecifyKind(parsedDateTime, DateTimeKind.Unspecified));
+                }
+            }
+
+            // Fallback to general parsing
+            return ParseFlexibleDateTime(input, baseDate);
+        }
+
+        /// <summary>
+        /// Get Nepal-specific supported formats for user guidance
+        /// </summary>
+        public static List<string> GetNepalSupportedFormats()
+        {
+            return new List<string>
+            {
+                "08/12/2025 5:13 PM",
+                "08/12/2025 17:13",
+                "2025-08-12 5:13 PM",
+                "2025-08-12 17:13:00",
+                "12/08/2025 5:13 PM"
+            };
+        }
 
     }
    
