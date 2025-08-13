@@ -1,5 +1,6 @@
 ﻿using Application.Dto.LocationDTOs;
 using Application.Features.LocationFeat.Commands;
+using Application.Features.LocationFeat.DeleCommands;
 using Application.Features.LocationFeat.Queries;
 using Application.Interfaces.Services;
 using Carter;
@@ -113,24 +114,7 @@ namespace Application.Features.LocationFeat.Module
             .WithName("FindNearbyStores")
             .WithSummary("Find stores near specified location")
             .Produces<object>(StatusCodes.Status200OK);
-
-            //  Get service areas
-            app.MapGet("/service-areas", async (
-                [FromServices] ISender mediator,
-                [FromQuery] bool activeOnly = true
-                ) =>
-            {
-                var query = new GetServiceAreasQuery(activeOnly);
-                var result = await mediator.Send(query);
-
-                if (!result.Succeeded)
-                    return Results.BadRequest(new { result.Message, result.Errors });
-
-                return Results.Ok(new { result.Message, result.Data });
-            })
-            .WithName("GetServiceAreas")
-            .WithSummary("Get all available service areas")
-            .Produces<object>(StatusCodes.Status200OK);
+           
 
             //  Reverse geocoding
             app.MapGet("/reverse-geocode", async (
@@ -164,6 +148,70 @@ namespace Application.Features.LocationFeat.Module
             .WithName("ForwardGeocode")
             .WithSummary("Convert address to coordinates")
             .Produces<object>(StatusCodes.Status200OK);
+
+            // service Areas 
+
+
+            //  Get service areas
+            app.MapGet("/service-areas", async (
+                [FromServices] ISender mediator,
+                [FromQuery] bool activeOnly = true
+                ) =>
+            {
+                var query = new GetServiceAreasQuery(activeOnly);
+                var result = await mediator.Send(query);
+
+                if (!result.Succeeded)
+                    return Results.BadRequest(new { result.Message, result.Errors });
+
+                return Results.Ok(new { result.Message, result.Data });
+            })
+            .WithTags("Service Area")
+            .WithName("GetServiceAreas")
+            .WithSummary("Get all available service areas")
+            .Produces<object>(StatusCodes.Status200OK);
+
+            app.MapPost("/create", async (AddServiceAreaDTO serviceAreaDTO, ISender mediator) =>
+            {
+                var command = new CreateServiceAreaCommand(serviceAreaDTO);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            }).WithTags("Service Area")
+            .RequireAuthorization("RequireAdmin")
+            .Produces<ServiceAreaDTO>(StatusCodes.Status200OK);
+
+            app.MapPut("/update", async (int id,UpdateServiceAreaDTO serviceAreaDTO, ISender mediator) =>
+            {
+                var command = new UpdateServiceAreaCommand(id,serviceAreaDTO);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            }).WithTags("Service Area")
+           .RequireAuthorization("RequireAdmin")
+           .Produces<ServiceAreaDTO>(StatusCodes.Status200OK);
+
+            app.MapDelete("/hardDelete", async (int id, ISender mediator) =>
+            {
+                var command = new HardDeleteServiceAreaCommand(id);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+                return Results.Ok(new { result.Message, result.Data });
+            }).WithTags("Service Area")
+           .RequireAuthorization("RequireAdmin")
+           .Produces<string>(StatusCodes.Status200OK);
         }
 
 

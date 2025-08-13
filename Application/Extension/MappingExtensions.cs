@@ -7,6 +7,7 @@ using Application.Dto.BilItemDTOs;
 using Application.Dto.CartItemDTOs;
 using Application.Dto.CategoryDTOs;
 using Application.Dto.CompanyDTOs;
+using Application.Dto.LocationDTOs;
 using Application.Dto.OrderDTOs;
 using Application.Dto.PaymentDTOs;
 using Application.Dto.PaymentMethodDTOs;
@@ -1304,7 +1305,7 @@ namespace Application.Extension
                 PaymentMethodId = paymentRequest.PaymentMethodId,
                 PaymentAmount = paymentRequest.PaymentAmount,
                 Currency = paymentRequest.Currency ?? "NPR",
-                Description = paymentRequest.Description,
+                Description = paymentRequest.Description!,
                 PaymentStatus = paymentRequest.PaymentStatus,
                 PaymentUrl = paymentRequest.PaymentUrl,
                 KhaltiPidx = paymentRequest.KhaltiPidx,
@@ -1642,6 +1643,31 @@ namespace Application.Extension
                 /// usedAtNepal.ToUserFriendlyNepalTime(nepalTimeService) :
                 // TimeParsingHelper.FormatForNepalDisplay(usedAtNepal),
                 PaymentMethod = usage.PaymentMethod
+            };
+        }
+
+        public static ServiceAreaDTO ToDTO(this ServiceArea serviceArea)
+        {
+            return new ServiceAreaDTO {
+                Id = serviceArea.Id,
+                CityName = serviceArea.CityName,
+                Province = serviceArea.Province,
+                Country = serviceArea.Country,
+                CenterLatitude = serviceArea.CenterLatitude,
+                CenterLongitude = serviceArea.CenterLongitude,
+                RadiusKm = serviceArea.RadiusKm,
+                IsActive = serviceArea.IsActive,
+                IsComingSoon = serviceArea.IsComingSoon,
+                MaxDeliveryDistancekm = serviceArea.MaxDeliveryDistanceKm,
+                MinOrderAmount = serviceArea.MinOrderAmount,
+                DeliveryStartTime = serviceArea.DeliveryStartTime,
+                DeliveryEndTime = serviceArea.DeliveryEndTime,
+                EstimatedDeliveryDays = serviceArea.EstimatedDeliveryDays,
+                DisplayName = serviceArea.DisplayName,
+                Description = serviceArea.Description,
+                NotAvailableMessage = serviceArea.NotAvailableMessage,
+                Stores = serviceArea.Stores.Select(s => s.ToDTO()).ToList(),
+                Orders = serviceArea.Orders.Select(o=>o.ToDTO()).ToList()
             };
         }
 

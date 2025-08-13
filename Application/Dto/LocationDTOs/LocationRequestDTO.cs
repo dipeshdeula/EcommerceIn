@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Application.Dto.OrderDTOs;
+using Application.Dto.StoreDTOs;
+using Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -71,17 +74,25 @@ namespace Application.Dto.LocationDTOs
     {
         public int Id { get; set; }
         public string CityName { get; set; } = string.Empty;
-        public string DisplayName { get; set; } = string.Empty;
         public string Province { get; set; } = string.Empty;
-        public bool IsActive { get; set; }
-        public bool IsComingSoon { get; set; }
-        public double RadiusKm { get; set; }
+        public string Country { get; set; } = string.Empty;
+        public double CenterLatitude { get; set; }
+        public double CenterLongitude { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public string NotAvailableMessage { get; set; } = string.Empty;
+        public bool IsActive { get; set; } = false;
+        public bool IsComingSoon { get; set; } = false;
         public int StoreCount { get; set; }
+        public double RadiusKm { get; set; }      
         public TimeSpan DeliveryStartTime { get; set; }
         public TimeSpan DeliveryEndTime { get; set; }
+        public int EstimatedDeliveryDays { get; set; }
         public decimal MinOrderAmount {get;set;}
         public double MaxDeliveryDistancekm{ get; set; }
+
+        public ICollection<StoreDTO> Stores { get; set; } = new List<StoreDTO>();
+        public ICollection<OrderDTO> Orders { get; set; } = new List<OrderDTO>();
     }
 
     public class IPLocationDTO

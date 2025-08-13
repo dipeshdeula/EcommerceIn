@@ -260,6 +260,7 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IShippingRepository, ShippingRepository>();
             services.AddScoped<IPromoCodeRepository, PromoCodeRepository>();
             services.AddScoped<IPromocodeUsageRepository,PromoCodeUsageRepository>();
+            services.AddScoped<IServiceAreaRepository, ServiceAreaRepository>();
 
 
             // Register CQRS handlers with scoped lifetime
