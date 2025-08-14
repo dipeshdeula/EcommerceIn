@@ -19,8 +19,9 @@ namespace Domain.Entities
         public bool IsDeleted { get; set; } = false;
 
         public ICollection<SubCategory> SubCategories { get; set; } = new List<SubCategory>();
+        public ICollection<SubSubCategory> SubSubCategories { get; set; } = new List<SubSubCategory>();
 
-        public ICollection<Product> Products { get; set; }
+        public ICollection<Product> Products { get; set; } = new List<Product>();
 
 
 

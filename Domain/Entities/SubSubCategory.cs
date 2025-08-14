@@ -15,9 +15,11 @@ namespace Domain.Entities
         public string ImageUrl { get; set; } = string.Empty;
         public bool IsDeleted { get; set; } = false;
 
+        public int CategoryId { get; set; }
         public int SubCategoryId { get; set; } // Foreign key to SubCategory
-        public SubCategory SubCategory { get; set; }  // Navigation property to SubCategory entity
-
+        public SubCategory? SubCategory { get; set; }  // Navigation property to SubCategory entity
+        
+        public Category? Category { get; set; }
         public ICollection<Product> Products { get; set; } = new List<Product>();
     }
 }

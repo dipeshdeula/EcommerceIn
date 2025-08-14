@@ -23,7 +23,7 @@ namespace Application.Interfaces.Services
         Task<Result<NearbyStoreDTO?>> FindNearestStoreAsync(double latitude, double longitude, CancellationToken cancellationToken = default);
         
         //  Service area management
-        Task<Result<List<ServiceAreaDTO>>> GetAllServiceAreasAsync(bool activeOnly = true, CancellationToken cancellationToken = default);
+        Task<Result<IEnumerable<ServiceAreaDTO>>> GetAllServiceAreasAsync(int pageNumber,int pageSize,bool activeOnly = true, CancellationToken cancellationToken = default);
         Task<Result<ServiceAreaDTO?>> GetServiceAreaDetailsAsync(int serviceAreaId, CancellationToken cancellationToken = default);
         Task<Result<ServiceArea>> CreateServiceAreaAsync(ServiceArea serviceArea, CancellationToken cancellationToken = default);
         Task<Result<bool>> UpdateServiceAreaAsync(ServiceArea serviceArea, CancellationToken cancellationToken = default);

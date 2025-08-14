@@ -1,4 +1,5 @@
-﻿using Domain.Entities;
+﻿using Application.Dto.CategoryDTOs;
+using Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,8 @@ namespace Application.Dto
         public string Description { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
         public bool IsDeleted { get; set; } = false;
+        public int CategoryId { get; set; } // Foreign key to Category
+        public CategoryDTO? categoryDTO { get; set; }
         public List<SubSubCategoryDTO> SubSubCategories { get; set; } = new List<SubSubCategoryDTO>();
     }
 }

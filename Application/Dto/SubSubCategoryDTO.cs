@@ -1,4 +1,5 @@
-﻿using Application.Dto.ProductDTOs;
+﻿using Application.Dto.CategoryDTOs;
+using Application.Dto.ProductDTOs;
 using Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -16,8 +17,10 @@ namespace Application.Dto
         public string Description { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
         public bool IsDeleted { get; set; } = false;
+        public int CategoryId { get; set; }
         public int SubCategoryId { get; set; }
-        public SubCategory SubCategory { get; set; }
+        public CategoryDTO? Category { get; set; }
+        public SubCategoryDTO? SubCategory { get; set; }
         public List<ProductDTO> Products { get; set; } = new List<ProductDTO>();
     }
 }

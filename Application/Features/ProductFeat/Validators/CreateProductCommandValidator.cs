@@ -6,13 +6,13 @@ namespace Application.Features.ProductFeat.Validators
 {
     public class CreateProductCommandValidator : AbstractValidator<CreateProductCommand>
     {
-        public CreateProductCommandValidator(ISubSubCategoryRepository subSubCategoryRepository)
+        public CreateProductCommandValidator(ICategoryRepository categoryRepository)
         {
-            RuleFor(x => x.SubSubCategoryId)
-                .GreaterThan(0).WithMessage("SubSubCategoryId must be greater than 0.")
+            RuleFor(x => x.CategoryId)
+                .GreaterThan(0).WithMessage("CategoryId must be greater than 0.")
                 .MustAsync(async (id, _) =>
-                    await subSubCategoryRepository.AnyAsync(s => s.Id == id))
-                .WithMessage("SubSubCategory does not exist.");
+                    await categoryRepository.AnyAsync(c => c.Id == id))
+                .WithMessage("Category does not exist.");
 
             RuleFor(x => x.createProductDTO)
                 .NotNull().WithMessage("Product data is required.")

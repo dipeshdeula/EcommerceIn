@@ -1108,7 +1108,7 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CategoryId")
+                    b.Property<int?>("CategoryId")
                         .HasColumnType("integer");
 
                     b.Property<decimal>("CostPrice")
@@ -1175,7 +1175,10 @@ namespace Infrastructure.Migrations
                     b.Property<int>("StockQuantity")
                         .HasColumnType("integer");
 
-                    b.Property<int>("SubSubCategoryId")
+                    b.Property<int?>("SubCategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("SubSubCategoryId")
                         .HasColumnType("integer");
 
                     b.Property<uint>("Version")
@@ -1201,6 +1204,8 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("Slug")
                         .IsUnique();
+
+                    b.HasIndex("SubCategoryId");
 
                     b.HasIndex("SubSubCategoryId");
 
@@ -1605,7 +1610,7 @@ namespace Infrastructure.Migrations
                             CenterLongitude = 85.047799999999995,
                             CityName = "Hetauda",
                             Country = "Nepal",
-                            CreatedAt = new DateTime(2025, 8, 10, 12, 27, 35, 74, DateTimeKind.Utc).AddTicks(3141),
+                            CreatedAt = new DateTime(2025, 8, 14, 14, 47, 49, 68, DateTimeKind.Utc).AddTicks(6024),
                             DeliveryEndTime = new TimeSpan(0, 21, 0, 0, 0),
                             DeliveryStartTime = new TimeSpan(0, 9, 0, 0, 0),
                             Description = "Premium delivery service in Hetauda city and surrounding areas",
@@ -1619,7 +1624,7 @@ namespace Infrastructure.Migrations
                             NotAvailableMessage = "Service not available in your area yet. Coming soon to Hetauda!",
                             Province = "Bagmati",
                             RadiusKm = 15.0,
-                            UpdatedAt = new DateTime(2025, 8, 10, 12, 27, 35, 74, DateTimeKind.Utc).AddTicks(3143)
+                            UpdatedAt = new DateTime(2025, 8, 14, 14, 47, 49, 68, DateTimeKind.Utc).AddTicks(6027)
                         });
                 });
 
@@ -1950,6 +1955,9 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -1977,6 +1985,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
 
                     b.HasIndex("SubCategoryId");
 
@@ -2346,16 +2356,21 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Entities.Category", "Category")
                         .WithMany("Products")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Domain.Entities.SubCategory", "SubCategory")
+                        .WithMany("Products")
+                        .HasForeignKey("SubCategoryId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Domain.Entities.SubSubCategory", "SubSubCategory")
                         .WithMany("Products")
                         .HasForeignKey("SubSubCategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Category");
+
+                    b.Navigation("SubCategory");
 
                     b.Navigation("SubSubCategory");
                 });
@@ -2503,11 +2518,19 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.SubSubCategory", b =>
                 {
+                    b.HasOne("Domain.Entities.Category", "Category")
+                        .WithMany("SubSubCategories")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.SubCategory", "SubCategory")
                         .WithMany("SubSubCategories")
                         .HasForeignKey("SubCategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Category");
 
                     b.Navigation("SubCategory");
                 });
@@ -2552,6 +2575,8 @@ namespace Infrastructure.Migrations
                     b.Navigation("Products");
 
                     b.Navigation("SubCategories");
+
+                    b.Navigation("SubSubCategories");
                 });
 
             modelBuilder.Entity("Domain.Entities.Order", b =>
@@ -2596,6 +2621,8 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.SubCategory", b =>
                 {
+                    b.Navigation("Products");
+
                     b.Navigation("SubSubCategories");
                 });
 

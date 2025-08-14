@@ -1,14 +1,15 @@
-﻿using Application.Features.CategoryFeat.Commands;
+﻿using Application.Dto.CategoryDTOs;
+using Application.Features.CategoryFeat.Commands;
+using Application.Features.CategoryFeat.DeleteCommands;
 using Application.Features.CategoryFeat.Queries;
 using Application.Features.CategoryFeat.UpdateCommands;
-using Application.Features.CategoryFeat.DeleteCommands;
+using Application.Features.SubSubCategoryFeat.Queries;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using Application.Dto.CategoryDTOs;
 
 namespace Application.Features.CategoryFeat.Module
 {
@@ -22,7 +23,7 @@ namespace Application.Features.CategoryFeat.Module
 
         }
 
-        public override async void AddRoutes(IEndpointRouteBuilder app)
+        public override void AddRoutes(IEndpointRouteBuilder app)
         {
             app = app.MapGroup("category");
            
@@ -157,6 +158,64 @@ namespace Application.Features.CategoryFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 return Results.Ok(new { result.Message, result.Data });
             }).RequireAuthorization("RequireAdmin","RequireVendo");
+
+            // ByCategory - subCategory and SubSubCategory
+            app.MapGet("/getAllSubCategoryByCategoryId", async (
+                [FromServices] ISender mediator,
+                [FromQuery] int categoryId,
+                [FromQuery] int pageNumber = 1,
+                [FromQuery] int pageSize = 10
+            ) =>
+            {
+                var command = new GetAllSubCategoryByCategoryId(categoryId, pageNumber, pageSize);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+
+                return Results.Ok(new { result.Message, result.Data });
+            }).WithTags("ByCategoryId")
+            .Produces<CategoryWithSubCategoryDTO>(StatusCodes.Status200OK);
+
+            app.MapGet("/getAllSubSubCategoryByCategoryId", async (
+                [FromServices] ISender mediator,
+                [FromQuery] int categoryId,
+                [FromQuery] int pageNumber = 1,
+                [FromQuery] int pageSize = 10
+            ) =>
+            {
+                var command = new GetAllSubSubCategoryByCategoryId(categoryId, pageNumber, pageSize);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+
+                return Results.Ok(new { result.Message, result.Data });
+            }).WithTags("ByCategoryId")
+            .Produces<CategoryWithSubSubCategoryDTO>(StatusCodes.Status200OK);
+
+            app.MapGet("/getAllSubSubCategoryBySubCategoryId", async (
+               [FromServices] ISender mediator,
+               [FromQuery] int subCategoryId,
+               [FromQuery] int pageNumber = 1,
+               [FromQuery] int pageSize = 10
+           ) =>
+            {
+                var command = new GetAllSubSubCategoryBySubCategoryId(subCategoryId, pageNumber, pageSize);
+                var result = await mediator.Send(command);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new { result.Message, result.Errors });
+                }
+
+                return Results.Ok(new { result.Message, result.Data });
+            }).WithTags("ByCategoryId")
+           .Produces<SubSubCategoryWithSubCategoryDTO>(StatusCodes.Status200OK);
 
 
         }

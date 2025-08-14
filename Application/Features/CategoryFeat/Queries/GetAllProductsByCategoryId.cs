@@ -6,8 +6,6 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using Application.Utilities;
-using System.Linq.Expressions;
 
 namespace Application.Features.CategoryFeat.Queries
 {
@@ -19,7 +17,7 @@ namespace Application.Features.CategoryFeat.Queries
         bool OnSaleOnly = false,
         string? SortBy = null, // "price","name","rating","discount"
         bool IncludeDeleted = false,
-        bool IsAdminRequest = false  
+        bool IsAdminRequest = false
     ) : IRequest<Result<CategoryWithProductsDTO>>;
 
     public class GetAllProductsByCategoryIdHandler : IRequestHandler<GetAllProductsByCategoryId, Result<CategoryWithProductsDTO>>
@@ -27,7 +25,7 @@ namespace Application.Features.CategoryFeat.Queries
         private readonly ICategoryRepository _categoryRepository;
         private readonly IProductPricingService _pricingService;
         private readonly IHybridCacheService _cacheService;
-        private readonly ILogger<GetAllProductsByCategoryIdHandler> _logger; 
+        private readonly ILogger<GetAllProductsByCategoryIdHandler> _logger;
 
         public GetAllProductsByCategoryIdHandler(
             ICategoryRepository categoryRepository,
@@ -45,17 +43,12 @@ namespace Application.Features.CategoryFeat.Queries
         {
             try
             {
-                _logger.LogInformation("Fetching products for Category {CategoryId} - Page {PageNumber}, Size {PageSize}, OnSaleOnly {OnSaleOnly}", 
+                _logger.LogInformation("Fetching products for Category {CategoryId} - Page {PageNumber}, Size {PageSize}, OnSaleOnly {OnSaleOnly}",
                     request.CategoryId, request.PageNumber, request.PageSize, request.OnSaleOnly);
 
                 // Check if Category exists with deletion filter
-                var categories = await _categoryRepository.GetAllAsync(
-                    predicate: c => c.Id == request.CategoryId && (request.IncludeDeleted || !c.IsDeleted),
-                    take: 1,
-                    cancellationToken: cancellationToken);
-
-                var category = categories.FirstOrDefault();
-                if (category == null)
+                var category = await _categoryRepository.FindByIdAsync(request.CategoryId);
+                if (category == null || (!request.IncludeDeleted && category.IsDeleted))
                 {
                     return Result<CategoryWithProductsDTO>.Failure("CategoryId is not found");
                 }
@@ -71,7 +64,7 @@ namespace Application.Features.CategoryFeat.Queries
                 if (!products.Any())
                 {
                     _logger.LogInformation("No products found for Category {CategoryId}", request.CategoryId);
-                    
+
                     return Result<CategoryWithProductsDTO>.Success(new CategoryWithProductsDTO
                     {
                         Id = category.Id,
@@ -132,11 +125,11 @@ namespace Application.Features.CategoryFeat.Queries
                     AveragePrice = activeProducts.Any() ? Math.Round(activeProducts.Average(p => p.Pricing?.EffectivePrice ?? p.MarketPrice), 2) : 0,
                     MinPrice = activeProducts.Any() ? activeProducts.Min(p => p.Pricing?.EffectivePrice ?? p.MarketPrice) : 0,
                     MaxPrice = activeProducts.Any() ? activeProducts.Max(p => p.Pricing?.EffectivePrice ?? p.MarketPrice) : 0,
-                    
+
                     // Proper calculation with parentheses and null safety
                     TotalSavings = activeProducts.Sum(p => (p.Pricing?.ProductDiscountAmount ?? 0) + (p.Pricing?.EventDiscountAmount ?? 0))
                 };
-                
+
                 _logger.LogInformation("Retrieved category {CategoryId} with {ProductCount} products ({ActiveCount} active, {DeletedCount} deleted), {OnSaleCount} on sale, total savings: Rs.{TotalSavings}",
                     request.CategoryId, productDTOs.Count, activeProducts.Count, productDTOs.Count - activeProducts.Count, categoryWithProductsDto.ProductsOnSale, categoryWithProductsDto.TotalSavings);
 

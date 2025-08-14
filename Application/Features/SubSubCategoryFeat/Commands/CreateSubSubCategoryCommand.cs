@@ -23,11 +23,16 @@ namespace Application.Features.SubSubCategoryFeat.Commands
     public class CreateSubSubCategoryCommandHandler : IRequestHandler<CreateSubSubCategoryCommand, Result<SubSubCategoryDTO>>
     {
         private readonly ISubCategoryRepository _subCategoryRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IFileServices _fileService;
 
-        public CreateSubSubCategoryCommandHandler(ISubCategoryRepository subCategoryRepository, IFileServices fileService)
+        public CreateSubSubCategoryCommandHandler(
+            ISubCategoryRepository subCategoryRepository, 
+            IUnitOfWork unitOfWork,
+            IFileServices fileService)
         {
             _subCategoryRepository = subCategoryRepository;
+            _unitOfWork = unitOfWork;
             _fileService = fileService;
         }
 
@@ -40,7 +45,7 @@ namespace Application.Features.SubSubCategoryFeat.Commands
                 return Result<SubSubCategoryDTO>.Failure("Sub-category not found.");
             }
 
-            string fileUrl = null;
+            string fileUrl = null!;
 
             if (request.File != null && request.File.Length > 0)
             {
@@ -62,17 +67,18 @@ namespace Application.Features.SubSubCategoryFeat.Commands
                 Name = request.Name,
                 Slug = request.Slug,
                 Description = request.Description,
-                ImageUrl = fileUrl,
+                ImageUrl = fileUrl!,
                 SubCategoryId = request.SubCategoryId,
-                SubCategory = subCategory
+                SubCategory = subCategory,
+                CategoryId = subCategory.CategoryId,
+                Category = subCategory.Category
+
             };
 
             // Add the SubSubCategory to the parent's SubSubCategories collection
-            subCategory.SubSubCategories.Add(subSubCategory);
+            await _unitOfWork.SubSubCategories.AddAsync(subSubCategory, cancellationToken);       
 
-            // Save changes to the database
-            await _subCategoryRepository.UpdateAsync(subCategory, cancellationToken);
-            await _subCategoryRepository.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             // Map to DTO and return success
             return Result<SubSubCategoryDTO>.Success(subSubCategory.ToDTO(), "SubSubCategory created successfully");

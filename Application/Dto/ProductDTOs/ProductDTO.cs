@@ -21,8 +21,9 @@ namespace Application.Dto.ProductDTOs
         public decimal Rating { get; set; }
         public string Dimensions { get; set; } = string.Empty;
         public bool IsDeleted { get; set; } = false;
-        public int CategoryId { get; set; }
-        public int SubSubCategoryId { get; set; }
+        public int? CategoryId { get; set; }
+        public int? SubCategoryId { get; set; }
+        public int? SubSubCategoryId { get; set; }
 
         // COMPUTED BASIC PROPERTIES
         public int AvailableStock => Math.Max(0, StockQuantity - ReservedStock);

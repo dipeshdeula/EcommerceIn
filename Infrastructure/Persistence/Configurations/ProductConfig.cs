@@ -62,17 +62,25 @@ namespace Infrastructure.Persistence.Configurations
             .IsRowVersion()
             .IsConcurrencyToken();
 
+            // Relationship with category
+            builder.HasOne(p => p.Category)
+            .WithMany(c => c.Products)
+            .HasForeignKey(p => p.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
             // Relationship with SubSubCategory
             builder.HasOne(p => p.SubSubCategory)
                 .WithMany(ssc => ssc.Products)
                 .HasForeignKey(p => p.SubSubCategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
 
-            // Relationship with Category
-            builder.HasOne(p => p.Category)
-                .WithMany(c => c.Products)
-                .HasForeignKey(p => p.CategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
+            // Relationship with SubCategory
+            builder.HasOne(p => p.SubCategory)
+                .WithMany(sc => sc.Products)
+                .HasForeignKey(p => p.SubCategoryId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // Relationship with ProductImage
             builder.HasMany(p => p.Images)
@@ -102,6 +110,7 @@ namespace Infrastructure.Persistence.Configurations
        .HasDefaultValue(false);
 
             builder.HasIndex(p => p.CategoryId);
+            builder.HasIndex(p => p.SubCategoryId);
             builder.HasIndex(p => p.SubSubCategoryId);
             builder.HasIndex(p => p.IsDeleted);
 

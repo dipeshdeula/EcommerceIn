@@ -25,11 +25,13 @@ namespace Domain.Entities
         public uint Version { get; set; }
 
         //  FOREIGN KEYS 
-        public int SubSubCategoryId { get; set; }
-        public int CategoryId { get; set; }
+        public int? SubSubCategoryId { get; set; }
+        public int? SubCategoryId { get; set; }
+        public int? CategoryId { get; set; }
 
         //  NAVIGATION PROPERTIES 
         public SubSubCategory? SubSubCategory { get; set; }
+        public SubCategory? SubCategory { get; set; }
         public Category? Category { get; set; }
         public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
         public ICollection<ProductStore> ProductStores { get; set; } = new List<ProductStore>();

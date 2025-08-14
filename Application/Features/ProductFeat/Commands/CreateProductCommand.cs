@@ -8,34 +8,55 @@ using MediatR;
 namespace Application.Features.ProductFeat.Commands
 {
     public record CreateProductCommand(  
-        int SubSubCategoryId,
+        int CategoryId,
+        int? SubCategoryId,
+        int? SubSubCategoryId,
         CreateProductDTO createProductDTO
 
         ) : IRequest<Result<ProductDTO>>;
 
     public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, Result<ProductDTO>>
     {
+        private readonly ICategoryRepository _categoryRepository;
+        private readonly ISubCategoryRepository _subCategoryRepository;
         private readonly ISubSubCategoryRepository _subSubCategoryRepository;
-        public CreateProductCommandHandler(ISubSubCategoryRepository subSubCategoryRepository)
+        private readonly IProductRepository _productRepository;
+        public CreateProductCommandHandler(
+            ICategoryRepository categoryRepository,
+         ISubCategoryRepository subCategoryRepository,
+         ISubSubCategoryRepository subSubCategoryRepository,
+         IProductRepository productRepository)
         {
+            _categoryRepository = categoryRepository;
+            _subCategoryRepository = subCategoryRepository;
             _subSubCategoryRepository = subSubCategoryRepository;
+            _productRepository = productRepository;
 
         }
         public async Task<Result<ProductDTO>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
         {
-            // Validate SubSubCategoryId
-            var subSubCategory = await _subSubCategoryRepository.FindByIdAsync(request.SubSubCategoryId);
-            if (subSubCategory == null)
+            // validate CategoryId
+            var category = await _categoryRepository.FindByIdAsync(request.CategoryId);
+            if (category == null)
+                return Result<ProductDTO>.Failure("Category not found");
+
+            SubCategory? subCategory = null;
+            SubSubCategory? subSubCategory = null;
+
+            if (request.SubCategoryId.HasValue)
             {
-                return Result<ProductDTO>.Failure("sub-sub category not found");
+                subCategory = await _subCategoryRepository.FindByIdAsync(request.SubCategoryId.Value);
+                if (subCategory == null)
+                    return Result<ProductDTO>.Failure("SubCategory not found");
             }
 
-            // Resolve CategoryId from SubSubCategory -> SubCategory -> Category
-            var categoryId = subSubCategory.SubCategory?.CategoryId;
-            if (categoryId == null)
+            if (request.SubSubCategoryId.HasValue)
             {
-                return Result<ProductDTO>.Failure("Category not found for the given sub-sub category");
+                subSubCategory = await _subSubCategoryRepository.FindByIdAsync(request.SubSubCategoryId.Value);
+                if (subSubCategory == null)
+                    return Result<ProductDTO>.Failure("SubSubCategory not found");
             }
+
 
             // Calculate discount price from percentage
             decimal? discountPrice = null;
@@ -52,9 +73,10 @@ namespace Application.Features.ProductFeat.Commands
 
             // Create the new Product item
             var product = new Product
-            {
-                SubSubCategoryId = subSubCategory.Id,
-                CategoryId = categoryId.Value,
+            {            
+                CategoryId = category.Id,
+                SubCategoryId = subCategory?.Id,
+                SubSubCategoryId = subSubCategory?.Id,
                 Name = request.createProductDTO.Name,
                 Slug = request.createProductDTO.Slug,
                 Description = request.createProductDTO.Slug,
@@ -68,16 +90,15 @@ namespace Application.Features.ProductFeat.Commands
                 Reviews = request.createProductDTO.Reviews,
                 Rating = request.createProductDTO.Rating,
                 Dimensions = request.createProductDTO.Dimensions,
+                Category = category,
+                SubCategory = subCategory,
                 SubSubCategory = subSubCategory
 
             };
 
-            // Add the SubSubCategory to the parent's subsubcategories collection
-            subSubCategory.Products.Add(product);
-
-            // save changes to the database
-            await _subSubCategoryRepository.UpdateAsync(subSubCategory, cancellationToken);
-            await _subSubCategoryRepository.SaveChangesAsync(cancellationToken);
+            // Add the product to the repository
+            await _productRepository.AddAsync(product,cancellationToken);
+            await _productRepository.SaveChangesAsync(cancellationToken);
 
             // Map to the Dto and return success
             return Result<ProductDTO>.Success(product.ToDTO(), "Product item created successfully");

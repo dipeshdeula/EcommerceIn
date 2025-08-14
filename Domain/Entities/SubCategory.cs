@@ -17,9 +17,10 @@ namespace Domain.Entities
         public bool IsDeleted { get; set; } = false;
 
         public int CategoryId { get; set; } // Foreign key to Category
-        public Category Category { get; set; } // Navigation property to Category entity
+        public Category? Category { get; set; } // Navigation property to Category entity
 
         public ICollection<SubSubCategory> SubSubCategories { get; set; } = new List<SubSubCategory>();
+        public ICollection<Product> Products { get; set; } = new List<Product>();
 
 
     }

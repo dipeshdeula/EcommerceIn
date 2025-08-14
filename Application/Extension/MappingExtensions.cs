@@ -152,6 +152,7 @@ namespace Application.Extension
                 Dimensions = product.Dimensions ?? string.Empty,
                 IsDeleted = product.IsDeleted,
                 CategoryId = product.CategoryId,
+                SubCategoryId = product.SubCategoryId,
                 SubSubCategoryId = product.SubSubCategoryId,
                 Images = product.Images?.Select(pi => pi.ToDTO()).ToList() ?? new List<ProductImageDTO>(),
 

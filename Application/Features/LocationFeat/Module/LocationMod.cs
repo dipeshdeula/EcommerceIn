@@ -155,16 +155,28 @@ namespace Application.Features.LocationFeat.Module
             //  Get service areas
             app.MapGet("/service-areas", async (
                 [FromServices] ISender mediator,
+                [FromQuery] int pageNumber=1,
+                [FromQuery] int pageSize = 10,
                 [FromQuery] bool activeOnly = true
                 ) =>
             {
-                var query = new GetServiceAreasQuery(activeOnly);
+                var query = new GetServiceAreasQuery(pageNumber,pageSize,activeOnly);
                 var result = await mediator.Send(query);
 
                 if (!result.Succeeded)
                     return Results.BadRequest(new { result.Message, result.Errors });
 
-                return Results.Ok(new { result.Message, result.Data });
+                return Results.Ok(new { result.Message, result.Data ,
+                    Pagination = new
+                    {
+                        result.TotalCount,
+                        result.PageNumber,
+                        result.PageSize,
+                        result.TotalPages,
+                        result.HasNextPage,
+                        result.HasPreviousPage
+                    }
+                });
             })
             .WithTags("Service Area")
             .WithName("GetServiceAreas")

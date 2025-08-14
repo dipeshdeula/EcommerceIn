@@ -44,7 +44,7 @@ namespace Application.Features.Authentication.Module
                 return Results.Ok(new { result.Message, result.Data });
             });
 
-            app.MapPost("upload", async (ISender mediator, IFormFile file, int userId) =>
+            app.MapPut("upload", async (ISender mediator, IFormFile file, int userId) =>
             {
 
                 var comand = new UploadImageCommand(file, userId);

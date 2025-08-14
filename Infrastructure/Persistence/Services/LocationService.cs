@@ -1,5 +1,7 @@
 ﻿using Application.Common;
+using Application.Common.Models;
 using Application.Dto.LocationDTOs;
+using Application.Extension;
 using Application.Interfaces.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -394,7 +396,7 @@ namespace Infrastructure.Persistence.Services
             }
         }
 
-        // Implement remaining interface methods...
+
         public async Task<Result<bool>> IsLocationWithinServiceAreaAsync(double latitude, double longitude, CancellationToken cancellationToken = default)
         {
             var serviceAreaResult = await FindServiceAreaByLocationAsync(latitude, longitude, cancellationToken);
@@ -502,7 +504,7 @@ namespace Infrastructure.Persistence.Services
             if (!nearbyStoresResult.Succeeded || !nearbyStoresResult.Data?.Any() == true)
                 return Result<NearbyStoreDTO?>.Success(null, "No nearby stores found");
 
-            var nearestStore = nearbyStoresResult.Data.FirstOrDefault();
+            var nearestStore = nearbyStoresResult.Data!.FirstOrDefault();
             return Result<NearbyStoreDTO?>.Success(nearestStore, "Nearest store found");
         }
 
@@ -533,39 +535,31 @@ namespace Infrastructure.Persistence.Services
             return await _googleMapsService.ForwardGeocodeAsync(address, cancellationToken);
         }
 
-        // Additional methods implementation continued...
-        public async Task<Result<List<ServiceAreaDTO>>> GetAllServiceAreasAsync(bool activeOnly = true, CancellationToken cancellationToken = default)
+ 
+        public async Task<Result<IEnumerable<ServiceAreaDTO>>> GetAllServiceAreasAsync(int pageNumber,int pageSize,bool activeOnly = true, CancellationToken cancellationToken = default)
         {
             try
             {
                 var serviceAreas = await _unitOfWork.ServiceAreas.GetAllAsync(
-                    predicate: sa => !sa.IsDeleted && (!activeOnly || sa.IsActive),
+                    orderBy: query => query.OrderByDescending(s=>s.Id),                   
+                    skip: (pageNumber - 1) * pageSize,  
+                    take: pageSize,
                     includeProperties: "Stores",
                     cancellationToken: cancellationToken);
 
-                var serviceAreaDTOs = serviceAreas.Select(sa => new ServiceAreaDTO
-                {
-                    Id = sa.Id,
-                    CityName = sa.CityName,
-                    DisplayName = sa.DisplayName,
-                    Province = sa.Province,
-                    IsActive = sa.IsActive,
-                    IsComingSoon = sa.IsComingSoon,
-                    RadiusKm = sa.RadiusKm,
-                    Description = sa.Description,
-                    StoreCount = sa.Stores?.Count(s => !s.IsDeleted) ?? 0,
-                    DeliveryStartTime = sa.DeliveryStartTime,
-                    DeliveryEndTime = sa.DeliveryEndTime,
-                    MinOrderAmount = sa.MinOrderAmount,
-                    MaxDeliveryDistancekm = sa.MaxDeliveryDistanceKm
-                }).ToList();
+                var totalCount = await _unitOfWork.ServiceAreas.CountAsync(
+                    predicate: sa => !sa.IsDeleted && (!activeOnly || sa.IsActive),
+                    cancellationToken: cancellationToken);
 
-                return Result<List<ServiceAreaDTO>>.Success(serviceAreaDTOs);
+                var serviceAreaDTO = serviceAreas.Select(sa => sa.ToDTO()).ToList();
+
+
+                return Result<IEnumerable<ServiceAreaDTO>>.Success(serviceAreaDTO, "Service area fetched successfully", totalCount, pageNumber, pageSize); ;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting service areas");
-                return Result<List<ServiceAreaDTO>>.Failure($"Failed to get service areas: {ex.Message}");
+                return Result<IEnumerable<ServiceAreaDTO>>.Failure($"Failed to get service areas: {ex.Message}");
             }
         }
 

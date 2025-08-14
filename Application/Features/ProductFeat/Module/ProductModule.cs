@@ -27,9 +27,13 @@ namespace Application.Features.ProductFeat.Module
         {
             app = app.MapGroup("products");
 
-            app.MapPost("/create-product", async ([FromQuery] int subSubCategoryId, ISender mediator, CreateProductDTO productDTO) =>
+            app.MapPost("/create-product", async (
+                [FromQuery] int categoryId,
+                [FromQuery] int? subCategoryId,
+                [FromQuery] int? subSubCategoryId, 
+                ISender mediator, CreateProductDTO productDTO) =>
             {
-                var command = new CreateProductCommand(subSubCategoryId, productDTO);
+                var command = new CreateProductCommand(categoryId,subCategoryId,subSubCategoryId, productDTO);
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                 {
@@ -295,10 +299,13 @@ namespace Application.Features.ProductFeat.Module
 
             app.MapPut("/updateProduct", async (
                 [FromQuery] int ProductId,
+                [FromQuery] int? CategoryId,
+                [FromQuery] int? SubCategoryId,
+                [FromQuery] int? SubSubCategoryId,
                 [FromBody] UpdateProductDTO udpateProductDto,
                 ISender mediator) =>
             {
-                var command = new UpdateProductCommand(ProductId, udpateProductDto);
+                var command = new UpdateProductCommand(ProductId,CategoryId,SubCategoryId,SubSubCategoryId, udpateProductDto);
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                 {

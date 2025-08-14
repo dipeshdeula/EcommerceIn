@@ -27,6 +27,12 @@ namespace Infrastructure.Persistence.Configurations
                 .IsRequired()
                 .HasMaxLength(200);
 
+            // Relationship with category
+            builder.HasOne(ssc => ssc.Category)
+                .WithMany(c => c.SubSubCategories)
+                .HasForeignKey(ssc => ssc.CategoryId)
+                .OnDelete(DeleteBehavior.Cascade);          
+
             // Relationship with SubCategory
             builder.HasOne(ssc => ssc.SubCategory)
                 .WithMany(sc => sc.SubSubCategories)
