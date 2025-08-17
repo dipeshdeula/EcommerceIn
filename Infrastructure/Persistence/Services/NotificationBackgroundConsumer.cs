@@ -38,67 +38,91 @@ public class NotificationBackgroundConsumer : BackgroundService
         _baseUrl = apiConfig.Value.BaseUrl;
     }
 
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         const string functionName = nameof(ExecuteAsync);
+        int maxRetries = 10;
+        int delaySeconds = 5;
+        int attempt = 0;
+        bool connected = false;
 
-        _orderConfirmedConsumer.ConsumeMessages(async message =>
+        while (!connected && attempt < maxRetries && !stoppingToken.IsCancellationRequested)
         {
-            if (string.IsNullOrWhiteSpace(message))
-            {
-                _logger.LogWarning("{Function}: Received empty message.", functionName);
-                return;
-            }
-            var notification = JsonConvert.DeserializeObject<NotificationDto>(message);
-            if (notification == null)
-            {
-                _logger.LogWarning("{Function}: Failed to deserialize message.", functionName);
-                return;
-            }
-            
             try
             {
-                _logger.LogInformation("{Function}: Message received: {Message}", functionName, message);
-
-                //var notification = JObject.Parse(message);
-                var token = _serviceTokenProvider.GetServiceToken();
-
-                using var httpClient = _httpClientFactory.CreateClient();
-                var request = new HttpRequestMessage(HttpMethod.Post,
-                    notification.Email is not null ? _userNotificationApiUrl : _broadcastApiUrl)
+                _orderConfirmedConsumer.ConsumeMessages(async message =>
+            {
+                if (string.IsNullOrWhiteSpace(message))
                 {
-                    Content = new StringContent(message, Encoding.UTF8, "application/json")
-                };
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-                var response = await httpClient.SendAsync(request, stoppingToken);
-                var destination = request.RequestUri.ToString();
-
-                if (response.IsSuccessStatusCode)
-                {
-                    _logger.LogInformation("{Function}: Successfully forwarded notification to {Destination}.", functionName, destination);
+                    _logger.LogWarning("{Function}: Received empty message.", functionName);
+                    return;
                 }
-                else
+                var notification = JsonConvert.DeserializeObject<NotificationDto>(message);
+                if (notification == null)
                 {
-                    _logger.LogError("{Function}: Failed to forward notification. Destination: {Destination}, Status Code: {StatusCode}", functionName, destination, response.StatusCode);
+                    _logger.LogWarning("{Function}: Failed to deserialize message.", functionName);
+                    return;
                 }
 
                 try
-                {                    
-                    _logger.LogInformation("{Function}: Parsed notification object: {@UserNotification}", functionName, notification);
-                }
-                catch
                 {
-                    _logger.LogWarning("{Function}: Could not parse message into UserNotificationRequest.", functionName);
+                    _logger.LogInformation("{Function}: Message received: {Message}", functionName, message);
+
+                    //var notification = JObject.Parse(message);
+                    var token = _serviceTokenProvider.GetServiceToken();
+
+                    using var httpClient = _httpClientFactory.CreateClient();
+                    var request = new HttpRequestMessage(HttpMethod.Post,
+                        notification.Email is not null ? _userNotificationApiUrl : _broadcastApiUrl)
+                    {
+                        Content = new StringContent(message, Encoding.UTF8, "application/json")
+                    };
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                    var response = await httpClient.SendAsync(request, stoppingToken);
+                    var destination = request.RequestUri!.ToString();
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        _logger.LogInformation("{Function}: Successfully forwarded notification to {Destination}.", functionName, destination);
+                    }
+                    else
+                    {
+                        _logger.LogError("{Function}: Failed to forward notification. Destination: {Destination}, Status Code: {StatusCode}", functionName, destination, response.StatusCode);
+                    }
+
+                    try
+                    {
+                        _logger.LogInformation("{Function}: Parsed notification object: {@UserNotification}", functionName, notification);
+                    }
+                    catch
+                    {
+                        _logger.LogWarning("{Function}: Could not parse message into UserNotificationRequest.", functionName);
+                    }
                 }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "{Function}: Exception occurred while processing message: {Message}", functionName, message);
+                }
+            });
+                connected = true;
+                _logger.LogInformation("{Function}: Successfully connected to RabbitMQ.", functionName);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Function}: Exception occurred while processing message: {Message}", functionName, message);
+                attempt++;
+                _logger.LogError(ex, "{Function}: Exception occurred while connecting to RabbitMQ. Attempt: {Attempt}", functionName, attempt);
+                await Task.Delay(TimeSpan.FromSeconds(delaySeconds), stoppingToken);
             }
-        });
+        }
 
-        return Task.CompletedTask;
+        if (!connected)
+        {
+            _logger.LogError("{Function}: Failed to connect to RabbitMQ after {MaxRetries} attempts.", functionName, maxRetries);
+        }
+   
+
+        await Task.CompletedTask;
     }
 
 

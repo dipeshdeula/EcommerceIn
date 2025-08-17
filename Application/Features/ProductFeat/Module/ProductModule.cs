@@ -28,12 +28,15 @@ namespace Application.Features.ProductFeat.Module
             app = app.MapGroup("products");
 
             app.MapPost("/create-product", async (
+                 [FromBody] CreateProductDTO productDTO,
                 [FromQuery] int categoryId,
                 [FromQuery] int? subCategoryId,
-                [FromQuery] int? subSubCategoryId, 
-                ISender mediator, CreateProductDTO productDTO) =>
+                [FromQuery] int? subSubCategoryId
+               ,
+                ISender mediator
+                ) =>
             {
-                var command = new CreateProductCommand(categoryId,subCategoryId,subSubCategoryId, productDTO);
+                var command = new CreateProductCommand(categoryId, subCategoryId, subSubCategoryId, productDTO);
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                 {

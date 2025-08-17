@@ -34,7 +34,7 @@ RUN mkdir -p /app/uploads && chmod 755 /app/uploads
 # ENV ASPNETCORE_URLS=http://+:${PORT}
 
 ENV ASPNETCORE_URLS=http://+:8080
-ENV ASPNETCORE_ENVIRONMENT=Production
+ENV ASPNETCORE_ENVIRONMENT=Development
 
 # # RabbitMQ CloudAMQP settings
 # ENV RabbitMQ__HostName=possum.lmq.cloudamqp.com

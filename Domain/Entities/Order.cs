@@ -11,8 +11,10 @@
         public decimal? EventDiscountAmount { get; set; }
         public string? Notes { get; set; } = null; // Optional notes for the order
         public decimal TotalAmount { get; set; }
+        public decimal GrandTotal { get; set; }
 
         // Shipping fields
+        public int? ShippingId { get; set; }
         public string ShippingAddress { get; set; } = string.Empty;
         public string ShippingCity { get; set; } = string.Empty;
         public decimal ShippingCost { get; set; } = 0;
@@ -31,9 +33,10 @@
         public string? ReasonToCancel { get; set; }
 
         public bool IsDeleted { get; set; } = false;    
-        public User User { get; set; }
+        public User? User { get; set; }
         public ServiceArea? ServiceArea { get; set; }
-        public ICollection<OrderItem> Items { get; set; }
+        public Shipping? Shipping { get; set; }
+        public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
         public ICollection<Notification> Notifications { get; set; } = 
         new List<Notification>();
 

@@ -42,10 +42,10 @@ namespace Application.Features.SubSubCategoryFeat.Queries
                 }
                 // Fetch subcategories with pagination and deletion filter
                 var subSubCategoriesQuery = _unitOfWork.SubSubCategories.GetQueryable()
-                    .Where(sc => sc.CategoryId == request.SubCategoryId && !sc.IsDeleted);
+                    .Where(sc => sc.SubCategoryId == request.SubCategoryId && !sc.IsDeleted);
 
                 var totalSubSubCategories = await _unitOfWork.SubSubCategories.CountAsync(
-                    predicate: sc => sc.CategoryId == request.SubCategoryId && !sc.IsDeleted,
+                    predicate: sc => sc.SubCategoryId == request.SubCategoryId && !sc.IsDeleted,
                     cancellationToken: cancellationToken);
 
                 var subSubCategories = subSubCategoriesQuery

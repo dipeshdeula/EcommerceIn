@@ -1,5 +1,6 @@
 ﻿using Application.Common;
 using Application.Dto.OrderDTOs;
+using Application.Dto.ShippingDTOs;
 using Application.Extension;
 using Application.Extension.Cache;
 using Application.Features.OrderFeat.Events;
@@ -15,6 +16,8 @@ namespace Application.Features.OrderFeat.Commands
             int UserId,
             string ShippingAddress,
             string ShippingCity,
+            double? DeliveryLatitude = null,
+            double? DeliveryLongitude = null,
             string? Notes = null
         ) : IRequest<Result<OrderDTO>>;
 
@@ -29,6 +32,7 @@ namespace Application.Features.OrderFeat.Commands
         private readonly IMediator _mediator;
         private readonly IEventUsageService _eventUsageService;
         private readonly IHybridCacheService _cacheService;
+        private readonly IShippingService _shippingService;
         public CreatePlaceOrderCommandHandler(
             ICartItemRepository cartItemRepository,
             IProductRepository productRepository,
@@ -38,6 +42,7 @@ namespace Application.Features.OrderFeat.Commands
             IRabbitMqPublisher rabbitMqPublisher,
             IEventUsageService eventUsageService,
             IHybridCacheService cacheService,
+            IShippingService shippingService,
             IMediator mediator)
         {
             _cartItemRepository = cartItemRepository;
@@ -49,6 +54,7 @@ namespace Application.Features.OrderFeat.Commands
             _cacheService = cacheService;
             _mediator = mediator;
             _eventUsageService = eventUsageService;
+            _shippingService = shippingService;
         }
         public async Task<Result<OrderDTO>> Handle(CreatePlaceOrderCommand request, CancellationToken cancellationToken)
         {
@@ -144,6 +150,30 @@ namespace Application.Features.OrderFeat.Commands
                 }
                 await _productRepository.SaveChangesAsync(cancellationToken);
 
+                // Calcualte shipping cost using user's selected location
+                var shippingRequest = new ShippingRequestDTO
+                {
+                    UserId = request.UserId,
+                    DeliveryLatitude = request.DeliveryLatitude,
+                    DeliveryLongitude = request.DeliveryLongitude,
+                    Address = request.ShippingAddress,
+                    City = request.ShippingCity,
+                    OrderTotal = totalAmount
+                };
+
+                var shippingResult = await _shippingService.CalculateShippingAsync(shippingRequest,cancellationToken);
+                if(shippingResult.Succeeded)
+                {
+                    return Result<OrderDTO>.Failure("Failed to calculate shipping:" + shippingResult);
+                }
+
+                var shippingCost = shippingResult.Data.FinalShippingCost;
+                var shippingId = shippingResult.Data.Configuration?.Id ?? 1;
+
+                // Calculate grand Total
+                var grandTotal = totalAmount + shippingCost;
+                
+
                 // Create Order
                 var order = new Order
                 {
@@ -152,9 +182,14 @@ namespace Application.Features.OrderFeat.Commands
                     PaymentStatus = "Pending",
                     OrderStatus = "Pending",
                     TotalAmount = totalAmount,
+                    GrandTotal = grandTotal,
                     EventDiscountAmount = totalEventDiscount ?? 0,
                     ShippingAddress = request.ShippingAddress,
                     ShippingCity = request.ShippingCity,
+                    ShippingCost = shippingCost,
+                    ShippingId = shippingId,
+                    DeliveryLatitude = request.DeliveryLatitude,
+                    DeliveryLongitude = request.DeliveryLongitude,
                     Notes = request.Notes,
                     IsConfirmed = false,
 
@@ -230,9 +265,14 @@ namespace Application.Features.OrderFeat.Commands
                     PaymentStatus = order.PaymentStatus,
                     OrderStatus = order.OrderStatus,
                     TotalAmount = order.TotalAmount,
+                    GrandTotal = order.GrandTotal,
                     EventDiscountAmount = order.EventDiscountAmount ?? 0 ,
                     ShippingAddress = order.ShippingAddress,
                     ShippingCity = order.ShippingCity,
+                    ShippingCost = order.ShippingCost,
+                    ShippingId = order.ShippingId ?? 1,
+                    DeliveryLatitude = order.DeliveryLatitude,
+                    DeliveryLongitude = order.DeliveryLongitude,
                     Notes = order.Notes,
                     IsConfirmed = order.IsConfirmed,
                     Items = orderItems.Select(oi => new OrderItemDTO

@@ -848,6 +848,9 @@ namespace Infrastructure.Migrations
                     b.Property<decimal?>("EventDiscountAmount")
                         .HasColumnType("numeric");
 
+                    b.Property<decimal>("GrandTotal")
+                        .HasColumnType("numeric");
+
                     b.Property<bool>("HasFreeShipping")
                         .HasColumnType("boolean");
 
@@ -904,6 +907,9 @@ namespace Infrastructure.Migrations
                     b.Property<decimal>("ShippingDiscountAmount")
                         .HasColumnType("numeric");
 
+                    b.Property<int?>("ShippingId")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
 
@@ -916,6 +922,8 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ServiceAreaId");
+
+                    b.HasIndex("ShippingId");
 
                     b.HasIndex("UserId", "OrderDate")
                         .HasDatabaseName("IX_Order_UserId_OrderDate");
@@ -1610,7 +1618,7 @@ namespace Infrastructure.Migrations
                             CenterLongitude = 85.047799999999995,
                             CityName = "Hetauda",
                             Country = "Nepal",
-                            CreatedAt = new DateTime(2025, 8, 14, 14, 47, 49, 68, DateTimeKind.Utc).AddTicks(6024),
+                            CreatedAt = new DateTime(2025, 8, 17, 8, 12, 36, 833, DateTimeKind.Utc).AddTicks(3813),
                             DeliveryEndTime = new TimeSpan(0, 21, 0, 0, 0),
                             DeliveryStartTime = new TimeSpan(0, 9, 0, 0, 0),
                             Description = "Premium delivery service in Hetauda city and surrounding areas",
@@ -1624,7 +1632,7 @@ namespace Infrastructure.Migrations
                             NotAvailableMessage = "Service not available in your area yet. Coming soon to Hetauda!",
                             Province = "Bagmati",
                             RadiusKm = 15.0,
-                            UpdatedAt = new DateTime(2025, 8, 14, 14, 47, 49, 68, DateTimeKind.Utc).AddTicks(6027)
+                            UpdatedAt = new DateTime(2025, 8, 17, 8, 12, 36, 833, DateTimeKind.Utc).AddTicks(3814)
                         });
                 });
 
@@ -2294,6 +2302,11 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("ServiceAreaId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Domain.Entities.Shipping", "Shipping")
+                        .WithMany()
+                        .HasForeignKey("ShippingId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -2301,6 +2314,8 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("ServiceArea");
+
+                    b.Navigation("Shipping");
 
                     b.Navigation("User");
                 });

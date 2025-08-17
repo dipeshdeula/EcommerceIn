@@ -49,6 +49,7 @@ public class OrderPlacedEventHandler : INotificationHandler<OrderPlacedEvent>
 
             var email = orderEvent.User.Email;
             await _notificationService.SendToUserAsync(email, notification);
+            await _notificationService.SendToAdminAsync(email, notification);
 
             _logger.LogInformation("Notification {NotificationId} created successfully", notification.Id);
         }

@@ -19,7 +19,7 @@ namespace Application.Features.CategoryFeat.Module
         {
             WithTags("Category");
             IncludeInOpenApi();
-            RequireAuthorization();
+           /* RequireAuthorization();*/
 
         }
 

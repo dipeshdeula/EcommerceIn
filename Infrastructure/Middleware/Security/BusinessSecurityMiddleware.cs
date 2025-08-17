@@ -232,11 +232,11 @@ namespace Infrastructure.Middleware.Security
             var config = _configuration.GetSection("SecuritySettings:RateLimiting");
 
             if (path.Contains("/cart"))
-                return (config.GetValue<int>("CartOperations:MaxRequestsPerMinute", 15), 1,
+                return (config.GetValue<int>("CartOperations:MaxRequestsPerMinute", 25), 1,
                         "Too many cart operations");
 
             if (path.Contains("/order"))
-                return (config.GetValue<int>("OrderOperations:MaxOrdersPerHour", 5), 60,
+                return (config.GetValue<int>("OrderOperations:MaxOrdersPerHour", 15), 60,
                         "Too many order attempts");
 
             if (path.Contains("/location"))

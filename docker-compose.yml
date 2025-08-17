@@ -155,7 +155,7 @@ services:
       - RabbitMQ__OrderPlacedQueue=OrderPlacedQueue
       - RabbitMQ__OrderConfirmedQueue=OrderConfirmedQueue
       - RabbitMQ__Ssl=false
-      - RabbitMQ__Uri=
+      - RabbitMQ__Uri=amqp://admin:admin123@rabbitmq:5672/
 
       # Google Auth
       - Google__ClientId=1081137863319-s1t3r18jk69v0tvni1eirdidv550no7j.apps.googleusercontent.com

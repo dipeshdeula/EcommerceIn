@@ -105,7 +105,10 @@ namespace Infrastructure.DependencyInjection
             {
                 var factory = new ConnectionFactory
                 {
-                    HostName = configuration["RabbitMQ:HostName"] ?? "localhost"
+                    HostName = configuration["RabbitMQ:HostName"] ?? "localhost",
+                    UserName = configuration["RabbitMQ:UserName"] ?? "guest",
+                    Password = configuration["RabbitMQ:Password"] ?? "guest",
+                    VirtualHost = configuration["RabbitMQ:VirtualHost"] ?? "/"
                 };
                 return factory.CreateConnection();
             });
