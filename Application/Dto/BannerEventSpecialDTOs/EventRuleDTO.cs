@@ -49,10 +49,10 @@ namespace Application.Dto.BannerEventSpecialDTOs
         [JsonPropertyName("ruleComplexity")]
             public string RuleComplexity => Type switch
         {
-            RuleType.Category or RuleType.SubCategory or RuleType.SubSubCategory => "Simple", //  Fix: Was "Moderate"
+            RuleType.Category or RuleType.SubCategory or RuleType.SubSubCategory => "Simple", //   Was "Moderate"
             RuleType.Product => "Moderate",
-            RuleType.PriceRange => "Moderate", //  Fix: Was "Complex"  
-            RuleType.PaymentMethod => "Simple", //  Fix: Was "Complex"
+            RuleType.PriceRange => "Moderate", //   Was "Complex"  
+            RuleType.PaymentMethod => "Simple", //   Was "Complex"
             RuleType.Geography => "Simple",
             RuleType.All => "None",
             _ => "Advanced"

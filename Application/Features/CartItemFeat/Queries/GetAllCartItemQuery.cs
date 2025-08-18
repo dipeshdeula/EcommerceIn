@@ -27,13 +27,14 @@ namespace Application.Features.CartItemFeat.Queries
             try
             {
                 var cartItems = await _cartItemRepository.GetAllAsync(
-                    predicate: c => !c.IsDeleted,
+                    predicate: c => !c.IsDeleted && c.ExpiresAt > DateTime.UtcNow,
+                    orderBy: query => query.OrderByDescending(c => c.CreatedAt),
                     skip: (request.PageNumber - 1) * request.PageSize,
                     take: request.PageSize,
                     includeProperties: "User,User.Addresses,Product,Product.Images,Product.Category",
                     cancellationToken: cancellationToken
-                )
-                .QuickSortDesc(c => c.CreatedAt);
+                );
+                
 
                 var cartItemDtos = cartItems.Select(c => c.ToDTO()).ToList();
 

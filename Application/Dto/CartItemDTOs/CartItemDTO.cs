@@ -76,6 +76,9 @@ namespace Application.Dto.CartItemDTOs
             }
         }
 
+         public ShippingCalculationDetailDTO? ShippingInfo { get; set; }
+
+
         //  NAVIGATION
         //public CategoryDTO? Category { get; set; }
         public ProductDTO? Product { get; set; }

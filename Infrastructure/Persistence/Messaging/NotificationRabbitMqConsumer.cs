@@ -105,7 +105,7 @@ public class NotificationRabbitMqConsumer : IDisposable
                 Console.WriteLine("RabbitMQ HostName: " + _configuration["RabbitMQ:HostName"]);
                 Console.WriteLine("RabbitMQ Uri: " + _configuration["RabbitMQ:Uri"]);
                 Console.WriteLine("RabbitMQ UserName:" + _configuration["RabbitMQ:Username"]);
-            Console.WriteLine("RabbitMQ Password:" + _configuration["RabbitMQ:Password"]);
+                Console.WriteLine("RabbitMQ Password:" + _configuration["RabbitMQ:Password"]);
 
 
             _connection = factory.CreateConnection();

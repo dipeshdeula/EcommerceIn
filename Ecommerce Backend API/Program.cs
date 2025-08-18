@@ -559,7 +559,7 @@ app.MapGet("/redis-dashboard", async (IHybridCacheService cacheService) =>
         <h1 class='title'>🚀 Redis Cache Dashboard</h1>
         
         <div class='status {(health.IsRedisConnected ? "success" : "error")}'>
-            <h3>Connection Status: {(health.IsRedisConnected ? " CONNECTED" : "❌ DISCONNECTED")}</h3>
+            <h3>Connection Status: {(health.IsRedisConnected ? " CONNECTED" : " DISCONNECTED")}</h3>
         </div>
         
         <div class='metric'>
@@ -598,7 +598,7 @@ app.MapGet("/redis-dashboard", async (IHybridCacheService cacheService) =>
                 const data = await response.json();
                 resultsDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
             }} catch (error) {{
-                resultsDiv.innerHTML = '<p class=""error"">❌ Error: ' + error.message + '</p>';
+                resultsDiv.innerHTML = '<p class=""error""> Error: ' + error.message + '</p>';
             }}
         }}
     </script>

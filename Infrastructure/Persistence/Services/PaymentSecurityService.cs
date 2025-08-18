@@ -41,7 +41,7 @@ namespace Infrastructure.Persistence.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error generating signature");
+                _logger.LogError(ex, " Error generating signature");
                 throw new SecurityException("Signature generation failed", ex);
             }
         }
@@ -55,7 +55,7 @@ namespace Infrastructure.Persistence.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error validating signature");
+                _logger.LogError(ex, " Error validating signature");
                 return false;
             }
         }
@@ -82,7 +82,7 @@ namespace Infrastructure.Persistence.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error encrypting data");
+                _logger.LogError(ex, " Error encrypting data");
                 throw new SecurityException("Data encryption failed", ex);
             }
         }
@@ -113,7 +113,7 @@ namespace Infrastructure.Persistence.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error decrypting data");
+                _logger.LogError(ex, " Error decrypting data");
                 throw new SecurityException("Data decryption failed", ex);
             }
         }

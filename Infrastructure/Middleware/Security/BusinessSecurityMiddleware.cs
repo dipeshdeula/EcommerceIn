@@ -236,7 +236,7 @@ namespace Infrastructure.Middleware.Security
                         "Too many cart operations");
 
             if (path.Contains("/order"))
-                return (config.GetValue<int>("OrderOperations:MaxOrdersPerHour", 15), 60,
+                return (config.GetValue<int>("OrderOperations:MaxOrdersPerHour", 25), 60,
                         "Too many order attempts");
 
             if (path.Contains("/location"))

@@ -34,7 +34,7 @@ namespace Application.Dto.PromoCodeDTOs
         [Range(1, int.MaxValue)]
         public int MaxUsagePerUser { get; set; }
 
-        // ✅ USE CONSISTENT DATE INPUT FORMAT WITH TimeParsingHelper
+        //  USE CONSISTENT DATE INPUT FORMAT WITH TimeParsingHelper
         [Required]
         [JsonPropertyName("startDateNepal")]
         public string StartDateNepal { get; set; } = string.Empty;
@@ -49,7 +49,7 @@ namespace Application.Dto.PromoCodeDTOs
 
         public string? CustomerTier { get; set; }
 
-        // ✅ PARSING HELPERS USING TimeParsingHelper
+        //  PARSING HELPERS USING TimeParsingHelper
         [JsonIgnore]
         public DateTime? StartDateParsed
         {

@@ -124,7 +124,7 @@ namespace Application.Features.PromoCodeFeat.Commands
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "❌ Error converting Nepal time to UTC");
+                    _logger.LogError(ex, " Error converting Nepal time to UTC");
                     return Result<PromoCodeDTO>.Failure($"Error converting dates to UTC: {ex.Message}");
                 }
 
@@ -167,7 +167,7 @@ namespace Application.Features.PromoCodeFeat.Commands
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error creating promo code: {Code} - {Error}", request.PromoCodeDTO.Code, ex.Message);
+                _logger.LogError(ex, " Error creating promo code: {Code} - {Error}", request.PromoCodeDTO.Code, ex.Message);
                 return Result<PromoCodeDTO>.Failure($"Error creating promo code: {ex.Message}");
             }
         }

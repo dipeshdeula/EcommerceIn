@@ -48,7 +48,7 @@ namespace Application.Features.ProductFeat.Queries
                 var productDTOs = new List<ProductDTO>();
                 int totalCount = 0;
 
-                //  FIX: Get total count FIRST for proper pagination
+                //   Get total count FIRST for proper pagination
                 var countPredicate = BuildProductPredicate(
                     includeDeleted: request.IncludeDeleted,
                     searchTerm: request.SearchTerm);

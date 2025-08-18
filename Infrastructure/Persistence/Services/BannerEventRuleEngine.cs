@@ -242,7 +242,7 @@ namespace Infrastructure.Persistence.Services
                 return new SingleRuleResultDTO
                 {
                     IsValid = false,
-                    Message = $"❌ Cart must contain products from categories: {string.Join(", ", allCategoryNames)}"
+                    Message = $" Cart must contain products from categories: {string.Join(", ", allCategoryNames)}"
                 };
             }
             catch (Exception ex)
@@ -265,7 +265,7 @@ namespace Infrastructure.Persistence.Services
 
             return await Task.FromResult(matchingItems.Any())
                 ? new SingleRuleResultDTO { IsValid = true, Message = " Cart contains products from allowed subcategories" }
-                : new SingleRuleResultDTO { IsValid = false, Message = "❌ Cart must contain products from required subcategories" };
+                : new SingleRuleResultDTO { IsValid = false, Message = " Cart must contain products from required subcategories" };
         }
 
         private async Task<SingleRuleResultDTO> ValidateSubSubCategoryRule(EventRule rule, EvaluationContextDTO context)
@@ -277,7 +277,7 @@ namespace Infrastructure.Persistence.Services
 
             return await Task.FromResult(matchingItems.Any())
                 ? new SingleRuleResultDTO { IsValid = true, Message = " Cart contains products from allowed sub-subcategories" }
-                : new SingleRuleResultDTO { IsValid = false, Message = "❌ Cart must contain products from required sub-subcategories" };
+                : new SingleRuleResultDTO { IsValid = false, Message = " Cart must contain products from required sub-subcategories" };
         }
 
         private SingleRuleResultDTO ValidateProductRule(EventRule rule, EvaluationContextDTO context)
@@ -289,23 +289,23 @@ namespace Infrastructure.Persistence.Services
 
             return matchingItems.Any()
                 ? new SingleRuleResultDTO { IsValid = true, Message = " Cart contains required products" }
-                : new SingleRuleResultDTO { IsValid = false, Message = $"❌ Cart must contain specific products (IDs: {rule.TargetValue})" };
+                : new SingleRuleResultDTO { IsValid = false, Message = $" Cart must contain specific products (IDs: {rule.TargetValue})" };
         }
 
         private SingleRuleResultDTO ValidatePriceRangeRule(EventRule rule, EvaluationContextDTO context)
         {
             var parts = rule.TargetValue.Split('-');
             if (parts.Length != 2)
-                return new SingleRuleResultDTO { IsValid = false, Message = "❌ Invalid price range format" };
+                return new SingleRuleResultDTO { IsValid = false, Message = " Invalid price range format" };
 
             if (!decimal.TryParse(parts[0], out var minPrice) || !decimal.TryParse(parts[1], out var maxPrice))
-                return new SingleRuleResultDTO { IsValid = false, Message = "❌ Invalid price range values" };
+                return new SingleRuleResultDTO { IsValid = false, Message = " Invalid price range values" };
 
             var cartTotal = context.OrderTotal ?? context.CartItems.Sum(item => item.ReservedPrice * item.Quantity);
 
             return cartTotal >= minPrice && cartTotal <= maxPrice
                 ? new SingleRuleResultDTO { IsValid = true, Message = $" Cart total Rs.{cartTotal:F2} is within range Rs.{minPrice:F2}-{maxPrice:F2}" }
-                : new SingleRuleResultDTO { IsValid = false, Message = $"❌ Cart total Rs.{cartTotal:F2} must be between Rs.{minPrice:F2}-{maxPrice:F2}" };
+                : new SingleRuleResultDTO { IsValid = false, Message = $" Cart total Rs.{cartTotal:F2} must be between Rs.{minPrice:F2}-{maxPrice:F2}" };
         }
 
         private SingleRuleResultDTO ValidateGeographyRule(EventRule rule, EvaluationContextDTO context)
@@ -315,12 +315,12 @@ namespace Infrastructure.Persistence.Services
 
             if (string.IsNullOrEmpty(userCity))
             {
-                return new SingleRuleResultDTO { IsValid = false, Message = "❌ User address required for geography validation" };
+                return new SingleRuleResultDTO { IsValid = false, Message = " User address required for geography validation" };
             }
 
             return allowedCities.Contains(userCity, StringComparer.OrdinalIgnoreCase)
                 ? new SingleRuleResultDTO { IsValid = true, Message = $" Available in {userCity}" }
-                : new SingleRuleResultDTO { IsValid = false, Message = $"❌ Not available in {userCity}. Available in: {string.Join(", ", allowedCities)}" };
+                : new SingleRuleResultDTO { IsValid = false, Message = $" Not available in {userCity}. Available in: {string.Join(", ", allowedCities)}" };
         }
 
         private SingleRuleResultDTO ValidatePaymentMethodRule(EventRule rule, EvaluationContextDTO context)
@@ -334,7 +334,7 @@ namespace Infrastructure.Persistence.Services
 
             return allowedMethods.Contains(context.PaymentMethod, StringComparer.OrdinalIgnoreCase)
                 ? new SingleRuleResultDTO { IsValid = true, Message = $" Payment method {context.PaymentMethod} is supported" }
-                : new SingleRuleResultDTO { IsValid = false, Message = $"❌ Payment method {context.PaymentMethod} not supported. Use: {string.Join(", ", allowedMethods)}" };
+                : new SingleRuleResultDTO { IsValid = false, Message = $" Payment method {context.PaymentMethod} not supported. Use: {string.Join(", ", allowedMethods)}" };
         }
 
         //  Helper methods for discount calculation

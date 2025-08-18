@@ -50,11 +50,11 @@ public class VerifyOtpCommandHandlerTests
 
         _mockOtpService
             .Setup(x => x.ValidateOtp(email, otp))
-            .Returns(true); //  Works now!
+            .Returns(true); 
 
         _mockOtpService
             .Setup(x => x.GetUserInfo(email))
-            .Returns((storedUser, storedPassword)); //  Works now!
+            .Returns((storedUser, storedPassword)); 
 
         _mockUserRepository
             .Setup(x => x.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
@@ -85,7 +85,7 @@ public class VerifyOtpCommandHandlerTests
 
         _mockOtpService
             .Setup(x => x.ValidateOtp(email, otp))
-            .Returns(false); //  Works now!
+            .Returns(false); 
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);

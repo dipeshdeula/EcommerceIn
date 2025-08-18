@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Persistence.Configurations
 {
-    public class EventRuleConfig : IEntityTypeConfiguration<EventRule> //  FIX: Use EventRule, not Common.EventRule
+    public class EventRuleConfig : IEntityTypeConfiguration<EventRule> //   Use EventRule, not Common.EventRule
     {
-        public void Configure(EntityTypeBuilder<EventRule> builder) //  FIX: Remove override
+        public void Configure(EntityTypeBuilder<EventRule> builder) //   Remove override
         {
             builder.ToTable("EventRules");
             builder.HasKey(er => er.Id);

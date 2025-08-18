@@ -273,7 +273,7 @@ namespace Application.Features.PaymentRequestFeat.Modules
                 HttpRequest request,
                 ILogger<PaymentCallbackModule> logger) =>
             {
-                logger.LogWarning("❌ Khalti failure callback received: Pidx={Pidx}, Status={Status}, Message={Message}",
+                logger.LogWarning(" Khalti failure callback received: Pidx={Pidx}, Status={Status}, Message={Message}",
                     pidx, status, message);
 
                 return HandleCallbackResponse(request, false, message ?? "Payment cancelled or failed", null, pidx, null, null, "khalti");
@@ -361,11 +361,11 @@ namespace Application.Features.PaymentRequestFeat.Modules
                  .Produces(500);
 
             group.MapPost("/cod/collect-payment", async (
-                     int PaymentRequestId,
-                     string DeliveryStatus, // "Delivered", "PartialPayment", "PaymentRefused"
+                     int PaymentRequestId,                      
                      string? Notes,
                      ICurrentUserService currentUserService,
-                     ISender mediator
+                     ISender mediator,
+                     string DeliveryStatus = "DELIVERED" // "Delivered", "PartialPayment", "PaymentRefused"
                      ) =>
                  {
                      

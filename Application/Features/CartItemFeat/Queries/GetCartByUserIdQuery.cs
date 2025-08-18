@@ -289,7 +289,7 @@ namespace Application.Features.CartItemFeat.Queries
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "❌ Error calculating shipping for user {UserId}", request.UserId);
+                        _logger.LogError(ex, " Error calculating shipping for user {UserId}", request.UserId);
                         shippingMessage = "Shipping calculation error";
                     }
                 }
@@ -313,7 +313,7 @@ namespace Application.Features.CartItemFeat.Queries
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error fetching cart for user {UserId}: {Error}", request.UserId, ex.Message);
+                _logger.LogError(ex, " Error fetching cart for user {UserId}: {Error}", request.UserId, ex.Message);
                 return Result<CartItemResponseDTO>.Failure($"Failed to fetch cart items: {ex.Message}");
             }
         }

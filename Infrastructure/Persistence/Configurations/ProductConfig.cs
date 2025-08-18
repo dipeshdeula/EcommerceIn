@@ -114,7 +114,7 @@ namespace Infrastructure.Persistence.Configurations
             builder.HasIndex(p => p.SubSubCategoryId);
             builder.HasIndex(p => p.IsDeleted);
 
-            //  FIX: Computed column (not mapped)
+            //   Computed column (not mapped)
             builder.Ignore(p => p.AvailableStock);
 
           

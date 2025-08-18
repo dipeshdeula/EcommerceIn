@@ -146,7 +146,7 @@ namespace Application.Extension.Cache
             catch (Exception ex)
             {
                 // Don't throw - cache invalidation failure shouldn't break the operation
-                System.Diagnostics.Debug.WriteLine($"❌ Cache invalidation failed for user {userId}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($" Cache invalidation failed for user {userId}: {ex.Message}");
             }
         }
 

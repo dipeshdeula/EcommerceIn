@@ -160,7 +160,7 @@ namespace Application.Features.PromoCodeFeat.Commands
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, "❌ Error converting start date from Nepal to UTC");
+                            _logger.LogError(ex, " Error converting start date from Nepal to UTC");
                             return Result<PromoCodeDTO>.Failure($"Error converting start date: {ex.Message}");
                         }
                     }
@@ -190,7 +190,7 @@ namespace Application.Features.PromoCodeFeat.Commands
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, "❌ Error converting end date from Nepal to UTC");
+                            _logger.LogError(ex, " Error converting end date from Nepal to UTC");
                             return Result<PromoCodeDTO>.Failure($"Error converting end date: {ex.Message}");
                         }
                     }
@@ -263,7 +263,7 @@ namespace Application.Features.PromoCodeFeat.Commands
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error updating promo code {Id}: {Error}", request.Id, ex.Message);
+                _logger.LogError(ex, " Error updating promo code {Id}: {Error}", request.Id, ex.Message);
                 return Result<PromoCodeDTO>.Failure($"Error updating promo code: {ex.Message}");
             }
         }

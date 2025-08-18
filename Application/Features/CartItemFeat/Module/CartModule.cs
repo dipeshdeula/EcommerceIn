@@ -37,10 +37,10 @@ namespace Application.Features.CartItemFeat.Module
                 [FromServices] ICurrentUserService currentUserService,
                 [FromServices] ISender mediator) =>
             {
-                var UserId = Convert.ToInt32(currentUserService.UserId);                
+                var userId = Convert.ToInt32(currentUserService.UserId);                
 
                 var command = new CreateCartItemCommand(
-                    UserId: UserId,
+                    UserId: userId,
                     ProductId: request.ProductId,
                     Quantity: request.Quantity,
                     ShippingRequest: request.ShippingRequest
@@ -52,14 +52,15 @@ namespace Application.Features.CartItemFeat.Module
                 {
                     return Results.BadRequest(new { message = result?.Message ?? "An error occurred." });
                 }
-                
+              // Removed reference to ShippingInfo as CartItemDTO does not contain it
+
                 return Results.Ok(new { 
                     message = result.Message, 
                     data = result.Data,
-                    shippingInfo = new {
-                       // cost = result.Data.ShippingCost,
-                        //message = result.Data.ShippingCost == 0 ? " Free shipping applied!" : $" Shipping: Rs.{result.Data.ShippingCost:F2}"
-                    }
+                    //shippingInfo = new {
+                    //    cost = result.Data.ShippingInfo!.FinalShippingCost,
+                    //    message = result.Data.ShippingInfo.FinalShippingCost == 0 ? " Free shipping applied!" : $" Shipping: Rs.{result.Data.ShippingInfo.FinalShippingCost:F2}"
+                    //}
                 });
             })
             .RequireAuthorization()
@@ -73,15 +74,11 @@ namespace Application.Features.CartItemFeat.Module
                 [FromServices] ICurrentUserService currentUserService,
                 [FromServices] IUserRepository userRepository) =>
             {
-                var userId = currentUserService.GetUserIdAsInt();
-                if (userId == 0) return Results.Unauthorized();
-
-                var userInfo = await userRepository.FindByIdAsync(userId);
-                if (userInfo == null) return Results.NotFound();
+                var userId = Convert.ToInt32(currentUserService.UserId);                
 
                 var shippingRequest = new ShippingRequestDTO
                 {
-                    UserId = userInfo.Id,
+                    UserId = userId,
                     OrderTotal = request.OrderTotal,
                     DeliveryLatitude = request.DeliveryLatitude,
                     DeliveryLongitude = request.DeliveryLongitude,
@@ -141,9 +138,12 @@ namespace Application.Features.CartItemFeat.Module
             .WithSummary("Get cart items for a specific user with proper shipping calculation");
 
             app.MapPut("/updateCartItem", async (
-                int Id, int UserId, int? ProductId, int? Quantity, ISender mediator) =>
+                int Id, int? ProductId, int? Quantity,
+                ICurrentUserService currentUserService,
+                ISender mediator) =>
             {
-                var command = new UpdateCartItemCommand(Id, UserId, ProductId, Quantity);
+                var userId = Convert.ToInt32(currentUserService.UserId);
+                var command = new UpdateCartItemCommand(Id, userId, ProductId, Quantity);
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                     return Results.BadRequest(new { result.Message, result.Errors });
@@ -160,15 +160,11 @@ namespace Application.Features.CartItemFeat.Module
                 [FromServices] IUserRepository userRepository,
                 [FromServices] ISender mediator) =>
             {
-                var userId = currentUserService.GetUserIdAsInt();
-                if (userId == 0) return Results.Unauthorized();
-                var userInfo = await userRepository.FindByIdAsync(userId);
-
-                
+                var userId = Convert.ToInt32(currentUserService.UserId);          
+                               
                 var command = new ApplyPromoCodeToCartCommand(
                     Code: request.Code,
-                    UserId: userInfo.Id
-                    
+                    UserId: userId                    
                 );
                 
                 var result = await mediator.Send(command);
@@ -190,14 +186,11 @@ namespace Application.Features.CartItemFeat.Module
                 [FromServices] IUserRepository userRepository,
                 [FromServices] ISender mediator) =>
             {
-                var userId = currentUserService.GetUserIdAsInt();
-                if (userId == 0) return Results.Unauthorized();
-
-                var userInfo = await userRepository.FindByIdAsync(userId);
+                var userId = Convert.ToInt32(currentUserService.UserId);               
                 
                 var command = new ApplyPromoCodeToCartCommand(
                     Code: request.Code,
-                    UserId: userInfo.Id);
+                    UserId:userId);
                 
                 var result = await mediator.Send(command);
                 
@@ -217,13 +210,9 @@ namespace Application.Features.CartItemFeat.Module
                 [FromServices] IUserRepository userRepository,
                 [FromServices] ISender mediator) =>
             {
-                var userId = currentUserService.GetUserIdAsInt();
-                if (userId == 0) return Results.Unauthorized();
-
-                var userInfo = await userRepository.FindByIdAsync(userId);
-                if (userInfo == null) return Results.NotFound();
-
-                var command = new RemovePromoCodeFromCartCommand(userInfo.Id, promoCode);
+                var userId = Convert.ToInt32(currentUserService.UserId);
+               
+                var command = new RemovePromoCodeFromCartCommand(userId, promoCode);
                 var result = await mediator.Send(command);
                 
                 return result.Succeeded 
@@ -241,11 +230,8 @@ namespace Application.Features.CartItemFeat.Module
                 [FromServices] IUserRepository userRepository,
                 [FromServices] ISender mediator) =>
             {
-                var userId = currentUserService.GetUserIdAsInt();
-                if (userId == 0) return Results.Unauthorized();
-                var userInfo = await userRepository.FindByIdAsync(userId);
-                
-                var query = new GetCartSummaryWithPromoQuery(userInfo.Id);
+                var userId = Convert.ToInt32(currentUserService.UserId);
+                var query = new GetCartSummaryWithPromoQuery(userId);
                 var result = await mediator.Send(query);
                 
                 return result.Succeeded 
@@ -264,12 +250,8 @@ namespace Application.Features.CartItemFeat.Module
                 [FromServices] IUserRepository userRepository,
                 [FromServices] ISender mediator) =>
             {
-                var userId = currentUserService.GetUserIdAsInt();
-                if (userId == 0) return Results.Unauthorized();
-
-                var userInfo = await userRepository.FindByIdAsync(userId);
-                
-                var query = new CalculateCheckoutPricingQuery(userInfo.Id, request.ShippingCost, request.TaxRate ?? 0.13m);
+                var userId = Convert.ToInt32(currentUserService.UserId);
+                var query = new CalculateCheckoutPricingQuery(userId, request.ShippingCost, request.TaxRate ?? 0.13m);
                 var result = await mediator.Send(query);
                 
                 return result.Succeeded 
@@ -282,11 +264,12 @@ namespace Application.Features.CartItemFeat.Module
             .Produces<Result<OrderPricingSummaryDTO>>();
 
             app.MapPost("/add-multiple-cart-items", async (
-                int userId,
+               ICurrentUserService currentUserservice,
                 List<AddToCartItemDTO> items,
                 ISender mediator
                 ) =>
             {
+                var userId = Convert.ToInt32(currentUserservice.UserId);
                 var command = new CreateCartItemsCommand(userId, items);
                 var result = await mediator.Send(command);
 
@@ -324,12 +307,14 @@ namespace Application.Features.CartItemFeat.Module
             // Performance analysis endpoint
 
             app.MapGet("/cart-performance/{userId:int}", async (
-                int userId,
+               ICurrentUserService currentUserService,
                 ISender mediator,
                 IHybridCacheService cacheService) =>
             {
                 try
                 {
+                    var userId = Convert.ToInt32(currentUserService.UserId);                  
+
                     var stats = new List<object>();
 
                     // Test multiple page loads

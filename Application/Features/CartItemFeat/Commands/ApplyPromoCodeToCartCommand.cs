@@ -1,20 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Application.Common;
+﻿using Application.Common;
 using Application.Dto.PromoCodeDTOs;
 using Application.Dto.ShippingDTOs;
-using Application.Extension;
-using Application.Features.ShippingFeat.Commands;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using Domain.Entities;
 using Domain.Enums;
 using MediatR;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Features.CartItemFeat.Commands
 {
@@ -274,12 +267,12 @@ namespace Application.Features.CartItemFeat.Commands
 
                 await _unitOfWork.PromoCodeUsages.AddAsync(usage, cancellationToken);
 
-                _logger.LogInformation("📝 Recorded promo code usage: UserId={UserId}, PromoCodeId={PromoCodeId}, Discount=Rs.{Discount}",
+                _logger.LogInformation(" Recorded promo code usage: UserId={UserId}, PromoCodeId={PromoCodeId}, Discount=Rs.{Discount}",
                     userId, promoCode.Id, totalDiscountAmount);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to record promo code usage for user {UserId}, promo code {PromoCodeId}",
+                _logger.LogError(ex, " Failed to record promo code usage for user {UserId}, promo code {PromoCodeId}",
                     userId, promoCode.Id);
                 throw; // Re-throw to ensure transaction rollback
             }

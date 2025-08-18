@@ -102,9 +102,9 @@ namespace Application.Features.BillingItemFeat.Commands
                     CompanyInfoId = request.CompanyId,
                     PaymentId = payment.Id,
                     BillingDate = DateTime.UtcNow,                    
-                    User = user,
-                    Order = order,
-                    CompanyInfo = company
+                   // User = user,
+                    //Order = order,
+                   // CompanyInfo = company
                 };
 
                 await _unitOfWork.Billings.AddAsync(billing, cancellationToken);

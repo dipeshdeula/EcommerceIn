@@ -162,7 +162,7 @@ namespace Application.Features.OrderFeat.Commands
                 };
 
                 var shippingResult = await _shippingService.CalculateShippingAsync(shippingRequest,cancellationToken);
-                if(shippingResult.Succeeded)
+                if(!shippingResult.Succeeded)
                 {
                     return Result<OrderDTO>.Failure("Failed to calculate shipping:" + shippingResult);
                 }

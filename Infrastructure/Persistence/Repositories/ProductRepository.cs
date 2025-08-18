@@ -33,7 +33,7 @@ namespace Infrastructure.Persistence.Repositories
              bool includeDeleted = false,
              string includeProperties = null)
         {
-            // FIX: Start with base queryable, not specific DbSet
+            //  Start with base queryable, not specific DbSet
             IQueryable<Product> query = GetQueryable(includeDeleted);
 
             // Apply predicate first for better performance
@@ -42,7 +42,7 @@ namespace Infrastructure.Persistence.Repositories
                 query = query.Where(predicate);
             }
 
-            // FIX: Handle include properties properly
+            //  Handle include properties properly
             if (!string.IsNullOrEmpty(includeProperties))
             {
                 var properties = includeProperties.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
@@ -220,7 +220,7 @@ namespace Infrastructure.Persistence.Repositories
             var product = await FindByIdAsync(productId);
             if (product != null)
             {
-                // FIX: Use repository's soft delete method
+                //  Use repository's soft delete method
                 await SoftDeleteAsync(product, cancellationToken);
                 
             }
@@ -282,7 +282,7 @@ namespace Infrastructure.Persistence.Repositories
                     }
                 }
 
-                // FIX: Use repository's remove method
+                //  Use repository's remove method
                 Remove(product);
             }
              

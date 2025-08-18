@@ -3,11 +3,6 @@ using Application.Dto.CartItemDTOs;
 using Application.Extension;
 using Application.Interfaces.Repositories;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Features.CartItemFeat.Commands
 {
@@ -35,6 +30,7 @@ namespace Application.Features.CartItemFeat.Commands
             cartItem.Quantity = request.Quantity ?? cartItem.Quantity;
 
             await _cartItemRepository.UpdateAsync(cartItem,cancellationToken);
+            await _cartItemRepository.SaveChangesAsync(cancellationToken);
 
             return Result<CartItemDTO>.Success(cartItem.ToDTO(), "Cart item updated successfully");
         }

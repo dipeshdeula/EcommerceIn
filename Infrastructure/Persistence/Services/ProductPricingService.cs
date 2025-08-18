@@ -1,12 +1,5 @@
-﻿using System.Diagnostics;
-using Application.Common;
-using Application.Dto.CartItemDTOs;
+﻿using Application.Dto.CartItemDTOs;
 using Application.Dto.ProductDTOs;
-using Application.Extension;
-using Application.Interfaces.Repositories;
-using Application.Interfaces.Services;
-using Domain.Entities;
-using Domain.Entities.Common;
 using Domain.Enums.BannerEventSpecial;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;

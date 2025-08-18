@@ -89,10 +89,10 @@ namespace Infrastructure.Persistence.Services
                     return deserializedValue;
                 }
 
-                // ❌ CACHE MISS
+                //  CACHE MISS
                 stopwatch.Stop();
                 RecordCacheMiss(cacheType, stopwatch.ElapsedMilliseconds);
-                _logger.LogDebug("❌ CACHE MISS: {Key} in {ElapsedMs}ms", key, stopwatch.ElapsedMilliseconds);
+                _logger.LogDebug(" CACHE MISS: {Key} in {ElapsedMs}ms", key, stopwatch.ElapsedMilliseconds);
                 return default(T);
             }
             catch (Exception ex)
@@ -192,7 +192,7 @@ namespace Infrastructure.Persistence.Services
                         }
                         else
                         {
-                            _logger.LogDebug("❌ REDIS MISS: {Key}", key);
+                            _logger.LogDebug(" REDIS MISS: {Key}", key);
                             results[key] = default(T);
                         }
                     }
@@ -518,7 +518,7 @@ namespace Infrastructure.Persistence.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to remove keys by pattern '{Pattern}': {Error}", pattern, ex.Message);
+                _logger.LogError(ex, " Failed to remove keys by pattern '{Pattern}': {Error}", pattern, ex.Message);
                 throw;
             }
         }

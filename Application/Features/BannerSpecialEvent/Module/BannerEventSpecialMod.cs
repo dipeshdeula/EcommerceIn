@@ -575,7 +575,7 @@ namespace Application.Features.BannerSpecialEvent.Module
                 }
                 else
                 {
-                    recommendations.Add("❌ Cart does not meet event requirements");
+                    recommendations.Add(" Cart does not meet event requirements");
 
                     if (ruleResult.FailedRules?.Any() == true)
                     {
@@ -657,7 +657,7 @@ namespace Application.Features.BannerSpecialEvent.Module
                 //  Error handling - provide basic fallback recommendations
                 recommendations.Clear();
                 recommendations.Add(" Error generating detailed recommendations");
-                recommendations.Add(ruleResult.IsEligible ? " Cart is eligible for discount" : "❌ Cart is not eligible for discount");
+                recommendations.Add(ruleResult.IsEligible ? " Cart is eligible for discount" : " Cart is not eligible for discount");
                 
                 if (ruleResult.CalculatedDiscount > 0)
                 {
