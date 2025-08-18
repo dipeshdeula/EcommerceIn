@@ -19,8 +19,8 @@ namespace Application.Features.CompanyInfoFeat.Validators
                .WithMessage("Company doesn't exist!");
 
             RuleFor(x => x.updateCompanyInfoDto.Name)
-              .MustAsync(async (name, cancellation) => !await _companyInfoRepository.AnyAsync(c => c.Name.ToLower() == name.ToLower()))
-              .WithMessage("Company name already exists.")
+              //.MustAsync(async (name, cancellation) => !await _companyInfoRepository.AnyAsync(c => c.Name.ToLower() == name.ToLower()))
+              //.WithMessage("Company name already exists.")
               .MaximumLength(100).WithMessage("Name cannot exceed 100 characters.")
               .MinimumLength(3).WithMessage("Name must be at least 3 characters long.");
 
@@ -45,27 +45,21 @@ namespace Application.Features.CompanyInfoFeat.Validators
                 .WithMessage("Email already exists");
 
             RuleFor(x => x.updateCompanyInfoDto.RegistrationNumber)
-                .MinimumLength(5).WithMessage("Registration number must be atleast 5 character long")
-                .Matches(@"^\d{10}$").WithMessage("Supported Number only")
+                .MinimumLength(5).WithMessage("Registration number must be atleast 5 character long")               
                 .When(x => x.updateCompanyInfoDto.RegistrationNumber is not null);
 
             RuleFor(x => x.updateCompanyInfoDto.RegisteredPanNumber)
                 .MinimumLength(5).WithMessage("Registration Pan number must be atleast 5 character long")
-                .Matches(@"^\d{10}$").WithMessage("Supported Number only")
                 .When(x => x.updateCompanyInfoDto.RegisteredPanNumber is not null);
-
-            RuleFor(x => x.updateCompanyInfoDto.RegisteredVatNumber)
-                .MinimumLength(5).WithMessage("Registration Vat number must be atleast 5 character long")
-                .Matches(@"^\d{10}$").WithMessage("Supported Number only")
-                .When(x => x.updateCompanyInfoDto.RegisteredVatNumber is not null);
+           
 
             RuleFor(x => x.updateCompanyInfoDto.Province)
-                .Must(DataHelper.IsValidProvince)
+                .Must(DataHelper.IsValidProvince!)
                 .WithMessage("Invalid province name")
                 .When(x => x.updateCompanyInfoDto.Province is not null);
 
             RuleFor(x => x.updateCompanyInfoDto.City)
-                .Must(DataHelper.IsValidCity)
+                .Must(DataHelper.IsValidCity!)
                 .WithMessage("Invalid city name")
                 .When(x => x.updateCompanyInfoDto.City is not null);
 

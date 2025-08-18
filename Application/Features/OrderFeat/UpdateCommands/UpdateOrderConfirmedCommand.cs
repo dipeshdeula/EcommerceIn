@@ -275,7 +275,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
             var emailBody = $@"
                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>
                     <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;'>
-                        <h1 style='margin: 0; font-size: 28px;'>🎉 Order Confirmed!</h1>
+                        <h1 style='margin: 0; font-size: 28px;'> Order Confirmed!</h1>
                         <p style='margin: 10px 0 0 0; font-size: 18px; opacity: 0.9;'>Your order is on its way</p>
                     </div>
                     
@@ -337,7 +337,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
 
                             <div style='border-top: 2px solid #eee; padding-top: 20px; text-align: center;'>
                                 <p style='color: #28a745; font-size: 18px; font-weight: bold; margin: 0;'>
-                                    Thank you for choosing GetInstantMart! 🛒
+                                    Thank you for choosing GetInstantMart! 
                                 </p>
                                 <p style='color: #666; font-size: 14px; margin: 5px 0 0 0;'>
                                     Fast delivery, great service, every time.

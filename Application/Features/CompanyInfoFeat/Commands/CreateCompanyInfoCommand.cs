@@ -4,11 +4,6 @@ using Application.Extension;
 using Application.Interfaces.Repositories;
 using Domain.Entities;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Features.CompanyInfoFeat.Commands
 {
@@ -32,8 +27,7 @@ namespace Application.Features.CompanyInfoFeat.Commands
                     Email = request.addCompanyInfo.Email,
                     Contact = request.addCompanyInfo.Contact,
                     RegistrationNumber = request.addCompanyInfo.RegistrationNumber,
-                    RegisteredPanNumber = request.addCompanyInfo.RegisteredPanNumber,
-                    RegisteredVatNumber = request.addCompanyInfo.RegisteredVatNumber,
+                    RegisteredPanVatNumber = request.addCompanyInfo.RegisteredPanNumber,
                     Street = request.addCompanyInfo.Street,
                     City = request.addCompanyInfo.City,
                     Province = request.addCompanyInfo.Province,
@@ -50,7 +44,7 @@ namespace Application.Features.CompanyInfoFeat.Commands
             }
             catch (Exception ex)
             {
-                return Result<CompanyInfoDTO>.Failure("Failed to create a new company");
+                return Result<CompanyInfoDTO>.Failure("Failed to create a new company",ex.Message);
             }
         }
     }

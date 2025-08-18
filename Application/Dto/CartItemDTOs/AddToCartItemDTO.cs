@@ -19,6 +19,8 @@ namespace Application.Dto.CartItemDTOs
         //  LOCATION OVERRIDE (Optional)
         public double? DeliveryLatitude { get; set; }
         public double? DeliveryLongitude { get; set; }
+        public string? ShippingAddress { get; set; }
+        public string? ShippingCity { get; set; }
         public bool RequestRushDelivery { get; set; } = false;
         
         //  VALIDATION

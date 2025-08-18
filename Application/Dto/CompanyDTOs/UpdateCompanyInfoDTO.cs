@@ -12,8 +12,7 @@ namespace Application.Dto.CompanyDTOs
         public string? Email { get; set; }
         public string? Contact { get; set; }
         public string? RegistrationNumber { get; set; }
-        public string? RegisteredPanNumber { get; set; }
-        public string? RegisteredVatNumber { get; set; }
+        public string? RegisteredPanNumber { get; set; }       
         public string? Street { get; set; }
         public string? City { get; set; }
         public string? Province { get; set; }

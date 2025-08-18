@@ -31,8 +31,7 @@ namespace Application.Features.CompanyInfoFeat.Commands
             companyInfo.Email = request.updateCompanyInfoDto.Email ?? companyInfo.Email;
             companyInfo.Contact = request.updateCompanyInfoDto.Contact ?? companyInfo.Contact;
             companyInfo.RegistrationNumber = request.updateCompanyInfoDto.RegistrationNumber ?? companyInfo.RegistrationNumber;
-            companyInfo.RegisteredPanNumber = request.updateCompanyInfoDto.RegisteredPanNumber ?? companyInfo.RegisteredPanNumber;
-            companyInfo.RegisteredVatNumber = request.updateCompanyInfoDto.RegisteredVatNumber ?? companyInfo.RegisteredVatNumber;
+            companyInfo.RegisteredPanVatNumber = request.updateCompanyInfoDto.RegisteredPanNumber ?? companyInfo.RegisteredPanVatNumber;
             companyInfo.Street = request.updateCompanyInfoDto.Street ?? companyInfo.Street;
             companyInfo.City = request.updateCompanyInfoDto.City ?? companyInfo.City;
             companyInfo.Province = request.updateCompanyInfoDto.Province ?? companyInfo.Province;
@@ -41,6 +40,7 @@ namespace Application.Features.CompanyInfoFeat.Commands
             companyInfo.UpdateAt = DateTime.UtcNow;
 
             await _companyInfoRepository.UpdateAsync(companyInfo, cancellationToken);
+            await _companyInfoRepository.SaveChangesAsync(cancellationToken);
 
             return Result<CompanyInfoDTO>.Success(companyInfo.ToDTO(), $"CompanyInfo with id : {request.Id} is updated successfully");
 

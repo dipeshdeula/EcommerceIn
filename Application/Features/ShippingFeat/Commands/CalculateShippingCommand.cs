@@ -103,7 +103,7 @@ namespace Application.Features.ShippingFeat.Commands
                 {
                     baseShippingCost = 0;
                     shippingReason = string.IsNullOrEmpty(config.FreeShippingDescription) ?
-                        "Free shipping promotion active! 🎉" : config.FreeShippingDescription;
+                        "Free shipping promotion active! " : config.FreeShippingDescription;
                     result.IsFreeShipping = true;
                     result.AppliedPromotions.Add("Free Shipping Event");
                 }

@@ -76,6 +76,8 @@ namespace Infrastructure.Persistence.Services
                         return Result<CartItemDTO>.Failure(stockReservation.ErrorMessage);
                     }
 
+                 
+
                     // 5. Create cart item with current pricing
                     var cartItem = new CartItem
                     {
@@ -90,7 +92,17 @@ namespace Infrastructure.Persistence.Services
                         ExpiresAt = DateTime.UtcNow.AddMinutes(30),
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow,
-                        IsDeleted = false
+                        IsDeleted = false,
+
+                        DeliveryLatitude = request.DeliveryLatitude,
+                        DeliveryLongitude = request.DeliveryLongitude,
+                        ShippingAddress = request.ShippingAddress,
+                        ShippingCity = request.ShippingCity,
+                        ShippingCost = request.RequestedShippingCost ?? 0,
+                        ShippingId = request.ShippingConfigId,
+                       
+
+                        
                     };
 
                     // 6. Save to database (using your repository pattern)

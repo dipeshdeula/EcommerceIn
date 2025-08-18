@@ -27,12 +27,9 @@ namespace Infrastructure.Persistence.Configurations
                 .IsRequired()
                 .HasMaxLength(30);
 
-            builder.Property(ci => ci.RegisteredPanNumber)
+            builder.Property(ci => ci.RegisteredPanVatNumber)
                 .HasMaxLength(50);
-
-            builder.Property(ci => ci.RegisteredVatNumber)
-                .HasMaxLength(50);
-
+                    
             builder.Property(ci => ci.Street)
                 .HasMaxLength(100);
 

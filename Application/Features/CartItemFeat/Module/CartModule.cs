@@ -32,8 +32,7 @@ namespace Application.Features.CartItemFeat.Module
             app = app.MapGroup("CartItem");
 
             app.MapPost("/create-cart", async (
-                [FromBody] CreateCartItemRequest request,
-                [FromServices] IUserRepository userRepository,
+                [FromBody] CreateCartItemRequest request,                
                 [FromServices] ICurrentUserService currentUserService,
                 [FromServices] ISender mediator) =>
             {
@@ -48,15 +47,15 @@ namespace Application.Features.CartItemFeat.Module
 
                 var result = await mediator.Send(command);
 
-                 if (result == null || !result.Succeeded)
+                if (!result.Succeeded)
                 {
-                    return Results.BadRequest(new { message = result?.Message ?? "An error occurred." });
+                    return Results.BadRequest(new { result.Message, result.Errors });
                 }
-              // Removed reference to ShippingInfo as CartItemDTO does not contain it
+
 
                 return Results.Ok(new { 
-                    message = result.Message, 
-                    data = result.Data,
+                   result.Message, 
+                   result.Data,
                     //shippingInfo = new {
                     //    cost = result.Data.ShippingInfo!.FinalShippingCost,
                     //    message = result.Data.ShippingInfo.FinalShippingCost == 0 ? " Free shipping applied!" : $" Shipping: Rs.{result.Data.ShippingInfo.FinalShippingCost:F2}"
@@ -138,12 +137,12 @@ namespace Application.Features.CartItemFeat.Module
             .WithSummary("Get cart items for a specific user with proper shipping calculation");
 
             app.MapPut("/updateCartItem", async (
-                int Id, int? ProductId, int? Quantity,
-                ICurrentUserService currentUserService,
+                int Id, int? ProductId, int? Quantity, ShippingRequestDTO ShippingRequest,
+                ICurrentUserService currentUserService,            
                 ISender mediator) =>
             {
                 var userId = Convert.ToInt32(currentUserService.UserId);
-                var command = new UpdateCartItemCommand(Id, userId, ProductId, Quantity);
+                var command = new UpdateCartItemCommand(Id, userId, ProductId, Quantity, ShippingRequest);
                 var result = await mediator.Send(command);
                 if (!result.Succeeded)
                     return Results.BadRequest(new { result.Message, result.Errors });

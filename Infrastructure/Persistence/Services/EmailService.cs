@@ -180,7 +180,7 @@ namespace Infrastructure.Persistence.Services
                     <div class='email-container'>
                         <!-- HEADER -->
                         <div class='header'>
-                            <div class='logo'>🛒 {companyName}</div>
+                            <div class='logo'> {companyName}</div>
                             <p class='tagline'>{tagline}</p>
                         </div>
                         
@@ -191,7 +191,7 @@ namespace Infrastructure.Persistence.Services
                         
                         <!-- FOOTER -->
                         <div class='footer'>
-                            <div class='footer-logo'>🛒 {companyName}</div>
+                            <div class='footer-logo'> {companyName}</div>
                             <div class='footer-info'>
                                 <p><strong>Contact Us:</strong></p>
                                 <p>📧 {supportEmail} | 📞 {supportPhone}</p>

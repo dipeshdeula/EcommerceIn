@@ -17,6 +17,14 @@ namespace Infrastructure.Persistence.Configurations
             builder.Property(c => c.ShippingCost)
             .HasColumnType("decimal(18,2)").HasDefaultValue(0m).IsRequired();
 
+            builder.Property(c => c.DeliveryLatitude)
+            .HasColumnType("double precision").IsRequired(false);
+            builder.Property(c => c.DeliveryLongitude)
+            .HasColumnType("double precision").IsRequired(false);
+            builder.Property(c => c.ShippingAddress)
+            .HasMaxLength(200).IsRequired(false);
+            builder.Property(c => c.ShippingCity).HasMaxLength(100).IsRequired(false);
+
             //  PRICING COLUMNS
             builder.Property(c => c.OriginalPrice)
                 .HasColumnType("decimal(18,2)")

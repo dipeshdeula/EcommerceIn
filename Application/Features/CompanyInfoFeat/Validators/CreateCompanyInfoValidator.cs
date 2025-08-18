@@ -49,10 +49,6 @@ namespace Application.Features.CompanyInfoFeat.Validators
                 .NotEmpty().WithMessage("Registration Pan number is required")
                 .Matches(@"^\d{5,}$").WithMessage("Registration Pan number must be atleast 5 character long");
 
-            RuleFor(x => x.addCompanyInfo.RegisteredVatNumber)
-                .NotEmpty().WithMessage("Registration Vat number is required")
-                .Matches(@"^\d{5,}$").WithMessage("Registration Vat number must be atleast 5 character long");
-
             RuleFor(x => x.addCompanyInfo.Province)
                 .NotEmpty().WithMessage("Province is required")
                 .Must(DataHelper.IsValidProvince)

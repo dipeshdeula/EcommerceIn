@@ -1,10 +1,5 @@
 ﻿using Application.Interfaces.Repositories;
 using FluentValidation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Features.CartItemFeat.Commands
 {
@@ -31,7 +26,13 @@ namespace Application.Features.CartItemFeat.Commands
                 .WithMessage("Product does not exist.");
 
             RuleFor(x => x.Quantity)
-                .GreaterThan(0).WithMessage("Quantity must be greater than 0.");
+                .GreaterThan(0).WithMessage("Quantity must be greater than 0.")
+                .MustAsync(async (command, quantity, cancellation) =>
+                {
+                    var product = await _productRepository.GetProductWithFullDetailsAsync(command.ProductId, cancellation);
+                    return product != null && product.AvailableStock >= quantity;
+                })
+                .WithMessage("Insufficient product quantity available.");
         }
     }
 }

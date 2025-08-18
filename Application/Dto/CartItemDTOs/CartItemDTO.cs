@@ -13,6 +13,7 @@ namespace Application.Dto.CartItemDTOs
         public int UserId { get; set; }
         public int ProductId { get; set; }
         public int ShippingId { get; set; } // New field for shipping details
+        public decimal ShippingCost { get; set; }
         public int Quantity { get; set; }
 
         // CART-SPECIFIC PRICING (Locked-in at time of adding) 
@@ -77,6 +78,11 @@ namespace Application.Dto.CartItemDTOs
         }
 
          public ShippingCalculationDetailDTO? ShippingInfo { get; set; }
+         public double? DeliveryLatitude { get; set; }
+         public double? DeliveryLongitude { get; set; }
+         public string? ShippingAddress { get; set; }
+         public string? ShippingCity { get; set; }
+         public string? ShippingMessage { get; set; }
 
 
         //  NAVIGATION

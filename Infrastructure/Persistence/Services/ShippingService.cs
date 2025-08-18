@@ -272,7 +272,7 @@ namespace Infrastructure.Persistence.Services
                     predicate: s => !s.IsDeleted,
                     orderBy: q => q.OrderByDescending(s => s.IsDefault).ThenBy(s => s.Name),
                     s => s.CreatedByUser,
-                    s => s.LastModifiedByUser
+                    s => s.LastModifiedByUser!
                 );
 
                 var result = configurations.Select(c => c.ToShippingDTO()).ToList();
@@ -348,7 +348,7 @@ namespace Infrastructure.Persistence.Services
 
                 var configuration = new Shipping
                 {
-                    Name = request.Name,
+                    Name = request.Name!,
                     IsActive = true,
                     IsDefault = request.SetAsDefault,
                     LowOrderThreshold = request.LowOrderThreshold,
@@ -423,7 +423,7 @@ namespace Infrastructure.Persistence.Services
                 }
 
                 // Update configuration
-                configuration.Name = request.Name;
+                configuration.Name = request.Name!;
                 configuration.IsDefault = request.SetAsDefault;
                 configuration.LowOrderThreshold = request.LowOrderThreshold;
                 configuration.LowOrderShippingCost = request.LowOrderShippingCost;

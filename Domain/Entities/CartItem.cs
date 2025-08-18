@@ -17,6 +17,10 @@ namespace Domain.Entities
         public decimal RegularDiscountAmount { get; set; } // Product's regular discount
 
         public decimal ShippingCost { get; set; } = 0;
+        public double? DeliveryLatitude { get; set; }
+        public double? DeliveryLongitude { get; set; }
+        public string? ShippingAddress { get; set; }
+        public string? ShippingCity { get; set; }
 
         //  EVENT INTEGRATION (Existing)
         public int? AppliedEventId { get; set; }
@@ -45,6 +49,7 @@ namespace Domain.Entities
         public virtual Product Product { get; set; } = null!;
         public virtual BannerEventSpecial? AppliedEvent { get; set; }
         public virtual Shipping? Shipping { get; set; }
+
         public virtual PromoCode? AppliedPromoCode_Navigation { get; set; } // Avoid naming conflict
 
         //  COMPUTED PROPERTIES

@@ -342,7 +342,7 @@ namespace Application.Features.OrderFeat.UpdateCommands
 
                             <div style='border-top: 2px solid #eee; padding-top: 20px; text-align: center;'>
                                 <p style='color: #28a745; font-size: 18px; font-weight: bold; margin: 0;'>
-                                    Thank you for choosing GetInstantMart! 🛒
+                                    Thank you for choosing GetInstantMart! 
                                 </p>
                                 <p style='color: #666; font-size: 14px; margin: 5px 0 0 0;'>
                                     Fast delivery, great service, every time.

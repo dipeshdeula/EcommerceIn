@@ -13,8 +13,7 @@ namespace Domain.Entities
         public string Email { get; set; } = string.Empty;
         public string Contact { get; set; } = string.Empty;
         public string RegistrationNumber { get; set; } = string.Empty;
-        public string RegisteredPanNumber { get; set; } = string.Empty;
-        public string RegisteredVatNumber { get; set; } = string.Empty;
+        public string RegisteredPanVatNumber { get; set; } = string.Empty;
         public string Street { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string Province { get; set; } = string.Empty;

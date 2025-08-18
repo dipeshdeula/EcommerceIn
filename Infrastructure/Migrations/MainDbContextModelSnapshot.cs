@@ -365,6 +365,12 @@ namespace Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
 
+                    b.Property<double?>("DeliveryLatitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("DeliveryLongitude")
+                        .HasColumnType("double precision");
+
                     b.Property<decimal?>("EventDiscountAmount")
                         .HasColumnType("decimal(18,2)");
 
@@ -412,6 +418,14 @@ namespace Infrastructure.Migrations
 
                     b.Property<decimal>("ReservedPrice")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ShippingAddress")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ShippingCity")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<decimal>("ShippingCost")
                         .ValueGeneratedOnAdd()
@@ -733,12 +747,7 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<string>("RegisteredPanNumber")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("RegisteredVatNumber")
+                    b.Property<string>("RegisteredPanVatNumber")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -1618,7 +1627,7 @@ namespace Infrastructure.Migrations
                             CenterLongitude = 85.047799999999995,
                             CityName = "Hetauda",
                             Country = "Nepal",
-                            CreatedAt = new DateTime(2025, 8, 17, 8, 12, 36, 833, DateTimeKind.Utc).AddTicks(3813),
+                            CreatedAt = new DateTime(2025, 8, 18, 13, 37, 19, 653, DateTimeKind.Utc).AddTicks(7597),
                             DeliveryEndTime = new TimeSpan(0, 21, 0, 0, 0),
                             DeliveryStartTime = new TimeSpan(0, 9, 0, 0, 0),
                             Description = "Premium delivery service in Hetauda city and surrounding areas",
@@ -1632,7 +1641,7 @@ namespace Infrastructure.Migrations
                             NotAvailableMessage = "Service not available in your area yet. Coming soon to Hetauda!",
                             Province = "Bagmati",
                             RadiusKm = 15.0,
-                            UpdatedAt = new DateTime(2025, 8, 17, 8, 12, 36, 833, DateTimeKind.Utc).AddTicks(3814)
+                            UpdatedAt = new DateTime(2025, 8, 18, 13, 37, 19, 653, DateTimeKind.Utc).AddTicks(7599)
                         });
                 });
 

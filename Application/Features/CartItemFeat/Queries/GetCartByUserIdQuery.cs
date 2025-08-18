@@ -206,7 +206,7 @@ namespace Application.Features.CartItemFeat.Queries
             {
                 var startTime = DateTime.UtcNow;
 
-                _logger.LogInformation("🛒 CART LOOKUP: User {UserId}, Page {Page}/{Size}", 
+                _logger.LogInformation(" CART LOOKUP: User {UserId}, Page {Page}/{Size}", 
                     request.UserId, request.PageNumber, request.PageSize);
 
                 //  STEP 1: Get user

@@ -57,7 +57,7 @@ namespace Application.Features.CartItemFeat.Commands
         {
             try
             {
-                _logger.LogInformation("🛒 Processing add to cart: UserId={UserId}, ProductId={ProductId}, Quantity={Quantity}",
+                _logger.LogInformation(" Processing add to cart: UserId={UserId}, ProductId={ProductId}, Quantity={Quantity}",
                     request.UserId, request.ProductId, request.Quantity);
 
                 //  STEP 1: Get product pricing (includes event discounts)
@@ -86,11 +86,14 @@ namespace Application.Features.CartItemFeat.Commands
                 if (!shippingResult.Succeeded)
                 {
                     _logger.LogWarning("Failed to calculate shipping: {Error}", shippingResult.Message);
-                    // Continue with 0 shipping cost rather than fail
+                    
+                    return Result<CartItemDTO>.Failure("Failed to calculate shipping: " + shippingResult.Message);
                 }
 
                 var shippingCost = shippingResult.Data?.FinalShippingCost ?? 0;
                 var shippingConfigId = shippingResult.Data?.Configuration?.Id ?? 1;
+
+                
 
                 //  STEP 4: Create cart item request with shipping
                 var addToCartRequest = new AddToCartItemDTO
@@ -99,7 +102,7 @@ namespace Application.Features.CartItemFeat.Commands
                     Quantity = request.Quantity,
                     // Include shipping info in the request if your DTO supports it
                     RequestedShippingCost = shippingCost,
-                    ShippingConfigId = shippingConfigId
+                    ShippingConfigId = shippingConfigId,
                 };
 
                 //  STEP 5: Add item to cart via service
@@ -118,6 +121,16 @@ namespace Application.Features.CartItemFeat.Commands
 
                     //  STEP 8: Background events (non-blocking)
                     _ = Task.Run(async () => await PublishBackgroundEvents(request, result.Data, shippingResult.Data), cancellationToken);
+
+                    //result.Data.ShippingInfo = shippingResult.Data;
+                    if (request.ShippingRequest != null)
+                    {
+                        result.Data.DeliveryLatitude = request.ShippingRequest.DeliveryLatitude;
+                        result.Data.DeliveryLongitude = request.ShippingRequest.DeliveryLongitude;
+                        result.Data.ShippingAddress = request.ShippingRequest.Address;
+                        result.Data.ShippingCity = request.ShippingRequest.City;
+                        result.Data.ShippingMessage = shippingCost == 0 ? "Free shipping applied!" : $"Shipping: Rs. {shippingCost:F2}";
+                    }
                 }
 
                 return result;
@@ -153,7 +166,7 @@ namespace Application.Features.CartItemFeat.Commands
 
                 if (freeShippingEvent != null)
                 {
-                    _logger.LogInformation("🎉 Free shipping active: {EventName}", freeShippingEvent.Name);
+                    _logger.LogInformation(" Free shipping active: {EventName}", freeShippingEvent.Name);
                     return Result<ShippingCalculationDetailDTO>.Success(CreateFreeShippingResult(itemTotal, freeShippingEvent.Name));
                 }
 
@@ -167,6 +180,8 @@ namespace Application.Features.CartItemFeat.Commands
                     OrderTotal = itemTotal,
                     DeliveryLatitude = userLocation?.Latitude,
                     DeliveryLongitude = userLocation?.Longitude,
+                    Address = request.ShippingRequest?.Address ?? string.Empty,
+                    City = userLocation?.City ?? request.ShippingRequest?.City ?? string.Empty,
                     RequestRushDelivery = request.ShippingRequest?.RequestRushDelivery ?? false,
                     RequestedDeliveryDate = request.ShippingRequest?.RequestedDeliveryDate,
                     PreferredConfigurationId = request.ShippingRequest?.PreferredConfigurationId
@@ -261,7 +276,7 @@ namespace Application.Features.CartItemFeat.Commands
                 BaseShippingCost = 0,
                 FinalShippingCost = 0,
                 TotalAmount = orderTotal,
-                ShippingReason = $"🎉 Free shipping event: {eventName}",
+                ShippingReason = $" Free shipping event: {eventName}",
                 CustomerMessage = $" Free shipping applied from {eventName}!",
                 AppliedPromotions = new List<string> { $"Free Shipping Event: {eventName}" },
                 DeliveryEstimate = "Standard delivery time applies"
