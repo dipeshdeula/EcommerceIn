@@ -747,11 +747,6 @@ namespace Application.Extension
             return dto;
         }
 
-
-
-
-
-
         public static OrderDTO ToDTO(this Order order)
         {
             return new OrderDTO
@@ -762,15 +757,25 @@ namespace Application.Extension
                 OrderStatus = order.OrderStatus,
                 PaymentStatus = order.PaymentStatus,
                 TotalAmount = order.TotalAmount,
+                GrandTotal = order.GrandTotal,
+                EventDiscountAmount = order.EventDiscountAmount ?? 0,
+                Notes = order.Notes,
                 ShippingAddress = order.ShippingAddress,
                 ShippingCity = order.ShippingCity,
+                ShippingCost = order.ShippingCost,
+                ShippingId = order.ShippingId ?? 0,
+                DeliveryLatitude = order.DeliveryLatitude,
+                DeliveryLongitude = order.DeliveryLongitude,
+                ReasonToCancel = order.ReasonToCancel,
+                IsConfirmed = order.IsConfirmed,
+                IsCancelled = order.IsCancelled,
                 IsDeleted = order.IsDeleted,
-                UserDTO = order.User?.ToDTO(),
+                UserDTO = order.User != null ? order.User.ToDTO() : null,
                 Items = order.Items != null
-                ? order.Items.Select(i => i.ToDTO()).ToList()
-                : new List<OrderItemDTO>()
-            };
-        }
+                    ? order.Items.Select(i => i.ToDTO()).ToList()
+                    : new List<OrderItemDTO>()
+                    };
+                }
 
         public static OrderItemDTO ToDTO(this OrderItem orderItem)
         {

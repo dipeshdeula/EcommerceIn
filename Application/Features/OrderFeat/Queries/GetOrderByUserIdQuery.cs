@@ -22,11 +22,27 @@ namespace Application.Features.OrderFeat.Queries
             // Fetch orders and there associated user
 
             var userOrders = await _orderRepository.GetQueryable()
-                            .Where(uo => uo.UserId == request.UserId && !uo.IsDeleted)                         
-                            .Include(uo => uo.Items).ToListAsync(cancellationToken);
+            .Where(uo => uo.UserId == request.UserId && !uo.IsDeleted)
+            .Include(uo => uo.User)
+            .Include(uo => uo.Items)
+            .OrderByDescending(uo => uo.OrderDate)
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToListAsync(cancellationToken);
+
+            var totalCount = await _orderRepository.GetQueryable()
+            .Where(uo=>uo.UserId == request.UserId && !uo.IsDeleted).CountAsync(cancellationToken);
 
             var userOrderDTOs = userOrders.Select(u => u.ToDTO()).ToList();
-            return Result<IEnumerable<OrderDTO>>.Success(userOrderDTOs, "order fetched successfully");
+
+            var totalPages = (int)Math.Ceiling((double)totalCount / request.PageSize);
+            return Result<IEnumerable<OrderDTO>>.Success(
+                userOrderDTOs,
+                "order fetched successfully",
+                request.PageNumber,
+                request.PageSize,
+                totalPages
+            );
 
         }
     }

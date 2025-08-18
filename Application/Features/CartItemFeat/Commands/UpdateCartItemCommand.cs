@@ -26,12 +26,10 @@ namespace Application.Features.CartItemFeat.Commands
         public async Task<Result<CartItemDTO>> Handle(UpdateCartItemCommand request, CancellationToken cancellationToken)
         {
             var cartItem = await _cartItemRepository.FindByIdAsync(request.Id);
-            var user = await _cartItemRepository.FindByIdAsync(request.Id);
-            
+                        
             if (cartItem == null)
                 return Result<CartItemDTO>.Failure($"CartItem with Id : {request.Id} is not found");
-            if (user == null)
-                return Result<CartItemDTO>.Failure($"User is not found");
+            
 
             cartItem.ProductId = request.ProductId ?? cartItem.ProductId;
             cartItem.Quantity = request.Quantity ?? cartItem.Quantity;
