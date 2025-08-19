@@ -165,7 +165,7 @@ namespace Application.Extension
         }
         
                 /// <summary>
-        /// ✅ HELPER: Get formatted discount string for promo codes
+        ///  HELPER: Get formatted discount string for promo codes
         /// </summary>
             private static string GetFormattedDiscount(this PromoCode promoCode)
             {
@@ -181,7 +181,7 @@ namespace Application.Extension
                 
 
         /// <summary>
-        /// ✅ HELPER: Check if promo code can be used at specific time
+        ///  HELPER: Check if promo code can be used at specific time
         /// </summary>
         private static bool CanBeUsedAt(this PromoCode promoCode, DateTime checkTime)
         {

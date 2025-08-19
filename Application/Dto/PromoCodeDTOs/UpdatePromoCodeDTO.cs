@@ -20,7 +20,7 @@ namespace Application.Dto.PromoCodeDTOs
         public int? MaxTotalUsage { get; set; }
         public int? MaxUsagePerUser { get; set; }
 
-        // ✅ NEPAL TIMEZONE DATE INPUTS (using TimeParsingHelper)
+        //  NEPAL TIMEZONE DATE INPUTS (using TimeParsingHelper)
         [JsonPropertyName("startDateNepal")]
         public string? StartDateNepal { get; set; }
 
@@ -33,7 +33,7 @@ namespace Application.Dto.PromoCodeDTOs
 
         public string? AdminNotes { get; set; }
 
-        // ✅ HELPER PROPERTIES USING TimeParsingHelper
+        //  HELPER PROPERTIES USING TimeParsingHelper
         [JsonIgnore]
         public DateTime? StartDateParsed
         {
@@ -76,7 +76,7 @@ namespace Application.Dto.PromoCodeDTOs
             }
         }
 
-        // ✅ GET PARSING ERROR MESSAGES
+        //  GET PARSING ERROR MESSAGES
         [JsonIgnore]
         public string? StartDateParsingError
         {
@@ -99,7 +99,7 @@ namespace Application.Dto.PromoCodeDTOs
             }
         }
 
-        // ✅ VALIDATION HELPER
+        //  VALIDATION HELPER
         [JsonIgnore]
         public bool HasValidDateFormats => 
             (string.IsNullOrEmpty(StartDateNepal) || StartDateParsed.HasValue) &&

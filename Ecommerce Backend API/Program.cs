@@ -18,8 +18,6 @@ EnvProvider.LoadEnv();
 var builder = WebApplication.CreateBuilder(args);
 
 
-
-
 //  Validate Google Maps API Key
 var googleMapsApiKey = builder.Configuration["LocationSettings:GoogleMapsApiKey"];
 if (string.IsNullOrEmpty(googleMapsApiKey))
@@ -527,91 +525,7 @@ app.MapGet("/redis-ping", async (IHybridCacheService cacheService) =>
     }
 });
 
-app.MapGet("/redis-dashboard", async (IHybridCacheService cacheService) =>
-{
-    try
-    {
-        var health = await cacheService.GetHealthAsync();
-        var pingStart = DateTime.UtcNow;
-        await cacheService.SetAsync("dashboard-test", "test", TimeSpan.FromMinutes(1));
-        var pingResult = await cacheService.GetAsync<string>("dashboard-test");
-        var pingLatency = (DateTime.UtcNow - pingStart).TotalMilliseconds;
 
-        var html = $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Redis Dashboard</title>
-    <style>
-        body {{ font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }}
-        .container {{ max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-        .status {{ padding: 15px; border-radius: 5px; margin: 10px 0; }}
-        .success {{ background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }}
-        .error {{ background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }}
-        .metric {{ display: inline-block; margin: 10px; padding: 15px; background: #e9ecef; border-radius: 5px; }}
-        .title {{ color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }}
-        button {{ background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }}
-        button:hover {{ background: #0056b3; }}
-    </style>
-</head>
-<body>
-    <div class='container'>
-        <h1 class='title'>🚀 Redis Cache Dashboard</h1>
-        
-        <div class='status {(health.IsRedisConnected ? "success" : "error")}'>
-            <h3>Connection Status: {(health.IsRedisConnected ? " CONNECTED" : " DISCONNECTED")}</h3>
-        </div>
-        
-        <div class='metric'>
-            <strong>Latency:</strong> {pingLatency:F2}ms
-        </div>
-        <div class='metric'>
-            <strong>Memory Usage:</strong> {health.RedisMemoryUsage:N0} bytes
-        </div>
-        <div class='metric'>
-            <strong>Last Test:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC
-        </div>
-        
-        <h3>🧪 Quick Tests</h3>
-        <button onclick='testRedis(""/redis-ping"")'>Ping Test</button>
-        <button onclick='testRedis(""/test-redis"")'>Full Test</button>
-        <button onclick='location.reload()'>Refresh</button>
-        
-        <div id='testResults' style='margin-top: 20px;'></div>
-        
-        <h3> API Endpoints</h3>
-        <ul>
-            <li><a href='/redis-ping' target='_blank'>GET /redis-ping</a> - Quick connectivity test</li>
-            <li><a href='/test-redis' target='_blank'>GET /test-redis</a> - Comprehensive test</li>
-            <li><a href='/health' target='_blank'>GET /health</a> - App health check</li>
-            <li><a href='/' target='_blank'>Swagger UI</a> - Full API documentation</li>
-        </ul>
-    </div>
-    
-    <script>
-        async function testRedis(endpoint) {{
-            const resultsDiv = document.getElementById('testResults');
-            resultsDiv.innerHTML = '<p>⏳ Testing...</p>';
-            
-            try {{
-                const response = await fetch(endpoint);
-                const data = await response.json();
-                resultsDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-            }} catch (error) {{
-                resultsDiv.innerHTML = '<p class=""error""> Error: ' + error.message + '</p>';
-            }}
-        }}
-    </script>
-</body>
-</html>";
-
-        return Results.Content(html, "text/html");
-    }
-    catch (Exception ex)
-    {
-        return Results.Content($"<h1>Error</h1><p>{ex.Message}</p>", "text/html");
-    }
-});
 
 app.MapGet("/test-product-cache", async (IHybridCacheService cacheService) =>
 {

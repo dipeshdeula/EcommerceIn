@@ -49,7 +49,7 @@ namespace Application.Features.PromoCodeFeat.Commands
 
                 _logger.LogInformation("🔄 Updating promo code {Id}: {Code}", request.Id, promoCode.Code);
 
-                // ✅ VALIDATE DATE FORMATS FIRST USING TimeParsingHelper
+                //  VALIDATE DATE FORMATS FIRST USING TimeParsingHelper
                 if (!inputDto.HasValidDateFormats)
                 {
                     var errors = new List<string>();
@@ -61,7 +61,7 @@ namespace Application.Features.PromoCodeFeat.Commands
                     return Result<PromoCodeDTO>.Failure($"Invalid date format(s): {string.Join(", ", errors)}");
                 }
 
-                // ✅ 1. UPDATE TEXT FIELDS (only if provided)
+                //  1. UPDATE TEXT FIELDS (only if provided)
                 if (!string.IsNullOrWhiteSpace(inputDto.Name))
                     promoCode.Name = inputDto.Name.Trim();
                 
@@ -71,7 +71,7 @@ namespace Application.Features.PromoCodeFeat.Commands
                 if (!string.IsNullOrWhiteSpace(inputDto.AdminNotes))
                     promoCode.AdminNotes = inputDto.AdminNotes.Trim();
 
-                // ✅ 2. UPDATE NUMERIC FIELDS (only if provided and valid)
+                //  2. UPDATE NUMERIC FIELDS (only if provided and valid)
                 if (inputDto.DiscountValue.HasValue)
                 {
                     if (inputDto.DiscountValue.Value <= 0 || inputDto.DiscountValue.Value > 100)
@@ -117,7 +117,7 @@ namespace Application.Features.PromoCodeFeat.Commands
                     promoCode.MaxUsagePerUser = inputDto.MaxUsagePerUser.Value;
                 }
 
-                // ✅ 3. UPDATE BOOLEAN FLAGS (only if provided)
+                //  3. UPDATE BOOLEAN FLAGS (only if provided)
                 if (inputDto.IsActive.HasValue)
                     promoCode.IsActive = inputDto.IsActive.Value;
                 
@@ -127,7 +127,7 @@ namespace Application.Features.PromoCodeFeat.Commands
                 if (inputDto.StackableWithEvents.HasValue)
                     promoCode.StackableWithEvents = inputDto.StackableWithEvents.Value;
 
-                // ✅ 4. HANDLE NEPAL TIMEZONE DATE UPDATES USING TimeParsingHelper
+                //  4. HANDLE NEPAL TIMEZONE DATE UPDATES USING TimeParsingHelper
                 DateTime? newStartDateUtc = null;
                 DateTime? newEndDateUtc = null;
 
@@ -135,7 +135,7 @@ namespace Application.Features.PromoCodeFeat.Commands
                 {
                     _logger.LogInformation("📅 Processing Nepal date updates for promo code {Id}", request.Id);
 
-                    // ✅ PARSE START DATE USING TimeParsingHelper
+                    //  PARSE START DATE USING TimeParsingHelper
                     if (!string.IsNullOrEmpty(inputDto.StartDateNepal))
                     {
                         var startDateResult = TimeParsingHelper.ParseFlexibleDateTime(inputDto.StartDateNepal);
@@ -147,7 +147,7 @@ namespace Application.Features.PromoCodeFeat.Commands
 
                         var startDateNepal = startDateResult.Data;
 
-                        // ✅ CONVERT TO UTC WITH PROPER LOGGING
+                        //  CONVERT TO UTC WITH PROPER LOGGING
                         try
                         {
                             newStartDateUtc = _nepalTimeZoneService.ConvertFromNepalToUtc(startDateNepal);
@@ -165,7 +165,7 @@ namespace Application.Features.PromoCodeFeat.Commands
                         }
                     }
 
-                    // ✅ PARSE END DATE USING TimeParsingHelper
+                    //  PARSE END DATE USING TimeParsingHelper
                     if (!string.IsNullOrEmpty(inputDto.EndDateNepal))
                     {
                         var endDateResult = TimeParsingHelper.ParseFlexibleDateTime(inputDto.EndDateNepal);
@@ -177,7 +177,7 @@ namespace Application.Features.PromoCodeFeat.Commands
 
                         var endDateNepal = endDateResult.Data;
 
-                        // ✅ CONVERT TO UTC WITH PROPER LOGGING
+                        //  CONVERT TO UTC WITH PROPER LOGGING
                         try
                         {
                             newEndDateUtc = _nepalTimeZoneService.ConvertFromNepalToUtc(endDateNepal);
@@ -195,7 +195,7 @@ namespace Application.Features.PromoCodeFeat.Commands
                         }
                     }
 
-                    // ✅ VALIDATE DATE RANGE AFTER CONVERSION
+                    //  VALIDATE DATE RANGE AFTER CONVERSION
                     var effectiveStartDate = newStartDateUtc ?? promoCode.StartDate;
                     var effectiveEndDate = newEndDateUtc ?? promoCode.EndDate;
 
@@ -212,7 +212,7 @@ namespace Application.Features.PromoCodeFeat.Commands
                         return Result<PromoCodeDTO>.Failure($"End date ({endDisplay}) must be after start date ({startDisplay})");
                     }
 
-                    // ✅ VALIDATE START DATE NOT TOO FAR IN PAST
+                    //  VALIDATE START DATE NOT TOO FAR IN PAST
                     if (newStartDateUtc.HasValue)
                     {
                         var currentNepalTime = _nepalTimeZoneService.GetNepalCurrentTime();
@@ -227,35 +227,35 @@ namespace Application.Features.PromoCodeFeat.Commands
                         }
                     }
 
-                    // ✅ UPDATE DATES IN DATABASE (UTC)
+                    //  UPDATE DATES IN DATABASE (UTC)
                     if (newStartDateUtc.HasValue)
                     {
                         promoCode.StartDate = newStartDateUtc.Value;
-                        _logger.LogInformation("✅ Updated start date in database: {UtcDate}", newStartDateUtc.Value.ToString("yyyy-MM-dd HH:mm:ss"));
+                        _logger.LogInformation(" Updated start date in database: {UtcDate}", newStartDateUtc.Value.ToString("yyyy-MM-dd HH:mm:ss"));
                     }
                     
                     if (newEndDateUtc.HasValue)
                     {
                         promoCode.EndDate = newEndDateUtc.Value;
-                        _logger.LogInformation("✅ Updated end date in database: {UtcDate}", newEndDateUtc.Value.ToString("yyyy-MM-dd HH:mm:ss"));
+                        _logger.LogInformation(" Updated end date in database: {UtcDate}", newEndDateUtc.Value.ToString("yyyy-MM-dd HH:mm:ss"));
                     }
                 }
 
-                // ✅ 5. UPDATE AUDIT FIELDS
+                //  5. UPDATE AUDIT FIELDS
                 promoCode.LastModifiedByUserId = request.ModifiedByUserId;
                 promoCode.UpdatedAt = DateTime.UtcNow;
                 
-                // ✅ 6. SAVE CHANGES
+                //  6. SAVE CHANGES
                 await _promoCodeRepository.UpdateAsync(promoCode, cancellationToken);
                 await _promoCodeRepository.SaveChangesAsync(cancellationToken);
                 
-                // ✅ 7. CLEAR CACHE
+                //  7. CLEAR CACHE
                 await _cache.RemoveAsync($"promo_code_{promoCode.Code.ToLower()}");
                 
-                // ✅ 8. CONVERT TO DTO WITH NEPAL TIMEZONE INFO
+                //  8. CONVERT TO DTO WITH NEPAL TIMEZONE INFO
                 var result = promoCode.ToPromoCodeDTO(_nepalTimeZoneService);
                 
-                _logger.LogInformation("✅ Updated promo code {Id}: {Code} by user {UserId} - Active: {IsActive}, Valid: {StartDate} to {EndDate}",
+                _logger.LogInformation(" Updated promo code {Id}: {Code} by user {UserId} - Active: {IsActive}, Valid: {StartDate} to {EndDate}",
                     request.Id, promoCode.Code, request.ModifiedByUserId, result.IsActive, 
                     result.FormattedStartDate, result.FormattedEndDate);
                 

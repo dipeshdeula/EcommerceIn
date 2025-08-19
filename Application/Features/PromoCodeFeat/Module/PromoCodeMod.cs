@@ -113,7 +113,7 @@ namespace Application.Features.PromoCodeFeat.Module
                 return Results.BadRequest("User not found");
             }
 
-            // ✅ VALIDATE DATE FORMATS USING TimeParsingHelper
+            //  VALIDATE DATE FORMATS USING TimeParsingHelper
             if (request.HasDateUpdates && !request.HasValidDateFormats)
             {
                 var errors = new List<string>();
@@ -136,7 +136,7 @@ namespace Application.Features.PromoCodeFeat.Module
                 });
             }
 
-            // ✅ VALIDATE DATE RANGE
+            //  VALIDATE DATE RANGE
             if (request.HasDateUpdates && !request.IsValidDateRange)
             {
                 return Results.BadRequest(new { 

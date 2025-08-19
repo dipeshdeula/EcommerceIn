@@ -10,7 +10,7 @@ namespace Application.Features.PromoCodeFeat.Validators
     {
         public CreatePromoCodeCommandValidator()
         {
-            // ✅ VALIDATE COMMAND STRUCTURE
+            //  VALIDATE COMMAND STRUCTURE
             RuleFor(x => x.CreatedByUserId)
                 .GreaterThan(0)
                 .WithMessage("Created by user ID is required");
@@ -19,47 +19,47 @@ namespace Application.Features.PromoCodeFeat.Validators
                 .NotNull()
                 .WithMessage("Promo code data is required");
 
-            // ✅ VALIDATE PROMO CODE PROPERTIES
+            //  VALIDATE PROMO CODE PROPERTIES
             When(x => x.PromoCodeDTO != null, () => {
                 
-                // ✅ CODE VALIDATION
+                //  CODE VALIDATION
                 RuleFor(x => x.PromoCodeDTO.Code)
                     .NotEmpty().WithMessage("Promo code is required")
                     .Length(3, 50).WithMessage("Promo code must be between 3 and 50 characters")
                     .Matches("^[A-Z0-9]+$").WithMessage("Promo code can only contain uppercase letters and numbers");
                     
-                // ✅ NAME VALIDATION
+                //  NAME VALIDATION
                 RuleFor(x => x.PromoCodeDTO.Name)
                     .NotEmpty().WithMessage("Promo code name is required")
                     .Length(2, 200).WithMessage("Name must be between 2 and 200 characters");
                     
-                // ✅ DESCRIPTION VALIDATION
+                //  DESCRIPTION VALIDATION
                 RuleFor(x => x.PromoCodeDTO.Description)
                     .MaximumLength(1000).WithMessage("Description cannot exceed 1000 characters")
                     .When(x => !string.IsNullOrEmpty(x.PromoCodeDTO.Description));
                     
-                // ✅ DISCOUNT VALUE VALIDATION
+                //  DISCOUNT VALUE VALIDATION
                 RuleFor(x => x.PromoCodeDTO.DiscountValue)
                     .GreaterThan(0).WithMessage("Discount value must be greater than 0")
                     .LessThanOrEqualTo(100).WithMessage("Discount percentage cannot exceed 100%");
                     
-                // ✅ MAX DISCOUNT AMOUNT VALIDATION (fixed - remove .HasValue since it's not nullable)
+                //  MAX DISCOUNT AMOUNT VALIDATION (fixed - remove .HasValue since it's not nullable)
                 RuleFor(x => x.PromoCodeDTO.MaxDiscountAmount)
                     .GreaterThanOrEqualTo(0).WithMessage("Maximum discount amount cannot be negative");
                     
-                // ✅ MIN ORDER AMOUNT VALIDATION (fixed - remove .HasValue since it's not nullable)
+                //  MIN ORDER AMOUNT VALIDATION (fixed - remove .HasValue since it's not nullable)
                 RuleFor(x => x.PromoCodeDTO.MinOrderAmount)
                     .GreaterThanOrEqualTo(0).WithMessage("Minimum order amount cannot be negative");
                     
-                // ✅ MAX TOTAL USAGE VALIDATION (fixed - remove .HasValue since it's not nullable)
+                //  MAX TOTAL USAGE VALIDATION (fixed - remove .HasValue since it's not nullable)
                 RuleFor(x => x.PromoCodeDTO.MaxTotalUsage)
                     .GreaterThan(0).WithMessage("Maximum total usage must be greater than 0");
                     
-                // ✅ MAX USAGE PER USER VALIDATION (fixed - remove .HasValue since it's not nullable)
+                //  MAX USAGE PER USER VALIDATION (fixed - remove .HasValue since it's not nullable)
                 RuleFor(x => x.PromoCodeDTO.MaxUsagePerUser)
                     .GreaterThan(0).WithMessage("Maximum usage per user must be greater than 0");
                     
-                // ✅ NEPAL DATE FORMAT VALIDATION USING TimeParsingHelper
+                //  NEPAL DATE FORMAT VALIDATION USING TimeParsingHelper
                 RuleFor(x => x.PromoCodeDTO.StartDateNepal)
                     .NotEmpty().WithMessage("Start date is required")
                     .Must(BeValidDateTimeUsingTimeParsingHelper)
@@ -70,19 +70,19 @@ namespace Application.Features.PromoCodeFeat.Validators
                     .Must(BeValidDateTimeUsingTimeParsingHelper)
                     .WithMessage(x => GetDateTimeValidationMessage(x.PromoCodeDTO.EndDateNepal, "end date"));
                     
-                // ✅ DATE RANGE VALIDATION USING PARSED DATES
+                //  DATE RANGE VALIDATION USING PARSED DATES
                 RuleFor(x => x.PromoCodeDTO)
                     .Must(HaveValidDateRange)
                     .WithMessage("End date must be after start date")
                     .When(x => x.PromoCodeDTO.HasValidDateFormats);
 
-                // ✅ FUTURE DATE VALIDATION
+                //  FUTURE DATE VALIDATION
                 RuleFor(x => x.PromoCodeDTO)
                     .Must(HaveValidStartDate)
                     .WithMessage("Start date cannot be more than 1 hour in the past")
                     .When(x => x.PromoCodeDTO.HasValidDateFormats);
 
-                // ✅ DURATION VALIDATION
+                //  DURATION VALIDATION
                 RuleFor(x => x.PromoCodeDTO)
                     .Must(HaveValidDuration)
                     .WithMessage("Promo code duration cannot exceed 365 days")
@@ -92,7 +92,7 @@ namespace Application.Features.PromoCodeFeat.Validators
             });
         }
 
-        // ✅ USE TimeParsingHelper FOR DATE VALIDATION
+        //  USE TimeParsingHelper FOR DATE VALIDATION
         private bool BeValidDateTimeUsingTimeParsingHelper(string? dateString)
         {
             if (string.IsNullOrWhiteSpace(dateString)) return false;
@@ -101,7 +101,7 @@ namespace Application.Features.PromoCodeFeat.Validators
             return result.Succeeded;
         }
 
-        // ✅ GENERATE HELPFUL ERROR MESSAGES USING TimeParsingHelper
+        //  GENERATE HELPFUL ERROR MESSAGES USING TimeParsingHelper
         private string GetDateTimeValidationMessage(string input, string fieldName)
         {
             if (string.IsNullOrWhiteSpace(input)) 
@@ -115,13 +115,13 @@ namespace Application.Features.PromoCodeFeat.Validators
                    $"Examples: {string.Join(", ", TimeParsingHelper.GetSupportedFormats().Take(3))}";
         }
 
-        // ✅ VALIDATE DATE RANGE
+        //  VALIDATE DATE RANGE
         private bool HaveValidDateRange(AddPromoCodeDTO dto)
         {
             return dto.IsValidDateRange;
         }
 
-        // ✅ VALIDATE START DATE IS NOT TOO FAR IN PAST
+        //  VALIDATE START DATE IS NOT TOO FAR IN PAST
         private bool HaveValidStartDate(AddPromoCodeDTO dto)
         {
             if (!dto.StartDateParsed.HasValue) return false;
@@ -132,7 +132,7 @@ namespace Application.Features.PromoCodeFeat.Validators
             return timeDiff.TotalHours <= 1; // Allow up to 1 hour in the past
         }
 
-        // ✅ VALIDATE DURATION IS REASONABLE
+        //  VALIDATE DURATION IS REASONABLE
         private bool HaveValidDuration(AddPromoCodeDTO dto)
         {
             if (!dto.StartDateParsed.HasValue || !dto.EndDateParsed.HasValue) return false;
@@ -142,7 +142,7 @@ namespace Application.Features.PromoCodeFeat.Validators
         }
     }
 
-    // ✅ SEPARATE VALIDATOR FOR DTO ONLY (if needed elsewhere)
+    //  SEPARATE VALIDATOR FOR DTO ONLY (if needed elsewhere)
     public class AddPromoCodeDTOValidator : AbstractValidator<AddPromoCodeDTO>
     {
         public AddPromoCodeDTOValidator()
@@ -172,7 +172,7 @@ namespace Application.Features.PromoCodeFeat.Validators
             RuleFor(x => x.MaxUsagePerUser)
                 .GreaterThan(0).WithMessage("Maximum usage per user must be greater than 0");
 
-            // ✅ DATE VALIDATION USING TimeParsingHelper
+            //  DATE VALIDATION USING TimeParsingHelper
             RuleFor(x => x.StartDateNepal)
                 .NotEmpty().WithMessage("Start date is required")
                 .Must(BeValidDateTime)

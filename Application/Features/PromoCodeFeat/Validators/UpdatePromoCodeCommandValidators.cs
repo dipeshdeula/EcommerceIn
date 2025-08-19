@@ -17,7 +17,7 @@ namespace Application.Features.PromoCodeFeat.Validators
                 .GreaterThan(0)
                 .WithMessage("Modified by user ID is required");
 
-            // ✅ VALIDATE NEPAL DATE FORMATS USING TimeParsingHelper
+            //  VALIDATE NEPAL DATE FORMATS USING TimeParsingHelper
             When(x => !string.IsNullOrEmpty(x.PromoCodeData.StartDateNepal), () =>
             {
                 RuleFor(x => x.PromoCodeData.StartDateNepal)
@@ -42,13 +42,13 @@ namespace Application.Features.PromoCodeFeat.Validators
                     .When(x => !string.IsNullOrEmpty(x.PromoCodeData.EndDateNepal));
             });
 
-            // ✅ VALIDATE DATE RANGE WITH PROPER NEPAL TIME COMPARISON
+            //  VALIDATE DATE RANGE WITH PROPER NEPAL TIME COMPARISON
             RuleFor(x => x.PromoCodeData)
                 .Must(HaveValidDateRange)
                 .WithMessage("End date must be after start date (Nepal time)")
                 .When(x => x.PromoCodeData.HasDateUpdates);
 
-            // ✅ VALIDATE DISCOUNT VALUE
+            //  VALIDATE DISCOUNT VALUE
             When(x => x.PromoCodeData.DiscountValue.HasValue, () =>
             {
                 RuleFor(x => x.PromoCodeData.DiscountValue!.Value)
@@ -57,7 +57,7 @@ namespace Application.Features.PromoCodeFeat.Validators
                     .WithMessage("Discount value must be between 0.01 and 100");
             });
 
-            // ✅ VALIDATE MIN ORDER AMOUNT
+            //  VALIDATE MIN ORDER AMOUNT
             When(x => x.PromoCodeData.MinOrderAmount.HasValue, () =>
             {
                 RuleFor(x => x.PromoCodeData.MinOrderAmount!.Value)
@@ -65,7 +65,7 @@ namespace Application.Features.PromoCodeFeat.Validators
                     .WithMessage("Minimum order amount cannot be negative");
             });
 
-            // ✅ VALIDATE MAX DISCOUNT AMOUNT
+            //  VALIDATE MAX DISCOUNT AMOUNT
             When(x => x.PromoCodeData.MaxDiscountAmount.HasValue, () =>
             {
                 RuleFor(x => x.PromoCodeData.MaxDiscountAmount!.Value)
@@ -73,7 +73,7 @@ namespace Application.Features.PromoCodeFeat.Validators
                     .WithMessage("Maximum discount amount cannot be negative");
             });
 
-            // ✅ VALIDATE USAGE LIMITS
+            //  VALIDATE USAGE LIMITS
             When(x => x.PromoCodeData.MaxTotalUsage.HasValue, () =>
             {
                 RuleFor(x => x.PromoCodeData.MaxTotalUsage!.Value)
@@ -89,7 +89,7 @@ namespace Application.Features.PromoCodeFeat.Validators
             });
         }
 
-        // ✅ USE TimeParsingHelper FOR VALIDATION
+        //  USE TimeParsingHelper FOR VALIDATION
         private bool BeValidDateTimeUsingTimeParsingHelper(string? dateString)
         {
             if (string.IsNullOrWhiteSpace(dateString)) return false;
@@ -98,7 +98,7 @@ namespace Application.Features.PromoCodeFeat.Validators
             return result.Succeeded;
         }
 
-        // ✅ GENERATE HELPFUL ERROR MESSAGES USING TimeParsingHelper
+        //  GENERATE HELPFUL ERROR MESSAGES USING TimeParsingHelper
         private string GetDateTimeValidationMessage(string input, string fieldName)
         {
             var result = TimeParsingHelper.ParseFlexibleDateTime(input);
