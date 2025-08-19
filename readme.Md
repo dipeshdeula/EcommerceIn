@@ -9,16 +9,6 @@
 
 A modern, scalable, and feature-rich e-commerce backend API built with **.NET 8**, implementing **Clean Architecture** and enterprise-grade design patterns.
 
-## 🏗️ Architecture Overview
-
-**Clean Architecture Layers**
-
-📁 InstantMart API
-├── 🎯 Domain/              # Enterprise Business Rules
-├── 🔧 Application/         # Application Business Rules  
-├── 📊 Infrastructure/      # External Interfaces
-├── 🌐 Ecommerce Backend API/ # Web API Layer
-└── 🧪 tests/              # Testing Infrastructure
 
 
 **Design Patterns & Principles**
@@ -214,7 +204,6 @@ dotnet test --collect:"XPlat Code Coverage"
 ## 📞 Support & Contact
 
 * Issues: GitHub Issues
-* Email: [support@instantmart.com](mailto:support@instantmart.com)
-* Dev-Mail: [deuladipesh94@gmail.com](mailto:deuladipesh94@gmail.com)
+* Email: [mailto:deuladipesh94@gmail.com]
 
 
