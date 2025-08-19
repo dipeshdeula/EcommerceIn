@@ -24,58 +24,68 @@ namespace Application.Features.SubCategoryFeat.Commands
     public class CreateSubCategoryCommandHandler : IRequestHandler<CreateSubCategoryCommand, Result<SubCategoryDTO>>
     {
         private readonly ICategoryRepository _categoryRepository;
+        private readonly ISubCategoryRepository _subCategoryRepository;
         private readonly IFileServices _fileService;
 
-        public CreateSubCategoryCommandHandler(ICategoryRepository categoryRepository, IFileServices fileService)
+        public CreateSubCategoryCommandHandler(
+            ICategoryRepository categoryRepository,
+            ISubCategoryRepository subCategoryRepository,
+            IFileServices fileService)
         {
             _categoryRepository = categoryRepository;
+            _subCategoryRepository = subCategoryRepository;
             _fileService = fileService;
         }
 
         public async Task<Result<SubCategoryDTO>> Handle(CreateSubCategoryCommand request, CancellationToken cancellationToken)
         {
+            try
+            {
 
-            var parentCategory = await _categoryRepository.FindByIdAsync(request.CategoryId);
-            if (parentCategory == null)
-            {
-                return Result<SubCategoryDTO>.Failure("Parent category not found.");
-            }
-            string fileUrl = null;
-            if (request.File != null && request.File.Length > 0)
-            {
-                try
+                var parentCategory = await _categoryRepository.FindByIdAsync(request.CategoryId);
+                if (parentCategory == null)
                 {
-                    fileUrl = await _fileService.SaveFileAsync(request.File, FileType.SubCategoryImages);
-
+                    return Result<SubCategoryDTO>.Failure("Parent category not found.");
                 }
-                catch (Exception ex)
+                string fileUrl = null;
+                if (request.File != null && request.File.Length > 0)
                 {
-                    return Result<SubCategoryDTO>.Failure($"Image upload failed: {ex.Message}");
+                    try
+                    {
+                        fileUrl = await _fileService.SaveFileAsync(request.File, FileType.SubCategoryImages);
 
+                    }
+                    catch (Exception ex)
+                    {
+                        return Result<SubCategoryDTO>.Failure($"Image upload failed: {ex.Message}");
+
+                    }
                 }
+                // Validate ParentCategoryId
+
+                // Create the new subcategory
+                var subCategory = new SubCategory
+                {
+                    Name = request.Name,
+                    Slug = request.Slug,
+                    Description = request.Description,
+                    CategoryId = request.CategoryId,
+                    Category = parentCategory,
+                    ImageUrl = fileUrl!
+                };
+
+
+                // Save changes to the database
+                await _subCategoryRepository.AddAsync(subCategory, cancellationToken);
+                await _subCategoryRepository.SaveChangesAsync(cancellationToken);
+
+                // Map to DTO and return success
+                return Result<SubCategoryDTO>.Success(subCategory.ToDTO(), "Subcategory created successfully");
             }
-            // Validate ParentCategoryId
-
-            // Create the new subcategory
-            var subCategory = new SubCategory
+            catch (Exception ex)
             {
-                Name = request.Name,
-                Slug = request.Slug,
-                Description = request.Description,
-                CategoryId = request.CategoryId,
-                Category = parentCategory,
-                ImageUrl = fileUrl
-            };
-
-            // Add the subcategory to the parent's SubCategories collection
-            parentCategory.SubCategories.Add(subCategory);
-
-            // Save changes to the database
-            await _categoryRepository.UpdateAsync(parentCategory, cancellationToken);
-            await _categoryRepository.SaveChangesAsync(cancellationToken);
-
-            // Map to DTO and return success
-            return Result<SubCategoryDTO>.Success(subCategory.ToDTO(), "Subcategory created successfully");
+                return Result<SubCategoryDTO>.Failure("Fail to create subCategory",ex.Message);
+            }
         }
     }
 }

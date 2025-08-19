@@ -40,11 +40,14 @@ namespace Application.Features.OrderFeat.Queries
 
             var totalPages = (int)Math.Ceiling((double)totalCount / request.PageSize);
             return Result<IEnumerable<OrderDTO>>.Success(
+               
                 orderDTOs,
                 "Order is fetched successfully",
+                totalCount,
                 request.PageNumber,
-                request.PageSize,
-                totalPages
+                request.PageSize
+                
+            
                 
                 );
         }

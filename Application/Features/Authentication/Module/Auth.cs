@@ -127,10 +127,8 @@ namespace Application.Features.Authentication.Module
                 return Results.Ok(config);
             })
             .WithName("GoogleAuthConfig")
-            .WithSummary("Get Google OAuth configuration");      
+            .WithSummary("Get Google OAuth configuration");     
         
-
-
 
             app.MapPost("/refresh-token", async (
                   [FromBody] TokenRequestDto tokenRequest,
@@ -194,7 +192,6 @@ namespace Application.Features.Authentication.Module
 
                 return Results.Ok(new { Message = "Logged out successfully." });
             });
-
 
         }
 

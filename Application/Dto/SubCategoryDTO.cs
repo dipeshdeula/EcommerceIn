@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Application.Dto
@@ -17,6 +18,7 @@ namespace Application.Dto
         public string ImageUrl { get; set; } = string.Empty;
         public bool IsDeleted { get; set; } = false;
         public int CategoryId { get; set; } // Foreign key to Category
+        
         public CategoryDTO? categoryDTO { get; set; }
         public List<SubSubCategoryDTO> SubSubCategories { get; set; } = new List<SubSubCategoryDTO>();
     }

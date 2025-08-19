@@ -29,7 +29,7 @@ public class GetAllNotificationsQueryHandler : IRequestHandler<GetAllNotificatio
         {
             var notifications = await _notificationRepository.Queryable.AsNoTracking().
                 Include(n => n.User).
-                Where(un => string.IsNullOrEmpty(request.Status) || un.Status.ToString() == request.Status).
+                Where(un => string.IsNullOrEmpty(request.Status) || un.Status.ToString().ToLower() == request.Status.ToLower()).
                 Where(un => !un.IsDeleted).
                 OrderByDescending(un => un.CreatedAt).
                 Select(un => new NotificationDto
@@ -40,7 +40,7 @@ public class GetAllNotificationsQueryHandler : IRequestHandler<GetAllNotificatio
                     Title = un.Title,
                     Message = un.Message,
                     Type = un.Type.ToString(),
-                    Email = un.User.Email,
+                    Email = un.User!.Email,
                     Status = un.Status.ToString(),
                     IsRead = un.Status == NotificationStatus.Read,
                     OrderDate = un.CreatedAt

@@ -28,7 +28,7 @@ public class AcknowledgeNotificationCommandHandler : IRequestHandler<Acknowledge
             result.Status = NotificationStatus.Acknowledged;
             await _notificationRepository.UpdateAsync(result);
             await _notificationRepository.SaveChangesAsync();
-            return Results.Accepted("Notification Acknowledged.");
+            return Results.Ok("Notification Acknowledged.");
         }
         catch (Exception ex)
         {

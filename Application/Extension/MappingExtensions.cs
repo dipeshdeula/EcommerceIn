@@ -109,6 +109,7 @@ namespace Application.Extension
                 Description = subCategory.Description,
                 ImageUrl = subCategory.ImageUrl,
                 IsDeleted = subCategory.IsDeleted,
+                CategoryId = subCategory.CategoryId,
                 SubSubCategories = subCategory.SubSubCategories.Select(ssc => ssc.ToDTO()).ToList() // Map sub-subcategories
             };
         }
@@ -768,6 +769,7 @@ namespace Application.Extension
                 DeliveryLongitude = order.DeliveryLongitude,
                 ReasonToCancel = order.ReasonToCancel,
                 IsConfirmed = order.IsConfirmed,
+                IsDelivered = order.IsDelivered,
                 IsCancelled = order.IsCancelled,
                 IsDeleted = order.IsDeleted,
                 UserDTO = order.User != null ? order.User.ToDTO() : null,

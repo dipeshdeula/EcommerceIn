@@ -30,6 +30,7 @@ namespace Application.Dto.OrderDTOs
         public string?ReasonToCancel { get; set; }
         public bool IsConfirmed { get; set; } = false;
         public bool IsCancelled { get; set; } = false;
+        public bool IsDelivered { get; set; } = false;
 
         public bool IsDeleted { get; set; } = false;
 

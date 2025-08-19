@@ -42,7 +42,20 @@ namespace Application.Features.OrderFeat.Module
                 {
                     return Results.BadRequest(new { result.Message, result.Errors });
                 }
-                return Results.Ok(new { result.Message, result.Data });
+                return Results.Ok(new
+                {
+                    result.Message,
+                    result.Data,
+                    Pagination = new
+                    {
+                        pageNumber = result.PageNumber,
+                        pageSize = result.PageSize,
+                        totalPages = result.TotalPages,
+                        totalCount = result.TotalCount,
+                        hasNextPage = result.PageNumber < result.TotalPages,
+                        hasPreviousPage = result.PageNumber > 1
+                    }
+                });
 
             }).RequireAuthorization("RequireAdmin");
 

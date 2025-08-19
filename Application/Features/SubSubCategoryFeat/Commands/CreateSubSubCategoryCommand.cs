@@ -38,50 +38,58 @@ namespace Application.Features.SubSubCategoryFeat.Commands
 
         public async Task<Result<SubSubCategoryDTO>> Handle(CreateSubSubCategoryCommand request, CancellationToken cancellationToken)
         {
-            // Validate SubCategoryId
-            var subCategory = await _subCategoryRepository.FindByIdAsync(request.SubCategoryId);
-            if (subCategory == null)
+            try
             {
-                return Result<SubSubCategoryDTO>.Failure("Sub-category not found.");
-            }
-
-            string fileUrl = null!;
-
-            if (request.File != null && request.File.Length > 0)
-            {
-                try
+                // Validate SubCategoryId
+                var subCategory = await _subCategoryRepository.FindByIdAsync(request.SubCategoryId);
+                if (subCategory == null)
                 {
-                    fileUrl = await _fileService.SaveFileAsync(request.File, FileType.SubSubCategoryImages);
-
+                    return Result<SubSubCategoryDTO>.Failure("Sub-category not found.");
                 }
-                catch (Exception ex)
+
+                string fileUrl = null!;
+
+                if (request.File != null && request.File.Length > 0)
                 {
-                    return Result<SubSubCategoryDTO>.Failure($"Image upload failed: {ex.Message}");
+                    try
+                    {
+                        fileUrl = await _fileService.SaveFileAsync(request.File, FileType.SubSubCategoryImages);
 
+                    }
+                    catch (Exception ex)
+                    {
+                        return Result<SubSubCategoryDTO>.Failure($"Image upload failed: {ex.Message}");
+
+                    }
                 }
+
+                // Create the new SubSubCategory
+                var subSubCategory = new SubSubCategory
+                {
+                    Name = request.Name,
+                    Slug = request.Slug,
+                    Description = request.Description,
+                    ImageUrl = fileUrl!,
+                    SubCategoryId = request.SubCategoryId,
+                    SubCategory = subCategory,
+                    CategoryId = subCategory.CategoryId,
+                    Category = subCategory.Category
+
+                };
+
+                // Add the SubSubCategory to the parent's SubSubCategories collection
+                await _unitOfWork.SubSubCategories.AddAsync(subSubCategory, cancellationToken);
+
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                // Map to DTO and return success
+                return Result<SubSubCategoryDTO>.Success(subSubCategory.ToDTO(), "SubSubCategory created successfully");
             }
-
-            // Create the new SubSubCategory
-            var subSubCategory = new SubSubCategory
+            catch (Exception ex)
             {
-                Name = request.Name,
-                Slug = request.Slug,
-                Description = request.Description,
-                ImageUrl = fileUrl!,
-                SubCategoryId = request.SubCategoryId,
-                SubCategory = subCategory,
-                CategoryId = subCategory.CategoryId,
-                Category = subCategory.Category
-
-            };
-
-            // Add the SubSubCategory to the parent's SubSubCategories collection
-            await _unitOfWork.SubSubCategories.AddAsync(subSubCategory, cancellationToken);       
-
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            // Map to DTO and return success
-            return Result<SubSubCategoryDTO>.Success(subSubCategory.ToDTO(), "SubSubCategory created successfully");
+                return Result<SubSubCategoryDTO>.Failure("Fail to create subSubCategory", ex.Message);
+            }
+           
         }
     }
 }
