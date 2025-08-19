@@ -10,7 +10,6 @@
 A modern, scalable, and feature-rich e-commerce backend API built with **.NET 8**, implementing **Clean Architecture** and enterprise-grade design patterns.
 
 
-
 **Design Patterns & Principles**
 
 * **CQRS** – Separate read/write operations
