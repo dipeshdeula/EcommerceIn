@@ -47,7 +47,9 @@ namespace Application.Dto.ProductDTOs
         public ICollection<ProductImageDTO> Images { get; set; } = new List<ProductImageDTO>();
 
         // COMPOSITION PROPERTIES (Set by services)
+        [JsonIgnore]
         public ProductPricingDTO? Pricing { get; set; }
+        [JsonIgnore]
         public ProductStockDTO? Stock { get; set; }
 
         // SAFE CONVENIENCE PROPERTIES

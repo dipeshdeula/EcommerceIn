@@ -591,31 +591,41 @@ namespace Application.Extension
                 Id = cartItem.Id,
                 UserId = cartItem.UserId,
                 ProductId = cartItem.ProductId,
-                ShippingId = cartItem.ShippingId ?? 1,
-                ShippingCost = cartItem.ShippingCost,                
+                //ShippingId = cartItem.ShippingId ?? 1,
+                //ShippingCost = cartItem.ShippingCost,                
                 Quantity = cartItem.Quantity,
                 OriginalPrice = CalculateOriginalPrice(cartItem),
                 ReservedPrice = cartItem.ReservedPrice,                
 
                 // PROMO CODE
-                AppliedPromoCodeId = cartItem.AppliedPromoCodeId ?? 0,
-                PromoCodeDiscountAmount = cartItem.PromoCodeDiscountAmount ?? 0,
-                AppliedPromoCode = cartItem.AppliedPromoCode,
-                EventDiscountAmount = cartItem.EventDiscountAmount,
-                AppliedEventId = cartItem.AppliedEventId,
+                //AppliedPromoCodeId = cartItem.AppliedPromoCodeId ?? 0,
+               // PromoCodeDiscountAmount = cartItem.PromoCodeDiscountAmount ?? 0,
+                //AppliedPromoCode = cartItem.AppliedPromoCode,
+                //EventDiscountAmount = cartItem.EventDiscountAmount,
+                //AppliedEventId = cartItem.AppliedEventId,
                 IsStockReserved = cartItem.IsStockReserved,
-                ReservationToken = cartItem.ReservationToken,
+                //ReservationToken = cartItem.ReservationToken,
                 ExpiresAt = cartItem.ExpiresAt,
-                CreatedAt = cartItem.CreatedAt,
-                UpdatedAt = cartItem.UpdatedAt,
-                IsDeleted = cartItem.IsDeleted,               
-                DeliveryLatitude = cartItem.DeliveryLatitude,
-                DeliveryLongitude = cartItem.DeliveryLongitude,
-                ShippingAddress = cartItem.ShippingAddress,
-                ShippingCity = cartItem.ShippingCity,
-                ShippingMessage = cartItem.ShippingCost == 0 ? "Free shipping applied!" : $"Shipping: Rs. {cartItem.ShippingCost:F2}",
+              //  CreatedAt = cartItem.CreatedAt,
+               // UpdatedAt = cartItem.UpdatedAt,
+               // IsDeleted = cartItem.IsDeleted,
+               shipping = new ShippingInfoDTO
+               {
+                   DeliveryLatitude = cartItem.DeliveryLatitude,
+                   DeliveryLongitude = cartItem.DeliveryLongitude,
+                   ShippingAddress = cartItem.ShippingAddress,
+                   ShippingCity = cartItem.ShippingCity,
+                   ShippingMessage = cartItem.ShippingCost == 0 ? "Free shipping applied!" : $"Shipping: Rs. {cartItem.ShippingCost:F2}",
+               },
 
-                Product = cartItem.Product?.ToDTO(),
+                CartProduct = new CartProductReponseDTO
+                { 
+                    
+                    Name = cartItem.Product.Name,
+                    Images = cartItem.Product.Images.Select(p=>p.ToDTO()).ToList(),
+
+
+                },
                 //  Category = cartItem.Product?.Category != null ? cartItem.Product.Category.ToDTO() : null,
                 //User = cartItem.User?.ToDTO(),
                 //Shipping = cartItem.Shipping?.ToShippingDTO(),

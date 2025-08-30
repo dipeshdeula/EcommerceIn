@@ -3,6 +3,7 @@ using Application.Dto.ProductDTOs;
 using Application.Dto.PromoCodeDTOs;
 using Application.Dto.ShippingDTOs;
 using Application.Dto.UserDTOs;
+using System.Text.Json.Serialization;
 
 namespace Application.Dto.CartItemDTOs
 {
@@ -11,60 +12,45 @@ namespace Application.Dto.CartItemDTOs
         // CORE CART DATA 
         public int Id { get; set; }
         public int UserId { get; set; }
-        public int ProductId { get; set; }
-        public int ShippingId { get; set; } // New field for shipping details
-        public decimal ShippingCost { get; set; }
+        public int ProductId { get; set; }     
+        //public decimal ShippingCost { get; set; }
         public int Quantity { get; set; }
 
         // CART-SPECIFIC PRICING (Locked-in at time of adding) 
         public decimal ReservedPrice { get; set; }
         public decimal? OriginalPrice { get; set; }
-        public decimal? EventDiscountAmount { get; set; }
-        public int? AppliedEventId { get; set; }
 
-        // Promo Code
-        public int AppliedPromoCodeId { get; set; }
+        [JsonIgnore]
+        public decimal? EventDiscountAmount { get; set; }
+        [JsonIgnore]
         public decimal PromoCodeDiscountAmount { get; set; }
-        public string? AppliedPromoCode { get; set; }
+        // public string? AppliedPromoCode { get; set; }
 
         //public decimal ShippingCost { get; set; }
 
         // STOCK RESERVATION 
-        public bool IsStockReserved { get; set; }
-        public string? ReservationToken { get; set; }
+        public bool IsStockReserved { get; set; }        
         public DateTime ExpiresAt { get; set; }
 
         // AUDIT TRAIL 
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
+        // public DateTime CreatedAt { get; set; }
+        //public DateTime UpdatedAt { get; set; }
+
+        [JsonIgnore]
         public bool IsDeleted { get; set; }
 
         //  COMPUTED PROPERTIES (Business logic) 
         public bool IsExpired => ExpiresAt <= DateTime.UtcNow;
         public bool IsActive => !IsDeleted && !IsExpired && IsStockReserved;
         public decimal TotalItemPrice => ReservedPrice * Quantity   ;
-        //public decimal GrandTotal => TotalItemPrice + ShippingCost;
-        public decimal TotalDiscountAmount => (EventDiscountAmount ?? 0) * Quantity;
+        //public decimal TotalDiscountAmount => (EventDiscountAmount ?? 0) * Quantity;
         public decimal OriginalTotalPrice => OriginalPrice ?? ReservedPrice;
 
 
-        // DISPLAY PROPERTIES
-        public string FormattedOriginalPrice => $"Rs. {OriginalTotalPrice:F2}";
-
-        public string FormattedReservedPrice => $"Rs. {ReservedPrice:F2}";
-        public string FormattedTotalPrice => $"Rs. {TotalItemPrice:F2}";
-       // public string FormattedShippingCost => $"Rs. {ShippingCost:F2}";
-       // public string FormattedGrandTotal => $"Rs. {GrandTotal:F2}";
-        public string FormattedDiscount => TotalDiscountAmount > 0 ? $"Save Rs. {TotalDiscountAmount:F2}" : string.Empty;
-        public decimal TotalSavingsAmount => ((OriginalPrice ?? ReservedPrice) - ReservedPrice) * Quantity;
-        public string FormattedEventDiscount => EventDiscountAmount.HasValue && EventDiscountAmount > 0
-          ? $"Event Discount: Rs. {EventDiscountAmount.Value * Quantity:F2}"
-          : string.Empty;
-
-
+        
 
         //  STATUS TRACKING 
-        public string Status => IsExpired ? "Expired" : IsActive ? "Reserved" : IsDeleted ? "Removed" : "Invalid";
+       // public string Status => IsExpired ? "Expired" : IsActive ? "Reserved" : IsDeleted ? "Removed" : "Invalid";
         public string TimeRemaining
         {
             get
@@ -77,19 +63,11 @@ namespace Application.Dto.CartItemDTOs
             }
         }
 
-         public ShippingCalculationDetailDTO? ShippingInfo { get; set; }
-         public double? DeliveryLatitude { get; set; }
-         public double? DeliveryLongitude { get; set; }
-         public string? ShippingAddress { get; set; }
-         public string? ShippingCity { get; set; }
-         public string? ShippingMessage { get; set; }
-
-
         //  NAVIGATION
-        //public CategoryDTO? Category { get; set; }
-        public ProductDTO? Product { get; set; }
-        //public UserDTO? User { get; set; }
-        //public PromoCodeDTO? PromoCodeDTO { get; set; }
-        //public ShippingDTO? Shipping { get; set; }
+
+        //public ProductDTO? Product { get; set; }
+        public ShippingInfoDTO? shipping { get; set; }
+        public CartProductReponseDTO? CartProduct { get; set; }
+       
     }
 }

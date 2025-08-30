@@ -1627,7 +1627,7 @@ namespace Infrastructure.Migrations
                             CenterLongitude = 85.047799999999995,
                             CityName = "Hetauda",
                             Country = "Nepal",
-                            CreatedAt = new DateTime(2025, 8, 18, 13, 37, 19, 653, DateTimeKind.Utc).AddTicks(7597),
+                            CreatedAt = new DateTime(2025, 8, 28, 5, 46, 51, 353, DateTimeKind.Utc).AddTicks(130),
                             DeliveryEndTime = new TimeSpan(0, 21, 0, 0, 0),
                             DeliveryStartTime = new TimeSpan(0, 9, 0, 0, 0),
                             Description = "Premium delivery service in Hetauda city and surrounding areas",
@@ -1641,7 +1641,7 @@ namespace Infrastructure.Migrations
                             NotAvailableMessage = "Service not available in your area yet. Coming soon to Hetauda!",
                             Province = "Bagmati",
                             RadiusKm = 15.0,
-                            UpdatedAt = new DateTime(2025, 8, 18, 13, 37, 19, 653, DateTimeKind.Utc).AddTicks(7599)
+                            UpdatedAt = new DateTime(2025, 8, 28, 5, 46, 51, 353, DateTimeKind.Utc).AddTicks(131)
                         });
                 });
 

@@ -52,13 +52,14 @@ namespace Application.Features.CategoryFeat.Commands
             // Create the new category
             var category = new Category
             {
+                
                 Name = request.Name,
                 Slug = request.Slug,
                 Description = request.Description,
                 ImageUrl = fileUrl
 
             };
-
+            Console.WriteLine("Id:", category.Id);
             // Save the category to the database
             var createdCategory = await _categoryRepository.AddAsync(category, cancellationToken);
             await _categoryRepository.SaveChangesAsync(cancellationToken);

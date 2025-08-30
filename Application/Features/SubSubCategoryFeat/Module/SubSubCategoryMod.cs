@@ -18,7 +18,7 @@ namespace Application.Features.SubSubCategoryFeat.Module
         {
             WithTags("SubSubCategory");
             IncludeInOpenApi();
-            RequireAuthorization();
+            //RequireAuthorization();
 
         }
 

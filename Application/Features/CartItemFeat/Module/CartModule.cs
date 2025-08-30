@@ -56,10 +56,7 @@ namespace Application.Features.CartItemFeat.Module
                 return Results.Ok(new { 
                    result.Message, 
                    result.Data,
-                    //shippingInfo = new {
-                    //    cost = result.Data.ShippingInfo!.FinalShippingCost,
-                    //    message = result.Data.ShippingInfo.FinalShippingCost == 0 ? " Free shipping applied!" : $" Shipping: Rs.{result.Data.ShippingInfo.FinalShippingCost:F2}"
-                    //}
+                  
                 });
             })
             .RequireAuthorization()
@@ -124,10 +121,10 @@ namespace Application.Features.CartItemFeat.Module
                         totalItems = result.Data?.TotalItems ?? 0,
                         activeItems = result.Data?.ActiveItems ?? 0,
                         expiredItems = result.Data?.ExpiredItems ?? 0,
-                        totalItemPrice = result.Data?.FormattedTotalItemPrice ?? "Rs. 0.00",
-                        totalDiscount = result.Data?.FormattedTotalDiscount ?? "Rs. 0.00",
-                        shippingCost = result.Data?.FormattedShippingCost ?? "Rs. 0.00",
-                        grandTotal = result.Data?.FormattedGrandTotal ?? "Rs. 0.00",
+                        //totalItemPrice = result.Data?.FormattedTotalItemPrice ?? "Rs. 0.00",
+                        //totalDiscount = result.Data?.FormattedTotalDiscount ?? "Rs. 0.00",
+                        //shippingCost = result.Data?.FormattedShippingCost ?? "Rs. 0.00",
+                        //grandTotal = result.Data?.FormattedGrandTotal ?? "Rs. 0.00",
                         canCheckout = result.Data?.CanCheckout ?? false,
                         shippingMessage = result.Data?.ShippingMessage ?? ""
                     }

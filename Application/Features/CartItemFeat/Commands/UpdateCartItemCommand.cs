@@ -66,7 +66,7 @@ namespace Application.Features.CartItemFeat.Commands
             await _cartItemRepository.SaveChangesAsync(cancellationToken);
 
             var dto = cartItem.ToDTO();
-            dto.ShippingMessage = cartItem.ShippingCost == 0 ? "Free shipping applied!" : $"Shipping: Rs. {cartItem.ShippingCost:F2}";
+            dto.shipping.ShippingMessage = cartItem.ShippingCost == 0 ? "Free shipping applied!" : $"Shipping: Rs. {cartItem.ShippingCost:F2}";
 
             return Result<CartItemDTO>.Success(dto, "Cart item updated successfully");
 

@@ -24,7 +24,7 @@ namespace Application.Features.CategoryFeat.UploadImages
 
             RuleFor(x => x.Files)
                 .NotEmpty().WithMessage("At least one image file is required.")
-                .Must(files => files.All(f => BeAnImage(f))).WithMessage("Only image files (jpg, jpeg, png) are allowed.")
+                .Must(files => files.All(f => BeAnImage(f))).WithMessage("Only image files (jpg, jpeg, png, webp) are allowed.")
                 .Must(files => files.Count <= 10).WithMessage("You can upload up to 10 images.")
                 .Must(files => files.All(f => f.Length <= 5 * 1024 * 1024)) // 5MB max per file
                 .WithMessage("Each image must be less than 5MB in size.");

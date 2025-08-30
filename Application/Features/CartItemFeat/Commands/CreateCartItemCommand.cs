@@ -103,6 +103,11 @@ namespace Application.Features.CartItemFeat.Commands
                     // Include shipping info in the request if your DTO supports it
                     RequestedShippingCost = shippingCost,
                     ShippingConfigId = shippingConfigId,
+                    DeliveryLatitude = request.ShippingRequest?.DeliveryLatitude,
+                    DeliveryLongitude = request.ShippingRequest?.DeliveryLongitude,
+                    ShippingAddress = request.ShippingRequest?.Address,
+                    ShippingCity = request.ShippingRequest?.City,
+                    RequestRushDelivery = request.ShippingRequest?.RequestRushDelivery ?? false
                 };
 
                 //  STEP 5: Add item to cart via service
@@ -125,11 +130,11 @@ namespace Application.Features.CartItemFeat.Commands
                     //result.Data.ShippingInfo = shippingResult.Data;
                     if (request.ShippingRequest != null)
                     {
-                        result.Data.DeliveryLatitude = request.ShippingRequest.DeliveryLatitude;
-                        result.Data.DeliveryLongitude = request.ShippingRequest.DeliveryLongitude;
-                        result.Data.ShippingAddress = request.ShippingRequest.Address;
-                        result.Data.ShippingCity = request.ShippingRequest.City;
-                        result.Data.ShippingMessage = shippingCost == 0 ? "Free shipping applied!" : $"Shipping: Rs. {shippingCost:F2}";
+                        result.Data.shipping.DeliveryLatitude = request.ShippingRequest.DeliveryLatitude;
+                        result.Data.shipping.DeliveryLongitude = request.ShippingRequest.DeliveryLongitude;
+                        result.Data.shipping.ShippingAddress = request.ShippingRequest.Address;
+                        result.Data.shipping.ShippingCity = request.ShippingRequest.City;
+                        result.Data.shipping.ShippingMessage = shippingCost == 0 ? "Free shipping applied!" : $"Shipping: Rs. {shippingCost:F2}";
                     }
                 }
 

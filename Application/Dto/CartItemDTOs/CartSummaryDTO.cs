@@ -94,7 +94,7 @@ namespace Application.Dto.CartItemDTOs
         }
 
         //  Create summary from cart items (static factory method)
-        public static CartSummaryDTO CreateFromCartItems(
+        /*public static CartSummaryDTO CreateFromCartItems(
             int userId, 
             List<CartItemDTO> cartItems, 
             double calculationTimeMs = 0,
@@ -105,7 +105,7 @@ namespace Application.Dto.CartItemDTOs
             
             var subTotal = activeItems.Sum(c => c.ReservedPrice);
             var totalDiscount = activeItems.Sum(c => (c.EventDiscountAmount ?? 0));
-            var eventSavings = activeItems.Where(c => c.AppliedEventId.HasValue).Sum(c => (c.EventDiscountAmount ?? 0) );
+            //var eventSavings = activeItems.Where(c => c.AppliedEventId.HasValue).Sum(c => (c.EventDiscountAmount ?? 0) );
 
             var validationErrors = new List<string>();
             
@@ -141,10 +141,10 @@ namespace Application.Dto.CartItemDTOs
                 CalculationTimeMs = calculationTimeMs,
                 TotalWeight = activeItems.Sum(c => c.Product?.Weight != null ? decimal.Parse(c.Product.Weight.Replace("g", "")) * c.Quantity : 0),
                 DistinctProductCount = cartItems.Select(c => c.ProductId).Distinct().Count(),
-                HasEventItems = activeItems.Any(c => c.AppliedEventId.HasValue),
-                EventSavings = eventSavings
+               // HasEventItems = activeItems.Any(c => c.AppliedEventId.HasValue),
+               // EventSavings = eventSavings
             };
-        }
+        }*/
 
     }
 }

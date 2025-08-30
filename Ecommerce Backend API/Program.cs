@@ -17,6 +17,16 @@ using System.Text.Json.Serialization;
 EnvProvider.LoadEnv();
 var builder = WebApplication.CreateBuilder(args);
 
+// builder.WebHost.ConfigureKestrel(options =>
+// {
+//     options.ListenAnyIP(5000); // HTTP
+//     options.ListenAnyIP(5001, listenOptions =>
+//     {
+//         listenOptions.UseHttps(); // HTTPS
+//     });
+// });
+
+
 
 //  Validate Google Maps API Key
 var googleMapsApiKey = builder.Configuration["LocationSettings:GoogleMapsApiKey"];

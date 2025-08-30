@@ -17,7 +17,7 @@ namespace Application.Features.StoreFeat.Module
         {
             WithTags("Store");
             IncludeInOpenApi();
-            RequireAuthorization();
+            //RequireAuthorization();
 
         }
 

@@ -33,10 +33,6 @@ namespace Application.Dto.CartItemDTOs
         public int ExpiredItems => Items.Count(i => i.IsExpired);
         public bool CanCheckout => ActiveItems > 0 && ExpiredItems == 0;
         
-        // FORMATTED DISPLAY
-        public string FormattedTotalItemPrice => $"Rs. {TotalItemPrice:F2}";
-        public string FormattedTotalDiscount => $"Rs. {TotalDiscount:F2}";
-        public string FormattedShippingCost => $"Rs. {ShippingCost:F2}";
-        public string FormattedGrandTotal => $"Rs. {GrandTotal:F2}";
+    
     }
 }
