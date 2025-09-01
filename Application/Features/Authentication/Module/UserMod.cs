@@ -17,7 +17,7 @@ namespace Application.Features.Authentication.Module
         {
             WithTags("Auth User");
             IncludeInOpenApi();
-            RequireAuthorization();
+            //RequireAuthorization();
             
         }
         public override void AddRoutes(IEndpointRouteBuilder app)

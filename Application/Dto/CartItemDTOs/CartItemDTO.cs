@@ -29,7 +29,10 @@ namespace Application.Dto.CartItemDTOs
         //public decimal ShippingCost { get; set; }
 
         // STOCK RESERVATION 
-        public bool IsStockReserved { get; set; }        
+        public bool IsStockReserved { get; set; }
+
+
+        [JsonIgnore]
         public DateTime ExpiresAt { get; set; }
 
         // AUDIT TRAIL 
@@ -47,10 +50,12 @@ namespace Application.Dto.CartItemDTOs
         public decimal OriginalTotalPrice => OriginalPrice ?? ReservedPrice;
 
 
-        
+
 
         //  STATUS TRACKING 
-       // public string Status => IsExpired ? "Expired" : IsActive ? "Reserved" : IsDeleted ? "Removed" : "Invalid";
+        // public string Status => IsExpired ? "Expired" : IsActive ? "Reserved" : IsDeleted ? "Removed" : "Invalid";
+
+        [JsonIgnore]
         public string TimeRemaining
         {
             get
@@ -66,6 +71,7 @@ namespace Application.Dto.CartItemDTOs
         //  NAVIGATION
 
         //public ProductDTO? Product { get; set; }
+        [JsonIgnore]
         public ShippingInfoDTO? shipping { get; set; }
         public CartProductReponseDTO? CartProduct { get; set; }
        

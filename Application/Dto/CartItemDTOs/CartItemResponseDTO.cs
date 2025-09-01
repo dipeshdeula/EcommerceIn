@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Application.Dto.CartItemDTOs
@@ -19,11 +20,14 @@ namespace Application.Dto.CartItemDTOs
         public decimal TotalDiscount { get; set; }
         public decimal TotalEventDiscounts { get; set; }
         public decimal TotalPromoDiscounts { get; set; }
+
+        [JsonIgnore]
         public decimal ShippingCost { get; set; }
         public decimal GrandTotal { get; set; }
         
         // SHIPPING INFO (once per cart)
-        public ShippingDTO? Shipping { get; set; }
+        public ShippingInfoDTO? Shipping { get; set; }
+        [JsonIgnore]
         public string? ShippingMessage { get; set; }
         public bool HasFreeShipping { get; set; }
         

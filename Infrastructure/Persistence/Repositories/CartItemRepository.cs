@@ -29,8 +29,14 @@ namespace Infrastructure.Persistence.Repositories
                 .LoadAsync();
 
             await _context.Entry(cartItem)
-                .Reference(c => c.Product)
+                .Reference(c => c.Product)                 
                 .LoadAsync();
+            if (cartItem.Product != null)
+            {
+                await _context.Entry(cartItem.Product)
+                    .Collection(p => p.Images)
+                    .LoadAsync();
+            }
         }
         public async Task DeleteByUserIdAsync(int userId)
         {

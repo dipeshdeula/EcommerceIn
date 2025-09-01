@@ -13,5 +13,6 @@ namespace Application.Dto.ShippingDTOs
         public string? ShippingAddress { get; set; }
         public string? ShippingCity { get; set; }
         public string? ShippingMessage { get; set; }
+        public decimal ShippingCost { get; set; }
     }
 }

@@ -128,14 +128,14 @@ namespace Application.Features.CartItemFeat.Commands
                     _ = Task.Run(async () => await PublishBackgroundEvents(request, result.Data, shippingResult.Data), cancellationToken);
 
                     //result.Data.ShippingInfo = shippingResult.Data;
-                    if (request.ShippingRequest != null)
-                    {
-                        result.Data.shipping.DeliveryLatitude = request.ShippingRequest.DeliveryLatitude;
-                        result.Data.shipping.DeliveryLongitude = request.ShippingRequest.DeliveryLongitude;
-                        result.Data.shipping.ShippingAddress = request.ShippingRequest.Address;
-                        result.Data.shipping.ShippingCity = request.ShippingRequest.City;
-                        result.Data.shipping.ShippingMessage = shippingCost == 0 ? "Free shipping applied!" : $"Shipping: Rs. {shippingCost:F2}";
-                    }
+                    //if (request.ShippingRequest != null)
+                    //{
+                    //    result.Data.shipping.DeliveryLatitude = request.ShippingRequest.DeliveryLatitude;
+                    //    result.Data.shipping.DeliveryLongitude = request.ShippingRequest.DeliveryLongitude;
+                    //    result.Data.shipping.ShippingAddress = request.ShippingRequest.Address;
+                    //    result.Data.shipping.ShippingCity = request.ShippingRequest.City;
+                    //    result.Data.shipping.ShippingMessage = shippingCost == 0 ? "Free shipping applied!" : $"Shipping: Rs. {shippingCost:F2}";
+                    //}
                 }
 
                 return result;

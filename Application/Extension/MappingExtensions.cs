@@ -618,7 +618,7 @@ namespace Application.Extension
                    ShippingMessage = cartItem.ShippingCost == 0 ? "Free shipping applied!" : $"Shipping: Rs. {cartItem.ShippingCost:F2}",
                },
 
-                CartProduct = new CartProductReponseDTO
+                CartProduct = cartItem.Product == null ? null : new CartProductReponseDTO
                 { 
                     
                     Name = cartItem.Product.Name,
@@ -634,7 +634,7 @@ namespace Application.Extension
             };
         }
 
-        public static CartItemResponseDTO ToCartItemResponseDTO(this IEnumerable<CartItem> cartItems, UserDTO user, decimal shippingCost, ShippingDTO? shipping = null, string? shippingMessage = null)
+        public static CartItemResponseDTO ToCartItemResponseDTO(this IEnumerable<CartItem> cartItems, UserDTO user, decimal shippingCost, ShippingInfoDTO? shipping, string? shippingMessage = null)
         {
             var items = cartItems.Select(c => c.ToDTO()).ToList();
             var activeItems = items.Where(i => i.IsActive).ToList();
@@ -654,11 +654,21 @@ namespace Application.Extension
                 TotalDiscount = totalDiscount,
                 TotalEventDiscounts = totalEventDiscounts,
                 TotalPromoDiscounts = totalPromoDiscounts,
-                ShippingCost = shippingCost,
+                //ShippingCost = shippingCost,
                 GrandTotal = grandTotal,
-                Shipping = shipping,
-                ShippingMessage = shippingMessage ?? (shippingCost == 0 ? " Free shipping applied!" : $"📦 Shipping: Rs. {shippingCost:F2}"),
-                HasFreeShipping = shippingCost == 0
+                HasFreeShipping = shippingCost == 0,
+                Shipping = new ShippingInfoDTO
+                {
+                    
+                        DeliveryLatitude = cartItems.Select(x => x.DeliveryLatitude).FirstOrDefault(),
+                        DeliveryLongitude = cartItems.Select(x => x.DeliveryLongitude).FirstOrDefault(),
+                        ShippingCity = cartItems.Select(x => x.ShippingCity).FirstOrDefault(),
+                        ShippingAddress = cartItems.Select(x => x.ShippingAddress).FirstOrDefault(),
+                        ShippingCost = shippingCost,
+                        ShippingMessage = shippingMessage ?? (shippingCost == 0 ? " Free shipping applied!" : $"Shipping: Rs. {shippingCost:F2}"),
+
+
+                }
             };
         }
 

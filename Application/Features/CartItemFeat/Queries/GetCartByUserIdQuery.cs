@@ -8,6 +8,7 @@ using Application.Interfaces.Services;
 using Microsoft.Extensions.Logging;
 using Application.Extension.Cache;
 using Application.Dto.ShippingDTOs;
+using Domain.Entities;
 
 namespace Application.Features.CartItemFeat.Queries
 {
@@ -97,7 +98,7 @@ namespace Application.Features.CartItemFeat.Queries
 
                 //  STEP 4: Calculate shipping ONCE for entire cart
                 decimal shippingCost = 0;
-                ShippingDTO? shippingDto = null;
+                ShippingInfoDTO? shippingDto = null;
                 string? shippingMessage = null;
 
                 if (activeItems.Any())
@@ -138,7 +139,7 @@ namespace Application.Features.CartItemFeat.Queries
                 var CartItemResponseDTO = cartItems.ToCartItemResponseDTO(
                     user.ToDTO(), 
                     shippingCost, 
-                    shippingDto, 
+                    shippingDto,
                     shippingMessage
                 );
 

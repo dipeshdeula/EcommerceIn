@@ -23,7 +23,7 @@ namespace Application.Features.CartItemFeat.Module
         {
             WithTags("CartItem");
             IncludeInOpenApi();
-            RequireAuthorization();
+            //RequireAuthorization();
 
         }
 
@@ -56,7 +56,16 @@ namespace Application.Features.CartItemFeat.Module
                 return Results.Ok(new { 
                    result.Message, 
                    result.Data,
-                  
+                    shipping = new
+                    {
+                        DeliveryLatitude = result.Data.shipping.DeliveryLatitude,
+                        DeliveryLongitude = result.Data.shipping.DeliveryLongitude,
+                        ShippingAddress = result.Data.shipping.ShippingAddress,
+                        ShippingCity = result.Data.shipping.ShippingCity,
+                        ShippinMessage = result.Data.shipping.ShippingMessage
+
+                    },
+
                 });
             })
             .RequireAuthorization()
@@ -116,18 +125,8 @@ namespace Application.Features.CartItemFeat.Module
                 //  NEW: Return clean cart structure
                 return Results.Ok(new { 
                     message = result.Message, 
-                    data = result.Data, // This is now CartDTO with proper structure
-                    summary = new {
-                        totalItems = result.Data?.TotalItems ?? 0,
-                        activeItems = result.Data?.ActiveItems ?? 0,
-                        expiredItems = result.Data?.ExpiredItems ?? 0,
-                        //totalItemPrice = result.Data?.FormattedTotalItemPrice ?? "Rs. 0.00",
-                        //totalDiscount = result.Data?.FormattedTotalDiscount ?? "Rs. 0.00",
-                        //shippingCost = result.Data?.FormattedShippingCost ?? "Rs. 0.00",
-                        //grandTotal = result.Data?.FormattedGrandTotal ?? "Rs. 0.00",
-                        canCheckout = result.Data?.CanCheckout ?? false,
-                        shippingMessage = result.Data?.ShippingMessage ?? ""
-                    }
+                    data = result.Data // This is now CartDTO with proper structure                   
+                    
                 });
             })
             .WithName("GetCartItemsByUserId")
