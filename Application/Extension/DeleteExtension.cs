@@ -12,11 +12,11 @@ namespace Application.Extension
             if (entity == null)
                 throw new ArgumentNullException(nameof(entity));
             // Use reflection to check for IsDeleted property
-            PropertyInfo isDeletedProperty = typeof(T).GetProperty("IsDeleted");
+            PropertyInfo isDeletedProperty = typeof(T).GetProperty("IsDeleted")!;
 
             if (isDeletedProperty != null && isDeletedProperty.PropertyType == typeof(bool))
             {
-                var currentValue = (bool)isDeletedProperty.GetValue(entity);
+                var currentValue = (bool)isDeletedProperty.GetValue(entity)!;
                 if (currentValue) // Already deleted
                     return;
                 isDeletedProperty.SetValue(entity, true);
@@ -109,7 +109,7 @@ namespace Application.Extension
         // Undelete - restore a soft-deleted entity
         public static async Task<bool> UndeleteAsync<T>(this DbContext context, T entity, CancellationToken cancellationToken = default) where T : class
         {
-            PropertyInfo isDeletedProperty = typeof(T).GetProperty("IsDeleted");
+            PropertyInfo isDeletedProperty = typeof(T).GetProperty("IsDeleted")!;
 
             if (isDeletedProperty != null && isDeletedProperty.PropertyType == typeof(bool))
             {
@@ -183,11 +183,11 @@ namespace Application.Extension
         // Check if entity is deleted
         public static bool IsDeleted<T>(this T entity) where T : class
         {
-            PropertyInfo isDeletedProperty = typeof(T).GetProperty("IsDeleted");
+            PropertyInfo isDeletedProperty = typeof(T).GetProperty("IsDeleted")!;
 
             if (isDeletedProperty != null && isDeletedProperty.PropertyType == typeof(bool))
             {
-                return (bool)isDeletedProperty.GetValue(entity);
+                return (bool)isDeletedProperty.GetValue(entity)!;
             }
 
             return false; // Entities without IsDeleted property are considered not deleted

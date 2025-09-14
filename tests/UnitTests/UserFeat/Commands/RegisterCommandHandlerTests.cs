@@ -35,7 +35,7 @@ public class RegisterCommandHandlerTests
             _mockFileServices.Object,
             _mockEmailService.Object,
             _mockConfiguration.Object,
-            _mockOtpService.Object //  This will work now
+            _mockOtpService.Object 
         );
 
         _fixture = new Fixture();

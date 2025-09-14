@@ -34,7 +34,7 @@ namespace Application.Dto.OrderDTOs
 
         public bool IsDeleted { get; set; } = false;
 
-        public UserDTO? UserDTO { get; set; }
+        public UserDTO? User { get; set; }
 
         public ICollection<OrderItemDTO> Items{ get; set; } = new List<OrderItemDTO>();
 

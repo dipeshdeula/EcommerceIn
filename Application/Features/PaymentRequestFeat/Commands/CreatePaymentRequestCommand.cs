@@ -129,7 +129,11 @@ namespace Application.Features.PaymentRequestFeat.Commands
                     ExpiresAt = initiationResult.Data.ExpiresAt,
                     Instructions = initiationResult.Data.Instructions,
                     RequiresRedirect = initiationResult.Data.RequiresRedirect,
-                    Metadata = initiationResult.Data.Metadata
+                    Metadata = initiationResult.Data.Metadata,
+                    UserName = user.Name,
+                    PaymentMethodName = paymentMethod.ProviderName,
+                    OrderTotal = order.GrandTotal
+
                 };
 
                 return Result<PaymentRequestDTO>.Success(responseDto, "Payment request created and initiated successfully");

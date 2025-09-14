@@ -24,6 +24,7 @@ namespace Application.Features.OrderFeat.Queries
             var userOrders = await _orderRepository.GetQueryable()
             .Where(uo => uo.UserId == request.UserId && !uo.IsDeleted)
             .Include(uo => uo.User)
+            .ThenInclude(uo=>uo.Addresses)
             .Include(uo => uo.Items)
             .OrderByDescending(uo => uo.OrderDate)
             .Skip((request.PageNumber - 1) * request.PageSize)

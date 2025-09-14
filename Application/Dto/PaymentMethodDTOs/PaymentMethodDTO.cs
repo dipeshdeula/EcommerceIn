@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Application.Dto.PaymentMethodDTOs
@@ -21,6 +22,8 @@ namespace Application.Dto.PaymentMethodDTOs
         public bool RequiresRedirect { get; set; }
 
         public bool IsAvailable { get; set; }
+
+        [JsonIgnore]
         public ICollection<PaymentRequestDTO> PaymentRequests { get; set; }
     }
 }

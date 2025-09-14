@@ -18,7 +18,7 @@ namespace Application.Features.OrderFeat.Module
         {
             WithTags("Order");
             IncludeInOpenApi();
-            RequireAuthorization();
+            //RequireAuthorization();
         }
 
         public override void AddRoutes(IEndpointRouteBuilder app)
@@ -89,6 +89,7 @@ namespace Application.Features.OrderFeat.Module
                     return Results.BadRequest(new { result.Message, result.Errors });
                 return Results.Ok(new { result.Message, result.Data });
             });
+                //.RequireAuthorization();
 
             app.MapPut("/confirmOrderStatus", async (ISender mediator, int OrderId, bool IsConfirmed) =>
             {

@@ -73,10 +73,10 @@ namespace Application.Features.PaymentRequestFeat.Queries
                 {
                     var searchLower = request.SearchTerm.ToLower();
                     query = query.Where(pr =>
-                        pr.User.Name.ToLower().Contains(searchLower) ||
-                        pr.Description.ToLower().Contains(searchLower) ||
-                        pr.EsewaTransactionId.ToLower().Contains(searchLower) ||
-                        pr.KhaltiPidx.ToLower().Contains(searchLower));
+                        pr.User!.Name.ToLower().Contains(searchLower) ||
+                        pr.Description!.ToLower().Contains(searchLower) ||
+                        pr.EsewaTransactionId!.ToLower().Contains(searchLower) ||
+                        pr.KhaltiPidx!.ToLower().Contains(searchLower));
                 }
 
                 query = request.OrderBy?.ToLower() switch

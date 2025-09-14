@@ -18,7 +18,7 @@ namespace Infrastructure.Persistence.Repositories
         public async Task<IEnumerable<CartItem>> GetByUserIdAsync(int userId)
         {
             return await _context.CartItems.Include(c => c.Product)
-                 .Where(c => c.UserId == userId && !c.IsDeleted).ToListAsync();
+                 .Where(c => c.UserId == userId && !c.IsDeleted && c.ExpiresAt > DateTime.UtcNow).ToListAsync();
         }
 
 

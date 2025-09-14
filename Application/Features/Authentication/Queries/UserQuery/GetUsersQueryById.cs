@@ -27,7 +27,12 @@ namespace Application.Features.Authentication.Queries.UserQuery
         {
             _logger.LogInformation($"Fetching user with ID {request.Id}");
 
-            var user = await _userRepository.FirstOrDefaultAsync(x=>x.Id == request.Id && x.IsDeleted == false);
+            var user = await _userRepository.GetAsync(
+                predicate:x=>x.Id == request.Id,
+                includeProperties:"Addresses",
+                includeDeleted:false,
+                cancellationToken:cancellationToken
+                );
             if (user is null)
             {
                 return Result<UserDTO>.Failure("User not found");

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Application.Dto.PaymentDTOs
@@ -32,6 +33,8 @@ namespace Application.Dto.PaymentDTOs
         public DateTime? ExpiresAt { get; set; }
         public string Instructions { get; set; } = string.Empty;
         public bool RequiresRedirect { get; set; }
+
+        [JsonIgnore]
         public Dictionary<string,string> Metadata { get; set; }
         public string? UserName { get; set; }
         public string? PaymentMethodName { get; set; }

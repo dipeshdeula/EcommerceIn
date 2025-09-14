@@ -108,6 +108,44 @@ namespace Application.Features.BannerSpecialEvent.Module
             .WithSummary("Get all banner events")
             .WithDescription("Retrieves paginated list of banner events with optional filtering");
 
+            // Get all banner events with filtering and pagination
+            app.MapGet("/getAllBannerInfoUser", async (
+                ISender mediator,
+                [FromQuery] int pageNumber = 1,
+                [FromQuery] int pageSize = 10,
+                [FromQuery] bool includeDeleted = false               
+                ) =>
+            {
+                var query = new GetBannerSummaryQuery(
+                    PageNumber: pageNumber,
+                    PageSize: pageSize,
+                    IncludeDeleted: includeDeleted
+                    
+                );
+
+                var result = await mediator.Send(query);
+
+                if (!result.Succeeded)
+                {
+                    return Results.BadRequest(new
+                    {
+                        message = result.Message,
+                        errors = result.Errors
+                    });
+                }
+
+                return Results.Ok(new
+                {
+                    message = result.Message,
+                    result.Data
+                });
+            })
+            .Produces<PagedResult<BannerSummaryDTO>>(StatusCodes.Status200OK)
+            .Produces<ValidationProblemDetails>(StatusCodes.Status400BadRequest)
+            .WithName("GetAllBannerEventsUser")
+            .WithSummary("Get all banner events info for user")
+            .WithDescription("Retrieves paginated list of banner events with optional filtering");
+
             // Get banner event by ID
             app.MapGet("/getEventById", async (ISender mediator, [FromQuery] int bannerId) =>
             {

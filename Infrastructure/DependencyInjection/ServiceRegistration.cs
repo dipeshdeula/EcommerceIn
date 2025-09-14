@@ -346,7 +346,7 @@ namespace Infrastructure.DependencyInjection
             services.AddScoped<IRequestHandler<GetAllCartItemQuery, Result<IEnumerable<CartItemDTO>>>, GetAllCartItemQueryHandler>();
             //services.AddScoped<IRequestHandler<GetCartByUserIdQuery,Result<IEnumerable<CartItemDTO>>>, GetCartByUserIdQueryHandler>();
             services.AddScoped<IRequestHandler<UpdateCartItemCommand,Result<CartItemDTO>>, UpdateCartItemCommandHandler>();
-            services.AddScoped<IRequestHandler<HardDeleteCartItemCommand,Result<CartItemDTO>>, HardDeleteCartItemCommandHandler>();
+            services.AddScoped<IRequestHandler<HardDeleteCartItemCommand,Result<string>>, HardDeleteCartItemCommandHandler>();
 
             services.AddScoped < IRequestHandler<GetAllProductsByCategoryId, Result<CategoryWithProductsDTO>>, GetAllProductsByCategoryIdHandler>();
             services.AddScoped<IRequestHandler<GetAllProductsBySubSubCategoryIdQuery, Result<CategoryWithProductsDTO>>, GetAllProductsBySubSubCategoryIdQueryHandler>();

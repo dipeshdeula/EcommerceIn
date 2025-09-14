@@ -3,6 +3,7 @@ using Application.Dto.OrderDTOs;
 using Application.Dto.ShippingDTOs;
 using Application.Extension;
 using Application.Extension.Cache;
+using Application.Features.CartItemFeat.Queries;
 using Application.Features.OrderFeat.Events;
 using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
@@ -260,7 +261,7 @@ namespace Application.Features.OrderFeat.Commands
                 {
                     Id = order.Id,
                     UserId = request.UserId,
-                    UserDTO = user.ToDTO(),
+                    User = user.ToDTO(),
                     OrderDate = order.OrderDate,
                     PaymentStatus = order.PaymentStatus,
                     OrderStatus = order.OrderStatus,

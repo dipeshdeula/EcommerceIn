@@ -792,7 +792,7 @@ namespace Application.Extension
                 IsDelivered = order.IsDelivered,
                 IsCancelled = order.IsCancelled,
                 IsDeleted = order.IsDeleted,
-                UserDTO = order.User != null ? order.User.ToDTO() : null,
+                User = order.User != null ? order.User.ToDTO() : null,
                 Items = order.Items != null
                     ? order.Items.Select(i => i.ToDTO()).ToList()
                     : new List<OrderItemDTO>()
@@ -1016,7 +1016,78 @@ namespace Application.Extension
 
             return dto;
         }
+        public static BannerSummaryDTO ToBannerSummaryDTO(this BannerEventSpecial bannerEventSpecial, INepalTimeZoneService? nepalTimeService = null)
+        {
+            if (bannerEventSpecial == null) throw new ArgumentNullException(nameof(bannerEventSpecial));
 
+            var currentUtcTime = DateTime.UtcNow;
+
+            // SAFE: Handle timezone service gracefully
+            DateTime startDateNepal;
+            DateTime endDateNepal;
+            DateTime currentNepalTime;
+
+
+
+            if (nepalTimeService != null)
+            {
+                try
+                {
+                    // Convert UTC dates to Nepal time for display
+                    startDateNepal = nepalTimeService.ConvertFromUtcToNepal(bannerEventSpecial.StartDate);
+                    endDateNepal = nepalTimeService.ConvertFromUtcToNepal(bannerEventSpecial.EndDate);
+                    currentNepalTime = nepalTimeService.GetNepalCurrentTime();
+
+
+                }
+                catch (Exception)
+                {
+                    // FALLBACK: Use UTC if timezone service fails
+                    startDateNepal = bannerEventSpecial.StartDate;
+                    endDateNepal = bannerEventSpecial.EndDate;
+                    currentNepalTime = currentUtcTime;
+
+
+                }
+            }
+            else
+            {
+                // FALLBACK: Use UTC when no timezone service
+                startDateNepal = bannerEventSpecial.StartDate;
+                endDateNepal = bannerEventSpecial.EndDate;
+                currentNepalTime = currentUtcTime;
+
+
+            }
+
+            var dto = new BannerSummaryDTO
+            {
+                // SYSTEM FIELDS
+                Id = bannerEventSpecial.Id,              
+
+                // BASIC EVENT INFO
+                Name = bannerEventSpecial.Name ?? string.Empty,
+                Description = bannerEventSpecial.Description ?? string.Empty,
+                TagLine = bannerEventSpecial.TagLine,
+                PromotionType = bannerEventSpecial.PromotionType,
+                DiscountValue = bannerEventSpecial.DiscountValue,
+                MaxDiscountAmount = bannerEventSpecial.MaxDiscountAmount,      
+
+                //  NEPAL DATES (Display - converted for UI)
+                StartDateNepal = startDateNepal,
+                EndDateNepal = endDateNepal,               
+                IsActive = bannerEventSpecial.IsActive,        
+                              
+                // NESTED ENTITIES
+                Images = bannerEventSpecial.Images?.Select(i => i.ToDTO()).ToList() ?? new List<BannerImageDTO>(),
+                
+            };
+
+            //  CALCULATE DAYS REMAINING SAFELY
+            dto.DaysRemaining = dto.IsExpired ? 0 : (int)Math.Ceiling((endDateNepal - currentNepalTime).TotalDays);
+
+            return dto;
+        }
         /// <summary>
         /// FALLBACK METHOD (without timezone service)
         /// </summary>

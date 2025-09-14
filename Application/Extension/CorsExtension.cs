@@ -27,7 +27,8 @@ namespace Application.Extension
                         "https://pay.khalti.com",
                         "http://localhost:5173",
                         "http://localhost:3000",
-                        "http://localhost:5225"
+                        "http://localhost:5225",
+                        "http://192.168.1.74:7080"
                     )
                     .AllowAnyMethod()
                     .AllowAnyHeader()

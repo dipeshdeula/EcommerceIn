@@ -5,8 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Application.Extension
 {
     public static class AuthorizationExtensions
-    {
-       
+    {       
             public static void AddCustomAuthorization(this IServiceCollection services)
             {
                 services.AddAuthorization(options =>
@@ -107,9 +106,6 @@ namespace Application.Extension
                             );
                         });
                     });
-
-
-
 
 
                     // Policy for custom permission claim

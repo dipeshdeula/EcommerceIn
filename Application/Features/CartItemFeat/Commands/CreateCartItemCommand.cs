@@ -57,7 +57,7 @@ namespace Application.Features.CartItemFeat.Commands
         {
             try
             {
-                _logger.LogInformation(" Processing add to cart: UserId={UserId}, ProductId={ProductId}, Quantity={Quantity}",
+                _logger.LogInformation(" Processing Fadd to cart: UserId={UserId}, ProductId={ProductId}, Quantity={Quantity}",
                     request.UserId, request.ProductId, request.Quantity);
 
                 //  STEP 1: Get product pricing (includes event discounts)
