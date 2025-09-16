@@ -18,11 +18,12 @@ namespace Application.Features.whishlistFeat.Module
         {
             WithTags("wishlist");
             IncludeInOpenApi();
-            RequireAuthorization();
+           // RequireAuthorization();
         }
 
         public override void AddRoutes(IEndpointRouteBuilder app)
         {
+            app = app.MapGroup("wishlist");
             // Get user's wishlist
             app.MapGet("/{userId:int}", async (
                 int userId,
@@ -43,6 +44,7 @@ namespace Application.Features.whishlistFeat.Module
 
                 return Results.Ok(new { result.Message, result.Data });
             })
+             .RequireAuthorization()
             .WithName("GetUserWishlist")
             .WithSummary("Get user's wishlist with product details");
 
@@ -59,7 +61,7 @@ namespace Application.Features.whishlistFeat.Module
                 if (!result.Succeeded)
                     return Results.BadRequest(new { result.Message, result.Errors });
 
-                return Results.Ok(new { result.Message, result.Data });
+                return Results.Ok(new { result.Message });
             })
             .WithName("AddToWishlist")
             .WithSummary("Add a product to user's wishlist");
